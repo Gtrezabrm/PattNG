@@ -784,4 +784,18 @@
         <item>Aggressive</item>
     </string-array>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Connected</string>
+    <string name="home_status_connecting">Connecting…</string>
+    <string name="home_status_error">Connection failed</string>
+    <string name="home_status_unexpected">Connection lost</string>
+    <string name="home_empty_title">No server selected</string>
+    <string name="home_action_choose_server">Choose a server</string>
+    <string name="home_action_retry">Try again</string>
+    <string name="home_action_reconnect">Reconnect</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Duration</string>
+    <string name="home_details_download">Download</string>
+    <string name="home_details_upload">Upload</string>
+
 </resources>

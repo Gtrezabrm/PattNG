@@ -781,4 +781,18 @@
         <item>Агрессивная</item>
     </string-array>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Подключено</string>
+    <string name="home_status_connecting">Подключение…</string>
+    <string name="home_status_error">Не удалось подключиться</string>
+    <string name="home_status_unexpected">Соединение потеряно</string>
+    <string name="home_empty_title">Сервер не выбран</string>
+    <string name="home_action_choose_server">Выбрать сервер</string>
+    <string name="home_action_retry">Повторить</string>
+    <string name="home_action_reconnect">Переподключить</string>
+    <string name="home_details_ping">Пинг</string>
+    <string name="home_details_duration">Длительность</string>
+    <string name="home_details_download">Загрузка</string>
+    <string name="home_details_upload">Отдача</string>
+
 </resources>

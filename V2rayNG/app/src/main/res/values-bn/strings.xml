@@ -777,4 +777,18 @@
         <item>তীব্র</item>
     </string-array>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">সংযুক্ত</string>
+    <string name="home_status_connecting">সংযোগ হচ্ছে…</string>
+    <string name="home_status_error">সংযোগ ব্যর্থ হয়েছে</string>
+    <string name="home_status_unexpected">সংযোগ বিচ্ছিন্ন হয়েছে</string>
+    <string name="home_empty_title">কোনো সার্ভার নির্বাচিত নেই</string>
+    <string name="home_action_choose_server">সার্ভার নির্বাচন করুন</string>
+    <string name="home_action_retry">আবার চেষ্টা করুন</string>
+    <string name="home_action_reconnect">পুনরায় সংযোগ করুন</string>
+    <string name="home_details_ping">পিং</string>
+    <string name="home_details_duration">সময়কাল</string>
+    <string name="home_details_download">ডাউনলোড</string>
+    <string name="home_details_upload">আপলোড</string>
+
 </resources>

@@ -775,4 +775,18 @@
         <item>Mạnh</item>
     </string-array>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">Đã kết nối</string>
+    <string name="home_status_connecting">Đang kết nối…</string>
+    <string name="home_status_error">Kết nối thất bại</string>
+    <string name="home_status_unexpected">Mất kết nối</string>
+    <string name="home_empty_title">Chưa chọn máy chủ</string>
+    <string name="home_action_choose_server">Chọn máy chủ</string>
+    <string name="home_action_retry">Thử lại</string>
+    <string name="home_action_reconnect">Kết nối lại</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Thời lượng</string>
+    <string name="home_details_download">Tải xuống</string>
+    <string name="home_details_upload">Tải lên</string>
+
 </resources>

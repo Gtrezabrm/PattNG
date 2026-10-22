@@ -777,4 +777,18 @@
         <item>شدید</item>
     </string-array>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">منپیز</string>
+    <string name="home_status_connecting">درحال منپیز بیئن…</string>
+    <string name="home_status_error">منپیز بیئن نشد</string>
+    <string name="home_status_unexpected">منپیز قطع بی</string>
+    <string name="home_empty_title">سرور انتخاو نیئه</string>
+    <string name="home_action_choose_server">سرور انتخاو بکه</string>
+    <string name="home_action_retry">دوباره تلاش بکه</string>
+    <string name="home_action_reconnect">دوباره منپیز بو</string>
+    <string name="home_details_ping">پینگ</string>
+    <string name="home_details_duration">مدت</string>
+    <string name="home_details_download">دانلود</string>
+    <string name="home_details_upload">آپلود</string>
+
 </resources>

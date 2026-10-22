@@ -777,4 +777,18 @@
         <item>شدید</item>
     </string-array>
 
+    <!-- Home connection card -->
+    <string name="home_status_connected">متصل شد</string>
+    <string name="home_status_connecting">در حال اتصال…</string>
+    <string name="home_status_error">اتصال ناموفق بود</string>
+    <string name="home_status_unexpected">اتصال قطع شد</string>
+    <string name="home_empty_title">سروری انتخاب نشده</string>
+    <string name="home_action_choose_server">انتخاب سرور</string>
+    <string name="home_action_retry">تلاش مجدد</string>
+    <string name="home_action_reconnect">اتصال مجدد</string>
+    <string name="home_details_ping">پینگ</string>
+    <string name="home_details_duration">مدت اتصال</string>
+    <string name="home_details_download">دانلود</string>
+    <string name="home_details_upload">آپلود</string>
+
 </resources>
