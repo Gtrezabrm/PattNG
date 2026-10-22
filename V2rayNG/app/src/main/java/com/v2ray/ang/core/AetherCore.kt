@@ -59,12 +59,18 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
     /**
      * The listener options the core binds as [arguments] run it: its own and its HTTP proxy always, Tor's
      * listener with Tor inside or around the tunnel and Tor's HTTP proxy with Tor run in any way, and the same for
-     * Psiphon. An option of a mode that does not run binds nothing (aether lib.rs, tor.rs and psiphon.rs).
+     * Psiphon. An option of a mode that does not run binds nothing (aether lib.rs, tor.rs and psiphon.rs). Tor or
+     * Psiphon alone serves the core's own listener and its own HTTP proxy, and the core runs nothing else, not even
+     * its HTTP proxy, see [AetherCoreManager.aloneOf].
      */
     private val boundListeners: List<String>
         get() {
             val tor = AetherCoreManager.torModeOf(arguments)
             val psiphon = AetherCoreManager.psiphonModeOf(arguments)
+            if (AetherCoreManager.aloneOf(arguments) != null) {
+                val aloneHttp = if (tor == AetherTor.ONLY) AetherCoreManager.TOR_HTTP else AetherCoreManager.PSIPHON_HTTP
+                return LISTENERS.filter { it == "--bind" || it == aloneHttp }
+            }
             return LISTENERS.filter { flag ->
                 when (flag) {
                     AetherCoreManager.TOR_BIND -> tor == AetherTor.CHAIN || tor == AetherTor.REVERSE

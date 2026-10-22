@@ -1025,6 +1025,12 @@ class AetherCoreManagerTest {
         assertEquals(AetherTor.ONLY, AetherCoreManager.torModeOf(listOf("--tor", "--tor-only")))
         assertEquals(AetherPsiphon.CHAIN, AetherCoreManager.psiphonModeOf(listOf("--psiphon-reverse", "--psiphon")))
         assertEquals("--bind", AetherCoreManager.listenerFlagOf(listOf("--psiphon", "--psiphon-only")))
+        // A carrier alone is dialled on the core's own listener, whatever the other is told: the core starts only it.
+        assertEquals("--bind", AetherCoreManager.listenerFlagOf(listOf("--tor-only", "--psiphon")))
+        assertEquals("--bind", AetherCoreManager.listenerFlagOf(listOf("--psiphon-only", "--tor")))
+        assertEquals("TOR", AetherCoreManager.aloneOf(listOf("--tor-only", "--psiphon-only")))
+        assertEquals("PSIPHON", AetherCoreManager.aloneOf(listOf("--psiphon-only", "--tor")))
+        assertNull(AetherCoreManager.aloneOf(listOf("--tor", "--psiphon-reverse")))
     }
 
     @Test
@@ -1035,6 +1041,9 @@ class AetherCoreManagerTest {
         assertFalse(AetherCoreManager.readyNeedsWord(listOf("--masque", "--psiphon-reverse")))
         assertFalse(AetherCoreManager.readyNeedsWord(listOf("--wg", "--tor")))
         assertFalse(AetherCoreManager.readyNeedsWord(listOf("--wg")))
+        // Tor alone runs no Psiphon, whatever Psiphon is told; Psiphon alone does say it.
+        assertFalse(AetherCoreManager.readyNeedsWord(listOf("--tor-only", "--psiphon")))
+        assertTrue(AetherCoreManager.readyNeedsWord(listOf("--psiphon-only", "--tor")))
 
         assertTrue(AetherCoreManager.isReadyWord("[2026-09-24T10:00:00.000Z INFO  aether] [+] psiphon is ready; 127.0.0.1:10819 leaves through psiphon, carried by the tunnel"))
         assertTrue(AetherCoreManager.isReadyWord("[2026-09-24T10:00:00.000Z INFO  aether] [+] psiphon is ready; 127.0.0.1:10819 leaves through psiphon"))

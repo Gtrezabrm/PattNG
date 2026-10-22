@@ -956,8 +956,11 @@ object AetherCoreManager {
      * True when the listener the app dials is Psiphon's, inside the tunnel or alone: it answers the
      * greeting before it carries anything, so readiness needs the core's word as well.
      */
-    internal fun readyNeedsWord(arguments: List<String>): Boolean =
-        psiphonModeOf(arguments).let { it == AetherPsiphon.CHAIN || it == AetherPsiphon.ONLY }
+    internal fun readyNeedsWord(arguments: List<String>): Boolean = when (aloneOf(arguments)) {
+        PSIPHON_NAME -> true
+        TOR_NAME -> false
+        else -> psiphonModeOf(arguments) == AetherPsiphon.CHAIN
+    }
 
     /** True when [line] is the core's word that the listener the app dials carries traffic now. */
     internal fun isReadyWord(line: String): Boolean = psiphonReady.containsMatchIn(line)
@@ -1273,9 +1276,21 @@ object AetherCoreManager {
      * command written that way is dialled on Psiphon's.
      */
     internal fun listenerFlagOf(arguments: List<String>): String = when {
+        // Alone, Tor or Psiphon serves the core's own listener, and the core starts nothing else (aether lib.rs).
+        aloneOf(arguments) != null -> "--bind"
         psiphonModeOf(arguments) == AetherPsiphon.CHAIN -> PSIPHON_BIND
         torModeOf(arguments) == AetherTor.CHAIN -> TOR_BIND
         else -> "--bind"
+    }
+
+    /**
+     * The carrier [argv] runs alone, with no tunnel: Tor, before Psiphon when both are asked to, as the core starts
+     * them and [pathOf] names them; null when neither runs alone. The core then starts nothing else.
+     */
+    internal fun aloneOf(argv: List<String>): String? = when {
+        torModeOf(argv) == AetherTor.ONLY -> TOR_NAME
+        psiphonModeOf(argv) == AetherPsiphon.ONLY -> PSIPHON_NAME
+        else -> null
     }
 
     /** Where Tor stands in the tunnel [argv] runs, read the way the core reads it: the last mode flag wins. */

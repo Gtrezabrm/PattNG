@@ -364,6 +364,13 @@ class AetherCoreTest {
         assertEquals(10819, AetherCore.ofCommand("aether --wg --http-proxy 127.0.0.1:10819", 10819)!!.sharedPort)
         // Tor inside the tunnel on the core's own port.
         assertEquals(10820, AetherCore.ofCommand("aether --masque --tor --tor-bind 127.0.0.1:10820 --bind 127.0.0.1:10820")!!.sharedPort)
+        // A carrier alone serves the core's own listener and its own HTTP proxy, and the core runs nothing else.
+        val torAlone = AetherCore.ofCommand(
+            "aether --tor-only --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:8118 --tor-http 127.0.0.1:8118 " +
+                "--psiphon --psiphon-bind 127.0.0.1:10819 --psiphon-http 127.0.0.1:8120"
+        )!!
+        assertNull(torAlone.sharedPort)
+        assertEquals(listOf(10819, 8118), torAlone.ports)
         // Tor's listener of a command that runs no Tor binds nothing: the command names one listener, not two.
         val torOff = AetherCore.ofCommand("aether --masque --tor-bind 127.0.0.1:10819 --tor-http 127.0.0.1:10820", 10819)!!
         assertNull(torOff.sharedPort)
