@@ -45,10 +45,19 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
 import java.io.IOException
+import java.net.DatagramSocket
 import java.net.InetSocketAddress
+import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketAddress
 import java.util.Locale
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
@@ -71,6 +80,14 @@ object AetherCoreManager {
 
     /** The option that names Tor's own listener. */
     internal const val TOR_BIND = "--tor-bind"
+
+    /**
+     * The options that name the HTTP proxies a command written by hand may open beside the SOCKS listeners: the
+     * core's own, Tor's and Psiphon's. The app names none of them, but the ports they name are the core's as well.
+     */
+    internal const val HTTP_PROXY = "--http-proxy"
+    internal const val TOR_HTTP = "--tor-http"
+    internal const val PSIPHON_HTTP = "--psiphon-http"
 
     /** The option that names the proxy the core dials out through. */
     internal const val UPSTREAM = "--upstream"
@@ -146,6 +163,13 @@ object AetherCoreManager {
     /** How long a session start waits for the cores of cancelled tests to be gone, and how often it looks. */
     private const val PROBE_EXIT_WAIT_MS = 3_000L
     private const val PROBE_POLL_MS = 100L
+
+    /**
+     * How long a session start waits for the check of the ports its session takes, see [checkSessionPorts]: what
+     * runs on the core's executor before it is bounded by the waits there, and a start on the main thread stays
+     * well within the system's limit for a service start.
+     */
+    internal const val PORT_CHECK_WAIT_MS = 10_000L
 
     /** How long a stop waits for a core, and then for the programs it started, to be gone before force is used. */
     private const val EXIT_WAIT_MS = 2_000L
@@ -517,6 +541,113 @@ object AetherCoreManager {
      */
     private fun awaitProbeCores(context: Context): Boolean =
         awaitUntil(PROBE_EXIT_WAIT_MS, PROBE_POLL_MS) { coreProcesses(context).none { isProbe(it.ownerAlive, it.sessionMarked) } }
+
+    /**
+     * A loopback port a session takes as it starts: a listener of its core or, [secondary], the secondary-socks
+     * inbound of its configuration, which Xray opens for UDP as well.
+     */
+    internal data class SessionPort(val port: Int, val secondary: Boolean)
+
+    /** What [checkSessionPorts] found. */
+    internal sealed interface PortCheck {
+        /** Every port the session takes can be bound. */
+        data object Free : PortCheck
+
+        /** Something else holds [port], the first of the session's ports that could not be bound. */
+        data class Taken(val port: Int, val secondary: Boolean) : PortCheck
+
+        /** The check did not end within its bound, or failed; nothing is known about the ports. */
+        data object Unchecked : PortCheck
+    }
+
+    /**
+     * The loopback ports a session on [core] takes: the core's listeners and, when the configuration [content]
+     * has an inbound on [secondaryPort], that inbound, which is the secondary-socks one. A command that names an
+     * upstream of its own has none, and the program it names there has to be listening.
+     */
+    internal fun sessionPorts(core: AetherCore, content: String, secondaryPort: Int = secondarySocksPort): List<SessionPort> =
+        core.ports.map { SessionPort(it, secondary = false) } +
+            listOfNotNull(SessionPort(secondaryPort, secondary = true).takeIf { AetherDependency.inboundListensOn(content, secondaryPort) })
+
+    /**
+     * True when [port] can be bound on the loopback address now: over TCP, and over UDP as well for the
+     * secondary-socks inbound. The TCP probe reuses the address as the listeners of the core and of Xray do, so
+     * a connection of the previous session still in TIME_WAIT does not count; a listener does.
+     */
+    internal fun isFree(port: SessionPort): Boolean = try {
+        ServerSocket().use { socket ->
+            socket.reuseAddress = true
+            socket.bind(InetSocketAddress(AppConfig.LOOPBACK, port.port))
+        }
+        if (port.secondary) {
+            DatagramSocket(null as SocketAddress?).use { it.bind(InetSocketAddress(AppConfig.LOOPBACK, port.port)) }
+        }
+        true
+    } catch (_: IOException) {
+        false
+    }
+
+    /** The first of [ports], in their order, that [free] says cannot be bound; null when all can. */
+    internal fun firstTaken(ports: List<SessionPort>, free: (SessionPort) -> Boolean = ::isFree): SessionPort? =
+        ports.firstOrNull { !free(it) }
+
+    /** The message that refuses a session whose port [taken] something else holds. */
+    @StringRes
+    internal fun takenMessage(taken: PortCheck.Taken): Int =
+        if (taken.secondary) R.string.aether_secondary_port_in_use else R.string.aether_listen_port_in_use
+
+    /**
+     * Checks, before Xray starts a session on [core], that nothing else holds the loopback [ports] the session
+     * takes. Xray's Aether outbounds dial the core's port as soon as Xray runs, before the core binds it, so a
+     * program already listening there would take that traffic until the core failed to bind the port and the
+     * session stopped. The check runs on the core's executor, behind the stop of the previous session's core,
+     * after what a session start does there before it spawns its core: with [afterProbes] it waits for the cores
+     * of tests and scans to be gone, and it ends a leftover core of the app that holds the core's listener. The
+     * caller waits for it at most [timeoutMs].
+     */
+    internal fun checkSessionPorts(
+        context: Context,
+        core: AetherCore,
+        ports: List<SessionPort>,
+        afterProbes: Boolean,
+        timeoutMs: Long,
+    ): PortCheck {
+        val appContext = context.applicationContext
+        return awaitOn(lifecycle, timeoutMs) {
+            try {
+                if (afterProbes && !awaitProbeCores(appContext)) {
+                    LogUtil.w(AppConfig.TAG, "AetherCore: a core of a test or scan is still up as the ports of the session are checked")
+                }
+                reapStale(appContext, listenerAddressOf(core.arguments))
+                firstTaken(ports)?.let { PortCheck.Taken(it.port, it.secondary) } ?: PortCheck.Free
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "AetherCore: the ports of the session could not be checked", e)
+                PortCheck.Unchecked
+            }
+        } ?: PortCheck.Unchecked
+    }
+
+    /**
+     * Runs [task] on [executor] and waits for its result at most [timeoutMs]; null when it did not end in time,
+     * failed, or the wait was interrupted. A task that has not begun by then never runs; one that has goes on to
+     * its end, which no one waits for.
+     */
+    internal fun <T : Any> awaitOn(executor: Executor, timeoutMs: Long, task: () -> T): T? {
+        val future = FutureTask(Callable { task() })
+        executor.execute(future)
+        return try {
+            future.get(timeoutMs, TimeUnit.MILLISECONDS)
+        } catch (_: TimeoutException) {
+            future.cancel(false)
+            null
+        } catch (_: ExecutionException) {
+            null
+        } catch (_: InterruptedException) {
+            future.cancel(false)
+            Thread.currentThread().interrupt()
+            null
+        }
+    }
 
     /**
      * [arguments] as the core is started with them: the word [SHIPPED_LIST] after [PSIPHON_SERVER_ENTRIES]

@@ -215,6 +215,9 @@ object CoreServiceManager {
         // A reload still has the previous session's core; it ends before Xray starts again. The new core,
         // if any, starts once Xray listens, see launchNativeCore.
         AetherCoreManager.stop()
+        if (aether != null) {
+            checkAetherPorts(service, guid, aether, result.content, isReload)
+        }
 
         try {
             launchNativeCore(service, guid, config, aether, result.content, vpnInterface, isReload)
@@ -222,6 +225,40 @@ object CoreServiceManager {
             // Setup failed after this attempt spawned the Aether process; release it with the rest.
             AetherCoreManager.stop()
             throw e
+        }
+    }
+
+    /**
+     * Refuses the session when something else holds a loopback port it takes; see
+     * AetherCoreManager.checkSessionPorts. Nothing of the session runs yet, and a reload has stopped Xray
+     * and the previous core already, so a refusal leaves nothing running.
+     */
+    @Throws(Exception::class)
+    private fun checkAetherPorts(service: Service, guid: String, aether: AetherCore, content: String, isReload: Boolean) {
+        val attempt = "${service.javaClass.simpleName} ${if (isReload) "reload" else "start"}"
+        val ports = AetherCoreManager.sessionPorts(aether, content)
+        // Leak prevention: Xray's Aether outbounds dial the core's port as soon as Xray starts, before the core
+        // binds it, so a program listening there would take that traffic. The ports are therefore checked before
+        // Xray starts, and the start waits for the check, on the main thread of onStartCommand as well, at most
+        // PORT_CHECK_WAIT_MS: the check runs on the core's executor, behind the stop of the previous core.
+        val check = AetherCoreManager.checkSessionPorts(
+            service,
+            aether,
+            ports,
+            afterProbes = !isReload,
+            timeoutMs = AetherCoreManager.PORT_CHECK_WAIT_MS,
+        )
+        when (check) {
+            AetherCoreManager.PortCheck.Free -> Unit
+            is AetherCoreManager.PortCheck.Taken -> {
+                LogUtil.w(AppConfig.TAG, "StartCore-Manager: $attempt refused, port ${check.port} of the Aether session is taken, guid=$guid")
+                throw StartFailure(service.getString(AetherCoreManager.takenMessage(check), check.port))
+            }
+
+            AetherCoreManager.PortCheck.Unchecked -> {
+                LogUtil.w(AppConfig.TAG, "StartCore-Manager: $attempt refused, the ports of the Aether session were not checked in time, guid=$guid")
+                error("The ports of the Aether session could not be checked")
+            }
         }
     }
 

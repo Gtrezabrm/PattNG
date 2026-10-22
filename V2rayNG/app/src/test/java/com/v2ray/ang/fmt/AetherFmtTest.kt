@@ -1097,6 +1097,11 @@ class AetherFmtTest {
             AetherFmt.Problem.LISTEN_PORT_TAKEN,
             AetherFmt.normalize(profile { aetherCommand = "aether --wg --bind 127.0.0.1:10819" }, movedOntoIt)
         )
+        // So does an HTTP proxy it opens.
+        assertEquals(
+            AetherFmt.Problem.LISTEN_PORT_TAKEN,
+            AetherFmt.normalize(profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:10819" }, movedOntoIt)
+        )
     }
 
     @Test

@@ -34,7 +34,7 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
      */
     val port: Int get() = AetherCoreManager.listenerPortOf(arguments) ?: AetherCoreManager.socksPort
 
-    /** Every loopback port the core is told to listen on; an inbound of the configuration cannot share one. */
+    /** Every port the core is told to listen on, its HTTP proxies' too; an inbound of the configuration cannot share one. */
     val ports: List<Int>
         get() = LISTENERS
             .mapNotNull { AetherCoreManager.portAfter(arguments, it) }
@@ -72,8 +72,18 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
         /** The name a command line starts with; the app runs its own copy of the core whatever the name says. */
         const val COMMAND_NAME = "aether"
 
-        /** The listeners a core may be told to bind: the core's own, Tor's, Psiphon's. */
-        private val LISTENERS = listOf("--bind", AetherCoreManager.TOR_BIND, AetherCoreManager.PSIPHON_BIND)
+        /**
+         * The listeners a core may be told to bind: the core's own, Tor's, Psiphon's, and the HTTP proxies a command
+         * written by hand may open beside them.
+         */
+        private val LISTENERS = listOf(
+            "--bind",
+            AetherCoreManager.TOR_BIND,
+            AetherCoreManager.PSIPHON_BIND,
+            AetherCoreManager.HTTP_PROXY,
+            AetherCoreManager.TOR_HTTP,
+            AetherCoreManager.PSIPHON_HTTP,
+        )
 
         /**
          * The core of [profile]: the command line it carries, or its settings as arguments on

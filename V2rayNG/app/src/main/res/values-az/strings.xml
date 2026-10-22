@@ -612,6 +612,8 @@
     <string name="aether_invalid_fragment">Ədəd və ya 16-32 kimi aralıq yazın: ölçü 1–4096 bayt, gecikmə 0–1000 ms</string>
     <string name="aether_listen_port_taken">Nüvə tətbiqin yerli proksi portunda və Aether dinləmə portundan üç yuxarı olan portda dinləyə bilməz; tənzimləmələrdə Aether dinləmə portunu və ya əmrin portlarını dəyişin</string>
     <string name="aether_secondary_port_taken">Bu konfiqurasiyanın bir girişi artıq %1$d portunda dinləyir; bu, Aether dinləmə portundan üç yuxarı olan və Aether nüvəsinin xaricə qoşulduğu portdur; tənzimləmələrdə Aether dinləmə portunu dəyişin</string>
+    <string name="aether_listen_port_in_use">Aether nüvəsinin dinlədiyi %1$d portu başqa bir tətbiq tərəfindən istifadə olunur; tənzimləmələrdə Aether dinləmə portunu və ya əmrin portlarını dəyişin</string>
+    <string name="aether_secondary_port_in_use">Aether dinləmə portundan üç yuxarı olan və Xray-in Aether nüvəsinin xaricə qoşulması üçün açdığı %1$d portu başqa bir tətbiq tərəfindən istifadə olunur; tənzimləmələrdə Aether dinləmə portunu dəyişin</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon bağlantısı</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN fronting IP-ləri</string>

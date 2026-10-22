@@ -618,6 +618,8 @@
     <string name="aether_invalid_fragment">Use a number or a range such as 16-32: size 1–4096 bytes, delay 0–1000 ms</string>
     <string name="aether_listen_port_taken">The core cannot listen on the local proxy port of the app, nor on the port three above the Aether listen port; change the Aether listen port in the settings, or the ports of the command</string>
     <string name="aether_secondary_port_taken">An inbound of this configuration already listens on %1$d, the port three above the Aether listen port, which the Aether core dials out through; change the Aether listen port in the settings</string>
+    <string name="aether_listen_port_in_use">Port %1$d, which the Aether core listens on, is in use by another app; change the Aether listen port in the settings, or the ports of the command</string>
+    <string name="aether_secondary_port_in_use">Port %1$d, three above the Aether listen port, which Xray opens for the Aether core to dial out through, is in use by another app; change the Aether listen port in the settings</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon connection</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN fronting IPs</string>

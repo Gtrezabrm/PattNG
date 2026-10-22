@@ -615,6 +615,8 @@
     <string name="aether_invalid_fragment">Укажите число или диапазон, например 16-32: размер 1–4096 байт, задержка 0–1000 мс</string>
     <string name="aether_listen_port_taken">Ядро не может слушать порт локального прокси приложения или порт на три выше порта прослушивания Aether; измените порт прослушивания Aether в настройках или порты команды</string>
     <string name="aether_secondary_port_taken">Один из входящих (inbound) этой конфигурации уже слушает порт %1$d — порт на три выше порта прослушивания Aether, через который ядро Aether выходит наружу; измените порт прослушивания Aether в настройках</string>
+    <string name="aether_listen_port_in_use">Порт %1$d, который слушает ядро Aether, занят другим приложением; измените порт прослушивания Aether в настройках или порты команды</string>
+    <string name="aether_secondary_port_in_use">Порт %1$d — на три выше порта прослушивания Aether, Xray открывает его, чтобы ядро Aether выходило через него наружу, — занят другим приложением; измените порт прослушивания Aether в настройках</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Подключение Psiphon</string>
     <string name="aether_lab_psiphon_cdn_ips">IP-адреса CDN</string>

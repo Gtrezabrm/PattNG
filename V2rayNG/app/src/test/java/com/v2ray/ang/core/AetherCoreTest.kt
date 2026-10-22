@@ -346,6 +346,19 @@ class AetherCoreTest {
     }
 
     @Test
+    fun theHttpProxiesACommandWrittenByHandOpensAreItsPortsToo() {
+        val tor = AetherCore.ofCommand(
+            "aether --wg --tor --bind 127.0.0.1:10819 --tor-bind 127.0.0.1:10820 " +
+                "--http-proxy 127.0.0.1:8118 --tor-http 127.0.0.1:8119"
+        )!!
+        assertEquals(listOf(10819, 10820, 8118, 8119), tor.ports)
+        val psiphon = AetherCore.ofCommand(
+            "aether --wg --psiphon --bind 127.0.0.1:10819 --psiphon-bind 127.0.0.1:10821 --psiphon-http 127.0.0.1:8120"
+        )!!
+        assertEquals(listOf(10819, 10821, 8120), psiphon.ports)
+    }
+
+    @Test
     fun anUpdateThatLeavesAProfileAsItWasLeavesItsDigestAsItWas() {
         // A subscription's update builds every profile again, added anew, and may move it to another subscription or
         // describe it anew; what it connects with is what tells an exit-node, or the hops of a chain, apart.

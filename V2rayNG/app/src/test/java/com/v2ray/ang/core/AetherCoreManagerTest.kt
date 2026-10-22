@@ -37,11 +37,14 @@ import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 class AetherCoreManagerTest {
@@ -1560,5 +1563,118 @@ class AetherCoreManagerTest {
             listOf("--wg", "--bind", "127.0.0.1:10820", AetherCoreManager.UPSTREAM, "socks5://127.0.0.1:41234"),
             AetherCoreManager.standaloneArguments(exported, 41234)
         )
+    }
+
+    @Test
+    fun theSessionTakesTheListenersOfItsCoreAndTheSecondaryInboundOfItsConfiguration() {
+        val core = AetherCore(
+            listOf(
+                "--bind", "127.0.0.1:10820",
+                AetherCoreManager.TOR_BIND, "127.0.0.1:10819",
+                AetherCoreManager.PSIPHON_BIND, "127.0.0.1:0",
+            )
+        )
+        val routed = """{"inbounds": [{"tag": "socks", "port": 10808}, {"tag": "secondary-socks", "port": 10822, "listen": "127.0.0.1", "protocol": "mixed"}]}"""
+        assertEquals(
+            listOf(
+                AetherCoreManager.SessionPort(10820, secondary = false),
+                AetherCoreManager.SessionPort(10819, secondary = false),
+                AetherCoreManager.SessionPort(10822, secondary = true),
+            ),
+            AetherCoreManager.sessionPorts(core, routed, secondaryPort = 10822)
+        )
+        // A command naming an upstream of its own gets no secondary-socks inbound: what it names has to be listening.
+        val ownUpstream = """{"inbounds": [{"tag": "socks", "port": 10808}]}"""
+        assertEquals(
+            listOf(AetherCoreManager.SessionPort(10820, secondary = false), AetherCoreManager.SessionPort(10819, secondary = false)),
+            AetherCoreManager.sessionPorts(core, ownUpstream, secondaryPort = 10822)
+        )
+    }
+
+    @Test
+    fun aPortSomethingListensOnIsTakenAndAFreeOneIsNot() {
+        val listener = ServerSocket(0, 50, InetAddress.getLoopbackAddress())
+        val port = AetherCoreManager.SessionPort(listener.localPort, secondary = false)
+        listener.use {
+            assertFalse(AetherCoreManager.isFree(port))
+        }
+        assertTrue(AetherCoreManager.isFree(port))
+    }
+
+    @Test
+    fun theSecondaryInboundNeedsItsUdpPortFreeAsWell() {
+        DatagramSocket(0, InetAddress.getLoopbackAddress()).use { udp ->
+            // Xray's mixed inbound opens UDP on its port too; the listeners of the core take TCP alone.
+            assertFalse(AetherCoreManager.isFree(AetherCoreManager.SessionPort(udp.localPort, secondary = true)))
+            assertTrue(AetherCoreManager.isFree(AetherCoreManager.SessionPort(udp.localPort, secondary = false)))
+        }
+    }
+
+    @Test
+    fun theFirstTakenPortInTheOrderOfTheSessionIsReported() {
+        val ports = listOf(
+            AetherCoreManager.SessionPort(10819, secondary = false),
+            AetherCoreManager.SessionPort(10820, secondary = false),
+            AetherCoreManager.SessionPort(10822, secondary = true),
+        )
+        val looked = mutableListOf<Int>()
+        assertEquals(ports[1], AetherCoreManager.firstTaken(ports) { looked += it.port; it.port != 10820 })
+        assertEquals(listOf(10819, 10820), looked)
+        assertNull(AetherCoreManager.firstTaken(ports) { true })
+    }
+
+    @Test
+    fun aTakenPortIsNamedAsTheCoresOrAsTheSecondaryInbound() {
+        assertEquals(
+            R.string.aether_listen_port_in_use,
+            AetherCoreManager.takenMessage(AetherCoreManager.PortCheck.Taken(10819, secondary = false))
+        )
+        assertEquals(
+            R.string.aether_secondary_port_in_use,
+            AetherCoreManager.takenMessage(AetherCoreManager.PortCheck.Taken(10822, secondary = true))
+        )
+    }
+
+    @Test
+    fun theCheckRunsAfterWhatTheExecutorWasGivenBeforeIt() {
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            val order = Collections.synchronizedList(mutableListOf<String>())
+            executor.execute {
+                Thread.sleep(100)
+                order += "stop of the previous core"
+            }
+            assertEquals("free", AetherCoreManager.awaitOn(executor, timeoutMs = 2_000) { order += "check"; "free" })
+            assertEquals(listOf("stop of the previous core", "check"), order)
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun aCheckThatDoesNotEndInTimeGivesNothingAndNeverRunsLate() {
+        val executor = Executors.newSingleThreadExecutor()
+        val busy = CountDownLatch(1)
+        val ran = AtomicBoolean(false)
+        try {
+            executor.execute { busy.await() }
+            assertNull(AetherCoreManager.awaitOn(executor, timeoutMs = 100) { ran.set(true); "late" })
+            busy.countDown()
+            // The executor goes on with what comes next; the check, not begun in time, is skipped.
+            assertEquals("next", AetherCoreManager.awaitOn(executor, timeoutMs = 2_000) { "next" })
+            assertFalse(ran.get())
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun aCheckThatFailsGivesNothing() {
+        val executor = Executors.newSingleThreadExecutor()
+        try {
+            assertNull(AetherCoreManager.awaitOn<String>(executor, timeoutMs = 2_000) { throw IllegalStateException("broken") })
+        } finally {
+            executor.shutdownNow()
+        }
     }
 }
