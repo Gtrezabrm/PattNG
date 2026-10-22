@@ -1596,6 +1596,22 @@ class AetherCoreManagerTest {
     }
 
     @Test
+    fun aStartWaitsForTheCoresOfTestsOnItsListenerAlone() {
+        val listener = "127.0.0.1:10819"
+        val onIt = listOf("--wg", "--bind", listener)
+        assertTrue(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = false, listener = listener))
+        // Tor inside the tunnel listens there in the core's place.
+        val torOnIt = listOf("--masque", "--tor", "--tor-bind", listener, "--bind", "127.0.0.1:10820")
+        assertTrue(AetherCoreManager.isProbeOn(torOnIt, ownerAlive = true, sessionMarked = false, listener = listener))
+        // A core of a test elsewhere, the session's own core, a leftover whose owner is gone, or one that cannot be told apart.
+        val elsewhere = listOf("--wg", "--bind", "127.0.0.1:20808")
+        assertFalse(AetherCoreManager.isProbeOn(elsewhere, ownerAlive = true, sessionMarked = false, listener = listener))
+        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = true, listener = listener))
+        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = false, sessionMarked = false, listener = listener))
+        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = null, listener = listener))
+    }
+
+    @Test
     fun aNumberACommandNamesThatIsNoPortIsLeftOutOfTheSessionPorts() {
         // The core opens no HTTP proxy there; the check could not bind it either.
         val core = AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1")!!

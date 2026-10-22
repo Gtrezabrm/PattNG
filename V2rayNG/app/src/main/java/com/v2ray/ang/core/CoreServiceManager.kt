@@ -167,9 +167,10 @@ object CoreServiceManager {
 
     /**
      * Builds the configuration and starts Xray and the Aether core on it. A reload passes [goesOn], which says
-     * whether it still goes on once the ports of its Aether session were checked.
+     * whether it still goes on; it is asked once the configuration is built and again once the ports of its
+     * Aether session were checked, the two steps that can take seconds.
      *
-     * @return false when [goesOn] said no after that check; nothing of this attempt was started then.
+     * @return false when [goesOn] said no; nothing of this attempt was started then.
      */
     @Throws(Exception::class)
     private fun launchCore(
@@ -188,6 +189,9 @@ object CoreServiceManager {
             if (result.localizedError) throw StartFailure(result.errorMessage)
             error(result.errorMessage.ifBlank { "Failed to get V2Ray config" })
         }
+        // The build can take seconds, resolving server names: a stop, or a stop and a new start, that came
+        // meanwhile owns the cores, which a reload must leave alone from here on.
+        if (!goesOn()) return false
 
         cancelAetherWarmUp()
         // Starting a configuration ends the config tests, whatever the configuration: that is what a start
@@ -261,6 +265,7 @@ object CoreServiceManager {
             service,
             aether,
             ports,
+            afterProbes = !isReload,
             timeoutMs = AetherCoreManager.PORT_CHECK_WAIT_MS,
         )
         when (check) {
@@ -497,7 +502,7 @@ object CoreServiceManager {
             if (launchCore(service, tunFd, isReload = true, goesOn = { ReloadOutcome.goesOn(askedBy = monitor, current = networkMonitor) })) {
                 LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload finished")
             } else {
-                LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload given up, the service was stopped while the Aether ports were checked")
+                LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload given up, the service was stopped while the configuration was built or the Aether ports were checked")
             }
         } catch (e: Exception) {
             val message = e.message?.takeUnless { it.isBlank() } ?: e.javaClass.simpleName
