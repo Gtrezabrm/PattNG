@@ -611,8 +611,8 @@
     <string name="aether_secondary_port_taken">Một inbound của cấu hình này đã lắng nghe trên %1$d, là cổng lớn hơn cổng lắng nghe của Aether ba đơn vị, qua đó lõi Aether kết nối ra ngoài; hãy đổi cổng lắng nghe của Aether trong phần cài đặt</string>
     <string name="aether_listen_port_in_use">Cổng %1$d, nơi lõi Aether lắng nghe, đang được một ứng dụng khác sử dụng; hãy đổi cổng lắng nghe của Aether trong phần cài đặt, hoặc các cổng của lệnh</string>
     <string name="aether_secondary_port_in_use">Cổng %1$d, lớn hơn cổng lắng nghe của Aether ba đơn vị, là cổng Xray mở để lõi Aether kết nối ra ngoài, đang được một ứng dụng khác sử dụng; hãy đổi cổng lắng nghe của Aether trong phần cài đặt</string>
-    <string name="aether_listen_port_invalid">Lệnh của hồ sơ Aether bảo lõi lắng nghe trên %1$d, nhưng đó không phải là cổng (từ 1 đến 65535); hãy đổi các cổng của lệnh</string>
-    <string name="aether_listen_port_shared">Lệnh của hồ sơ Aether bảo lõi lắng nghe trên cùng một cổng bằng hai trình lắng nghe của nó; hãy cho mỗi trình lắng nghe một cổng riêng</string>
+    <string name="aether_listen_port_invalid">Lệnh Aether bảo lõi lắng nghe trên %1$d, nhưng đó không phải là cổng (từ 1 đến 65535); hãy đổi các cổng của lệnh</string>
+    <string name="aether_listen_port_shared">Lệnh Aether bảo lõi lắng nghe trên cùng một cổng bằng hai trình lắng nghe của nó; hãy cho mỗi trình lắng nghe một cổng riêng</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Kết nối Psiphon</string>
     <string name="aether_lab_psiphon_cdn_ips">IP CDN fronting</string>

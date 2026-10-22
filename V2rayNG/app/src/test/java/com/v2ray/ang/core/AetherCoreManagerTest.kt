@@ -1068,34 +1068,54 @@ class AetherCoreManagerTest {
     fun theEndOfTorOrPsiphonInsideTheTunnelIsToldFromTheirOtherLines() {
         val tor = listOf("--masque", "--tor", "--tor-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
         val psiphon = listOf("--masque", "--psiphon", "--psiphon-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
-        // The core's word when Tor cannot take its listener, which another program took meanwhile (aether lib.rs, run_chain).
-        val torWords = "tor: the tor socks5 listener cannot use 127.0.0.1:10819: Address already in use (os error 98); " +
-            "another program already listens there, so stop it or choose another port with --bind"
-        val torEnded = "[2026-10-23T10:00:00.000Z ERROR aether] [-] $torWords"
-        assertEquals(torWords, AetherCoreManager.chainEndWords(torEnded, tor))
-        // Psiphon's own words start with "psiphon" again; those of the client it passes on under the same prefix do not.
+        // The core's lines as it writes them (aether lib.rs, run_chain): an error's words start with the label of its
+        // kind, as AetherError::Other shows it.
+        val torEnded = "[2026-10-23T10:00:00.000Z ERROR aether] [-] tor: other: the tor socks5 listener cannot use 127.0.0.1:10819: " +
+            "Address already in use (os error 98); another program already listens there, so stop it or choose another port with --bind"
         assertEquals(
-            "psiphon: psiphon stopped before it was ready",
-            AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: psiphon stopped before it was ready", psiphon)
+            "tor: the tor socks5 listener cannot use 127.0.0.1:10819: Address already in use (os error 98); " +
+                "another program already listens there, so stop it or choose another port with --bind",
+            AetherCoreManager.chainEndWords(torEnded, tor)
+        )
+        assertEquals(
+            "tor: Connection reset by peer (os error 104)",
+            AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] tor: io: Connection reset by peer (os error 104)", tor)
+        )
+        // As a device logged it on 2026-09-24.
+        assertEquals(
+            "psiphon: psiphon did not come up in time; it may be blocked on this network",
+            AetherCoreManager.chainEndWords(
+                "[2026-09-24T16:12:36.142Z ERROR aether] [-] psiphon: other: psiphon did not come up in time; it may be blocked on this network",
+                psiphon
+            )
         )
         assertEquals(
             "psiphon: psiphon stopped: exit status: 1",
-            AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: psiphon stopped: exit status: 1", psiphon)
+            AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: other: psiphon stopped: exit status: 1", psiphon)
         )
+        // The notices of the Psiphon client come from the core's psiphon module, under the same prefix, at any level.
         assertNull(
             AetherCoreManager.chainEndWords(
                 "[2026-10-23T10:00:00.000Z ERROR aether::psiphon] [-] psiphon: error initializing local SOCKS proxy: address already in use",
                 psiphon
             )
         )
+        assertNull(
+            AetherCoreManager.chainEndWords(
+                "[2026-10-23T10:00:00.000Z ERROR aether::psiphon] [-] psiphon: psiphon.(*Controller).Run#412: tunnel failed",
+                psiphon
+            )
+        )
         assertNull(AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z WARN  aether::psiphon] [-] psiphon lost its tunnel; it is reconnecting", psiphon))
-        // Not at the error level, Tor's word for a session on Psiphon's listener, a session on the core's own listener.
+        // Not at the error level, Tor's word for a session on Psiphon's listener, a session on the core's own listener,
+        // and the error the core itself stops on, which ends it anyway.
         assertNull(AetherCoreManager.chainEndWords(torEnded.replace("ERROR", "INFO "), tor))
         assertNull(AetherCoreManager.chainEndWords(torEnded, psiphon))
         assertNull(AetherCoreManager.chainEndWords(torEnded, listOf("--masque", "--bind", "127.0.0.1:10819")))
+        assertNull(AetherCoreManager.chainEndWords("Error: Other(\"[-] tor: the tor socks5 listener cannot use 127.0.0.1:10819\")", tor))
         // Psiphon around the tunnel ends the tunnel with it, and the core's own listener answers no more: no leak to look for.
         val reverse = listOf("--masque", "--psiphon-reverse", "--bind", "127.0.0.1:10819")
-        assertNull(AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: psiphon stopped: exit status: 1", reverse))
+        assertNull(AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether::psiphon] [-] psiphon: other: psiphon stopped: exit status: 1", reverse))
 
         assertEquals(R.string.aether_core_stopped_chain_ended, AetherCoreManager.stoppedMessage(noEchKey = false, chainEnded = true))
     }
@@ -1607,8 +1627,10 @@ class AetherCoreManagerTest {
 
     @Test
     fun theSessionTakesTheListenersOfItsCoreAndTheSecondaryInboundOfItsConfiguration() {
+        // Tor inside the tunnel, dialled on P, and Psiphon around it on a port of its own choosing.
         val core = AetherCore(
             listOf(
+                "--masque", "--tor", "--psiphon-reverse",
                 "--bind", "127.0.0.1:10820",
                 AetherCoreManager.TOR_BIND, "127.0.0.1:10819",
                 AetherCoreManager.PSIPHON_BIND, "127.0.0.1:0",
@@ -1649,11 +1671,22 @@ class AetherCoreManagerTest {
 
     @Test
     fun aNumberACommandNamesThatIsNoPortIsFoundBeforeThePortsAreChecked() {
-        val core = AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1")!!
-        assertEquals(listOf(10819, 70000, -1), core.ports)
+        val core = AetherCore.ofCommand(
+            "aether --wg --tor --bind 127.0.0.1:10819 --tor-bind 127.0.0.1:10820 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1"
+        )!!
+        assertEquals(listOf(10819, 10820, 70000, -1), core.ports)
         assertEquals(70000, AetherCoreManager.invalidPort(core))
-        assertEquals(-1, AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --tor-http 127.0.0.1:-1")!!))
+        assertEquals(
+            -1,
+            AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --wg --tor --bind 127.0.0.1:10819 --tor-bind 127.0.0.1:10820 --tor-http 127.0.0.1:-1")!!)
+        )
         assertNull(AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:1 --http-proxy 127.0.0.1:65535")!!))
+        // The listener the app dials cannot take 0, any port; another listener can.
+        assertEquals(0, AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:0")!!))
+        assertEquals(0, AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --masque --tor --tor-bind 127.0.0.1:0 --bind 127.0.0.1:10820")!!))
+        assertNull(
+            AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --masque --psiphon-reverse --psiphon-bind 127.0.0.1:0 --bind 127.0.0.1:10819")!!)
+        )
     }
 
     @Test

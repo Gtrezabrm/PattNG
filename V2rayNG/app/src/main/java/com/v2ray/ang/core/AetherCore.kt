@@ -34,25 +34,46 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
      */
     val port: Int get() = AetherCoreManager.listenerPortOf(arguments) ?: AetherCoreManager.socksPort
 
-    /** Every port the core is told to listen on, its HTTP proxies' too; an inbound of the configuration cannot share one. */
+    /**
+     * Every port the core is told to listen on and binds as its modes run, its HTTP proxies' too, see
+     * [boundListeners]; an inbound of the configuration cannot share one.
+     */
     val ports: List<Int>
-        get() = LISTENERS
-            .mapNotNull { AetherCoreManager.portAfter(arguments, it) }
-            .filter { it != 0 }
-            .distinct()
+        get() = boundPorts.distinct()
 
     /**
-     * The first port two of the listeners the core is told to bind share, as a command written by hand may name;
-     * null when each has a port of its own. The core would bind one of them and fail on the other, once its
-     * tunnel is up and Xray dials it. Ports are told apart by number, as everywhere else in the app.
+     * The first port two of the listeners the core binds share, as a command written by hand may name; null when
+     * each has a port of its own. The core would bind one of them and fail on the other, once its tunnel is up and
+     * Xray dials it. Ports are told apart by number, as everywhere else in the app.
      */
     val sharedPort: Int?
         get() {
             val seen = mutableSetOf<Int>()
-            return LISTENERS
-                .mapNotNull { AetherCoreManager.portAfter(arguments, it) }
-                .filter { it != 0 }
-                .firstOrNull { !seen.add(it) }
+            return boundPorts.firstOrNull { !seen.add(it) }
+        }
+
+    /** The ports of [boundListeners], in their order, but 0, which asks for any port. */
+    private val boundPorts: List<Int>
+        get() = boundListeners.mapNotNull { AetherCoreManager.portAfter(arguments, it) }.filter { it != 0 }
+
+    /**
+     * The listener options the core binds as [arguments] run it: its own and its HTTP proxy always, Tor's
+     * listener with Tor inside or around the tunnel and Tor's HTTP proxy with Tor run in any way, and the same for
+     * Psiphon. An option of a mode that does not run binds nothing (aether lib.rs, tor.rs and psiphon.rs).
+     */
+    private val boundListeners: List<String>
+        get() {
+            val tor = AetherCoreManager.torModeOf(arguments)
+            val psiphon = AetherCoreManager.psiphonModeOf(arguments)
+            return LISTENERS.filter { flag ->
+                when (flag) {
+                    AetherCoreManager.TOR_BIND -> tor == AetherTor.CHAIN || tor == AetherTor.REVERSE
+                    AetherCoreManager.TOR_HTTP -> tor != AetherTor.OFF
+                    AetherCoreManager.PSIPHON_BIND -> psiphon == AetherPsiphon.CHAIN || psiphon == AetherPsiphon.REVERSE
+                    AetherCoreManager.PSIPHON_HTTP -> psiphon != AetherPsiphon.OFF
+                    else -> true
+                }
+            }
         }
 
     /** The protocol, which tells whose identity files the core uses. */

@@ -198,6 +198,9 @@ object AetherCoreManager {
      */
     private val noEchKey = Regex("""ECH is on but there is no ECH key to offer""")
 
+    /** The label an error of the core starts its words with, the kind it is of (aether error.rs, AetherError). */
+    private val errorLabel = Regex("""^(?:io|quic|h3|tls|ech|masque|capsule|api|other|identity refused): """)
+
     /** The levels at which the core writes its info lines, the ready word among them. */
     private val infoLevels = setOf("info", "debug", "trace")
 
@@ -594,9 +597,11 @@ object AetherCoreManager {
     /**
      * The first number [core] is told to listen on that is no port, outside 1..65535, as a command written by hand
      * may name; null when there is none. The core cannot listen there: it fails, or leaves such an HTTP proxy out
-     * without a word.
+     * without a word. The listener the app dials cannot take 0 either, which has the core listen on a port the app
+     * does not know.
      */
-    internal fun invalidPort(core: AetherCore): Int? = core.ports.firstOrNull { it !in 1..65535 }
+    internal fun invalidPort(core: AetherCore): Int? =
+        core.port.takeIf { it !in 1..65535 } ?: core.ports.firstOrNull { it !in 1..65535 }
 
     /**
      * True when [port] can be bound on the loopback address now: over TCP, and over UDP as well for the
@@ -961,21 +966,26 @@ object AetherCoreManager {
     internal fun isNoEchKeyWord(line: String): Boolean = noEchKey.containsMatchIn(line)
 
     /**
-     * PattNG: the core's words, without their "[-] ", when [line] says that Tor or Psiphon inside the tunnel, whose
-     * listener a session started with [arguments] is dialled on, has ended or could not start; null for any other
-     * line, and for a session dialled on the core's own listener. The core logs it and goes on without that listener
-     * (aether lib.rs: "[-] tor: {e}" and "[-] psiphon: {e}" of run_chain), where another program may listen then and
-     * get what Xray sends there. Tor's words are the only ones with their prefix; Psiphon's own start with "psiphon"
-     * again, where the notices of the Psiphon client that the core passes on under the same prefix do not.
+     * PattNG: the core's words, as "tor: ..." or "psiphon: ...", when [line] says that Tor or Psiphon inside the
+     * tunnel, whose listener a session started with [arguments] is dialled on, has ended or could not start; null
+     * for any other line, and for a session dialled on the core's own listener. The core logs it and goes on without
+     * that listener (aether lib.rs, run_chain: "[-] tor: {e}" and "[-] psiphon: {e}" at the error level, from the
+     * crate's root, the target "aether"), where another program may listen then and get what Xray sends there. The
+     * notices of the Psiphon client that the core passes on, under the same "[-] psiphon: ", come from its psiphon
+     * module, "aether::psiphon". The label of the error's kind, "other: " or "io: ", is left out of the words.
      */
     internal fun chainEndWords(line: String, arguments: List<String>): String? {
-        if (outputPriority(line) != Log.ERROR) return null
-        val prefix = when (listenerFlagOf(arguments)) {
-            TOR_BIND -> "[-] tor: "
-            PSIPHON_BIND -> "[-] psiphon: psiphon"
+        val header = logHeader(line.trim()) ?: return null
+        if (header[1] != "ERROR" || header[2] != "aether") return null
+        val carrier = when (listenerFlagOf(arguments)) {
+            TOR_BIND -> "tor"
+            PSIPHON_BIND -> "psiphon"
             else -> return null
         }
-        return outputMessage(line).takeIf { it.startsWith(prefix) }?.removePrefix("[-] ")
+        val message = outputMessage(line)
+        val prefix = "[-] $carrier: "
+        if (!message.startsWith(prefix)) return null
+        return "$carrier: " + message.removePrefix(prefix).replaceFirst(errorLabel, "")
     }
 
     /** What to tell the user of the session core that ended on its own last, or was ended for it, in the words it ended with. */
@@ -1534,7 +1544,8 @@ object AetherCoreManager {
                 relay(line, "aether")
                 if (!target.wordSeen && isReadyWord(line)) target.wordSeen = true
                 if (isNoEchKeyWord(line)) target.noEchKey = true
-                if (target.chainEnd == null) {
+                // A core the app stopped, or one a new start replaced, is no longer the session's to end.
+                if (target.chainEnd == null && session === target) {
                     chainEndWords(line, target.arguments)?.let { words ->
                         target.chainEnd = words
                         // The core goes on without the listener Xray dials, which another program may hold now. It is
@@ -1561,10 +1572,11 @@ object AetherCoreManager {
     @Synchronized
     private fun release(target: Session): Boolean {
         if (session !== target) return false
-        session = null
-        // Set before the exit is reported, which reads it; the core has written its last line by now.
+        // Set before the session goes and the exit is reported, which reads them: the warm-up wait reports the exit
+        // too, as soon as it sees no session. The core has written its last line by now.
         stoppedForEchKey = target.noEchKey
         stoppedChainEnd = target.chainEnd
+        session = null
         return true
     }
 

@@ -611,8 +611,8 @@
     <string name="aether_secondary_port_taken">此設定的某個入站已在 %1$d 上監聽，而這是比 Aether 監聽連接埠大 3 的連接埠，Aether 核心經由它向外連線；請在設定中變更 Aether 監聽連接埠</string>
     <string name="aether_listen_port_in_use">Aether 核心監聽的連接埠 %1$d 已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠，或變更命令中的連接埠</string>
     <string name="aether_secondary_port_in_use">連接埠 %1$d 比 Aether 監聽連接埠大 3，Xray 在此開放入站供 Aether 核心向外連線，但它已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠</string>
-    <string name="aether_listen_port_invalid">Aether 設定檔的命令讓核心監聽 %1$d，這不是有效的連接埠（1 到 65535）；請變更命令中的連接埠</string>
-    <string name="aether_listen_port_shared">Aether 設定檔的命令讓核心以兩個監聽器監聽同一個連接埠；請為每個監聽器指定各自的連接埠</string>
+    <string name="aether_listen_port_invalid">Aether 命令讓核心監聽 %1$d，這不是有效的連接埠（1 到 65535）；請變更命令中的連接埠</string>
+    <string name="aether_listen_port_shared">Aether 命令讓核心以兩個監聽器監聽同一個連接埠；請為每個監聽器指定各自的連接埠</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon 連線方式</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN 前置 IP</string>

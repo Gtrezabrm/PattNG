@@ -621,8 +621,8 @@
     <string name="aether_secondary_port_taken">أحد مداخل هذا الإعداد يستمع بالفعل على %1$d، وهو المنفذ الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether، والذي تتصل عبره نواة Aether بالخارج؛ غيّر منفذ الاستماع لـ Aether في الإعدادات</string>
     <string name="aether_listen_port_in_use">المنفذ %1$d، الذي تستمع عليه نواة Aether، يستخدمه تطبيق آخر؛ غيّر منفذ الاستماع لـ Aether في الإعدادات، أو منافذ الأمر</string>
     <string name="aether_secondary_port_in_use">المنفذ %1$d، الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether ويفتحه Xray لتتصل عبره نواة Aether بالخارج، يستخدمه تطبيق آخر؛ غيّر منفذ الاستماع لـ Aether في الإعدادات</string>
-    <string name="aether_listen_port_invalid">يطلب أمر ملف تعريف Aether من النواة الاستماع على %1$d، وهذا ليس منفذًا (من 1 إلى 65535)؛ غيّر منافذ الأمر</string>
-    <string name="aether_listen_port_shared">يطلب أمر ملف تعريف Aether من النواة الاستماع على منفذ واحد بمستمعَين من مستمعيها؛ أعطِ كل مستمع منفذًا خاصًا به</string>
+    <string name="aether_listen_port_invalid">يطلب أمر Aether من النواة الاستماع على %1$d، وهذا ليس منفذًا (من 1 إلى 65535)؛ غيّر منافذ الأمر</string>
+    <string name="aether_listen_port_shared">يطلب أمر Aether من النواة الاستماع على منفذ واحد بمستمعَين من مستمعيها؛ أعطِ كل مستمع منفذًا خاصًا به</string>
     <string name="aether_lab_psiphon">سايفون</string>
     <string name="aether_lab_psiphon_mode">طريقة اتصال سايفون</string>
     <string name="aether_lab_psiphon_cdn_ips">عناوين IP لشبكة CDN</string>
