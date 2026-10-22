@@ -38,6 +38,7 @@ object AetherFmt : FmtBase() {
         INVALID_ECH_DNS,
         INVALID_ECH_DOMAIN,
         LISTEN_PORT_TAKEN,
+        LISTEN_PORT_SHARED,
         PSIPHON_NEEDS_MASQUE,
         NEXT_PORT_TAKEN,
         TOR_NEEDS_MASQUE,
@@ -414,12 +415,16 @@ object AetherFmt : FmtBase() {
     private fun commaList(text: String?): String? =
         text?.split(Regex("[,\\s]+"))?.filter { it.isNotEmpty() }?.joinToString(",")?.ifEmpty { null }
 
-    /** A command written in place of the settings has to be one the app can run, on ports nothing else of the app holds. */
+    /**
+     * A command written in place of the settings has to be one the app can run, with a port of its own for each of
+     * its listeners, on ports nothing else of the app holds.
+     */
     private fun normalizeCommand(config: ProfileItem, takenPorts: Set<Int>, listenPort: Int): Problem? {
         val text = config.aetherCommand?.trim().orEmpty()
         config.aetherCommand = text.ifEmpty { null }
         if (text.isEmpty()) return null
         val core = AetherCore.ofCommand(text, listenPort) ?: return Problem.INVALID_COMMAND
+        if (core.sharedPort != null) return Problem.LISTEN_PORT_SHARED
         return if (core.ports.any { it in takenPorts }) Problem.LISTEN_PORT_TAKEN else null
     }
 

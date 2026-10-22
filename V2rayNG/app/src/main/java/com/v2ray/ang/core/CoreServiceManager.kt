@@ -214,18 +214,24 @@ object CoreServiceManager {
             if (!AetherCoreManager.isSupported(service)) {
                 throw StartFailure(service.getString(R.string.aether_unsupported_abi))
             }
+            // A command written by hand may name a number that is no port, or one port for two of its listeners:
+            // the core could not listen as told, and the session would fail only once Xray had started.
+            AetherCoreManager.invalidPort(aether)?.let { port ->
+                refuseAether(service, guid, isReload, "the Aether command names $port, which is no port") {
+                    service.getString(R.string.aether_listen_port_invalid, port)
+                }
+            }
+            aether.sharedPort?.let { port ->
+                refuseAether(service, guid, isReload, "the Aether command names port $port for two of its listeners") {
+                    service.getString(R.string.aether_listen_port_shared)
+                }
+            }
             // Xray would take the port first: the Aether outbound would dial the configuration's own inbound, or the
             // core could not open the HTTP proxy a command names there.
-            val aetherPort = aether.ports.firstOrNull { AetherDependency.inboundListensOn(result.content, it) }
-            if (aetherPort != null) {
-                LogUtil.w(
-                    AppConfig.TAG,
-                    "StartCore-Manager: ${service.javaClass.simpleName} ${if (isReload) "reload" else "start"} refused, " +
-                        "an inbound of the configuration listens on the Aether port $aetherPort, guid=$guid"
-                )
-                // A reload still has the previous session's core; without Xray it serves nothing.
-                AetherCoreManager.stop()
-                throw StartFailure(service.getString(R.string.aether_listen_port_taken))
+            aether.ports.firstOrNull { AetherDependency.inboundListensOn(result.content, it) }?.let { port ->
+                refuseAether(service, guid, isReload, "an inbound of the configuration listens on the Aether port $port") {
+                    service.getString(R.string.aether_listen_port_taken)
+                }
             }
         }
         // A reload still has the previous session's core; it ends before Xray starts again. The new core,
@@ -246,6 +252,19 @@ object CoreServiceManager {
             throw e
         }
         return true
+    }
+
+    /**
+     * Refuses the session, for [reason] in the log and with [message] on the main screen. A reload still has the
+     * previous session's core, which without Xray serves nothing; it ends too.
+     */
+    private fun refuseAether(service: Service, guid: String, isReload: Boolean, reason: String, message: () -> String): Nothing {
+        LogUtil.w(
+            AppConfig.TAG,
+            "StartCore-Manager: ${service.javaClass.simpleName} ${if (isReload) "reload" else "start"} refused, $reason, guid=$guid"
+        )
+        AetherCoreManager.stop()
+        throw StartFailure(message())
     }
 
     /**
@@ -407,7 +426,7 @@ object CoreServiceManager {
                 AppConfig.TAG,
                 "StartCore-Manager: Aether core exited while running, stopping ${service.javaClass.simpleName}, guid=$guid"
             )
-            MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, service.getString(AetherCoreManager.stoppedMessage()))
+            MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, AetherCoreManager.stoppedMessage(service))
             control.stopService()
         }
     }

@@ -614,6 +614,8 @@
     <string name="aether_secondary_port_taken">Bu konfiqurasiyanın bir girişi artıq %1$d portunda dinləyir; bu, Aether dinləmə portundan üç yuxarı olan və Aether nüvəsinin xaricə qoşulduğu portdur; tənzimləmələrdə Aether dinləmə portunu dəyişin</string>
     <string name="aether_listen_port_in_use">Aether nüvəsinin dinlədiyi %1$d portu başqa bir tətbiq tərəfindən istifadə olunur; tənzimləmələrdə Aether dinləmə portunu və ya əmrin portlarını dəyişin</string>
     <string name="aether_secondary_port_in_use">Aether dinləmə portundan üç yuxarı olan və Xray-in Aether nüvəsinin xaricə qoşulması üçün açdığı %1$d portu başqa bir tətbiq tərəfindən istifadə olunur; tənzimləmələrdə Aether dinləmə portunu dəyişin</string>
+    <string name="aether_listen_port_invalid">Aether profilinin əmri nüvəyə %1$d üzərində dinləməyi bildirir, lakin bu, port deyil (1-dən 65535-ə qədər); əmrin portlarını dəyişin</string>
+    <string name="aether_listen_port_shared">Aether profilinin əmri nüvəyə iki dinləyicisi ilə eyni portda dinləməyi bildirir; hər dinləyiciyə ayrıca port verin</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon bağlantısı</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN fronting IP-ləri</string>
@@ -661,6 +663,7 @@
     <string name="aether_unsupported_abi">Aether nüvəsi bu cihaz üçün mövcud deyil</string>
     <string name="aether_core_stopped">Aether nüvəsi dayandı</string>
     <string name="aether_core_stopped_no_ech_key">Aether nüvəsi dayandı: ECH aktivdir, lakin istifadə edilə bilən ECH açarı tapılmadı. Açar olmadan server adı açıq şəkildə göndəriləcəkdi.</string>
+    <string name="aether_core_stopped_chain_ended">Aether tunelinin içindəki Tor və ya Psiphon dayandı, ona görə bağlantı dayandırıldı: %1$s</string>
     <string name="aether_core_connecting">Aether nüvəsi hələ qoşulur</string>
     <string name="menu_item_import_config_manually_aether">Aether konfiqurasiyasını əllə əlavə et</string>
     <string name="aether_action_renew_key">Yeni WARP açarları al…</string>

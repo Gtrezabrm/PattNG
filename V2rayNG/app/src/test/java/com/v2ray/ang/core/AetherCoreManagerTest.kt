@@ -1065,6 +1065,42 @@ class AetherCoreManagerTest {
     }
 
     @Test
+    fun theEndOfTorOrPsiphonInsideTheTunnelIsToldFromTheirOtherLines() {
+        val tor = listOf("--masque", "--tor", "--tor-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
+        val psiphon = listOf("--masque", "--psiphon", "--psiphon-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
+        // The core's word when Tor cannot take its listener, which another program took meanwhile (aether lib.rs, run_chain).
+        val torWords = "tor: the tor socks5 listener cannot use 127.0.0.1:10819: Address already in use (os error 98); " +
+            "another program already listens there, so stop it or choose another port with --bind"
+        val torEnded = "[2026-10-23T10:00:00.000Z ERROR aether] [-] $torWords"
+        assertEquals(torWords, AetherCoreManager.chainEndWords(torEnded, tor))
+        // Psiphon's own words start with "psiphon" again; those of the client it passes on under the same prefix do not.
+        assertEquals(
+            "psiphon: psiphon stopped before it was ready",
+            AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: psiphon stopped before it was ready", psiphon)
+        )
+        assertEquals(
+            "psiphon: psiphon stopped: exit status: 1",
+            AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: psiphon stopped: exit status: 1", psiphon)
+        )
+        assertNull(
+            AetherCoreManager.chainEndWords(
+                "[2026-10-23T10:00:00.000Z ERROR aether::psiphon] [-] psiphon: error initializing local SOCKS proxy: address already in use",
+                psiphon
+            )
+        )
+        assertNull(AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z WARN  aether::psiphon] [-] psiphon lost its tunnel; it is reconnecting", psiphon))
+        // Not at the error level, Tor's word for a session on Psiphon's listener, a session on the core's own listener.
+        assertNull(AetherCoreManager.chainEndWords(torEnded.replace("ERROR", "INFO "), tor))
+        assertNull(AetherCoreManager.chainEndWords(torEnded, psiphon))
+        assertNull(AetherCoreManager.chainEndWords(torEnded, listOf("--masque", "--bind", "127.0.0.1:10819")))
+        // Psiphon around the tunnel ends the tunnel with it, and the core's own listener answers no more: no leak to look for.
+        val reverse = listOf("--masque", "--psiphon-reverse", "--bind", "127.0.0.1:10819")
+        assertNull(AetherCoreManager.chainEndWords("[2026-10-23T10:00:00.000Z ERROR aether] [-] psiphon: psiphon stopped: exit status: 1", reverse))
+
+        assertEquals(R.string.aether_core_stopped_chain_ended, AetherCoreManager.stoppedMessage(noEchKey = false, chainEnded = true))
+    }
+
+    @Test
     fun theGoProgramsAreToldWhereAndroidKeepsItsRootCertificates() {
         assertEquals(
             "/apex/com.android.conscrypt/cacerts:/system/etc/security/cacerts",
@@ -1612,14 +1648,12 @@ class AetherCoreManagerTest {
     }
 
     @Test
-    fun aNumberACommandNamesThatIsNoPortIsLeftOutOfTheSessionPorts() {
-        // The core opens no HTTP proxy there; the check could not bind it either.
+    fun aNumberACommandNamesThatIsNoPortIsFoundBeforeThePortsAreChecked() {
         val core = AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1")!!
         assertEquals(listOf(10819, 70000, -1), core.ports)
-        assertEquals(
-            listOf(AetherCoreManager.SessionPort(10819, secondary = false)),
-            AetherCoreManager.sessionPorts(core, """{"inbounds": []}""", secondaryPort = 10822)
-        )
+        assertEquals(70000, AetherCoreManager.invalidPort(core))
+        assertEquals(-1, AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --tor-http 127.0.0.1:-1")!!))
+        assertNull(AetherCoreManager.invalidPort(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:1 --http-proxy 127.0.0.1:65535")!!))
     }
 
     @Test

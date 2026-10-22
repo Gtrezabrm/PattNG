@@ -613,6 +613,8 @@
     <string name="aether_secondary_port_taken">یه inbound ای پیکربندی ایسا رو %1$d گوش ایده، که سه تا بالاتر زه پورت شنود Aether ـه وو هسته Aether زه ری وو بیرون وصل ابۊ؛ پورت شنود Aether نه تو تنظیمات آلشت کنین</string>
     <string name="aether_listen_port_in_use">یه برنامه دیه پورت %1$d نه، که هسته Aether رو وو گوش ایده، و کار گرؽڌه؛ پورت شنود Aether نه تو تنظیمات، یا پورت‌یای فرمان نه آلشت کنین</string>
     <string name="aether_secondary_port_in_use">یه برنامه دیه پورت %1$d نه، که سه تا بالاتر زه پورت شنود Aether ـه وو Xray وازس اکۊنه تا هسته Aether زه ری وو بیرون وصل بۊ، و کار گرؽڌه؛ پورت شنود Aether نه تو تنظیمات آلشت کنین</string>
+    <string name="aether_listen_port_invalid">فرمان پروفایل Aether وو هسته ایگه رو %1$d گوش بیه، که پورت نی (1 تا 65535)؛ پورت‌یای فرمان نه آلشت کنین</string>
+    <string name="aether_listen_port_shared">فرمان پروفایل Aether وو هسته ایگه وا دو تا شنونده رو یه پورت گوش بیه؛ وو هر شنونده یه پورت جدا بیین</string>
     <string name="aether_lab_psiphon">سایفون</string>
     <string name="aether_lab_psiphon_mode">نحوه اتصال سایفون</string>
     <string name="aether_lab_psiphon_cdn_ips">آی‌پی‌های CDN</string>
@@ -660,6 +662,7 @@
     <string name="aether_unsupported_abi">هسته Aether سی ای دستگاه د دسترس نیه</string>
     <string name="aether_core_stopped">هسته Aether وستاده</string>
     <string name="aether_core_stopped_no_ech_key">هسته Aether وستاده: ECH روشن هئ ولی کلید ECH قابل استفاده‌ای پیدا نبی؛ بی او، نوم سرور بی رمزنگاری فرستاده ابی</string>
+    <string name="aether_core_stopped_chain_ended">تور یا سایفون من تونل Aether وستاد، سی همی اتصال وستاده بی: %1$s</string>
     <string name="aether_core_connecting">هسته Aether هونی وصل ابۊ</string>
     <string name="menu_item_import_config_manually_aether">افزودن دستی کانفیگ Aether</string>
     <string name="aether_action_renew_key">گرفتن کلیدا تازه WARP…</string>

@@ -359,6 +359,27 @@ class AetherCoreTest {
     }
 
     @Test
+    fun twoListenersOfACommandOnOnePortAreFound() {
+        // An HTTP proxy on the port the core listens on, which a command naming no listener gets there.
+        assertEquals(10819, AetherCore.ofCommand("aether --wg --http-proxy 127.0.0.1:10819", 10819)!!.sharedPort)
+        // Tor inside the tunnel on the core's own port.
+        assertEquals(10820, AetherCore.ofCommand("aether --masque --tor --tor-bind 127.0.0.1:10820 --bind 127.0.0.1:10820")!!.sharedPort)
+        // Each with a port of its own; Psiphon's 0 around the tunnel is none.
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:8118")!!.sharedPort)
+        assertNull(
+            AetherCore.ofCommand("aether --masque --psiphon-reverse --psiphon-bind 127.0.0.1:0 --psiphon-http 127.0.0.1:0 --bind 127.0.0.1:10819")!!
+                .sharedPort
+        )
+        // The settings give each listener a port of its own.
+        val most = profile {
+            aetherProtocol = AetherProtocol.MASQUE.type
+            aetherPsiphon = AetherPsiphon.CHAIN.type
+            aetherTor = AetherTor.REVERSE.type
+        }
+        assertNull(AetherCore.of(most).sharedPort)
+    }
+
+    @Test
     fun anUpdateThatLeavesAProfileAsItWasLeavesItsDigestAsItWas() {
         // A subscription's update builds every profile again, added anew, and may move it to another subscription or
         // describe it anew; what it connects with is what tells an exit-node, or the hops of a chain, apart.

@@ -691,6 +691,7 @@ class ServerAetherActivity : BaseServerActivity() {
                 AetherFmt.Problem.INVALID_ECH_DNS -> R.string.aether_invalid_ech_dns
                 AetherFmt.Problem.INVALID_ECH_DOMAIN -> R.string.aether_invalid_ech_domain
                 AetherFmt.Problem.LISTEN_PORT_TAKEN -> R.string.aether_listen_port_taken
+                AetherFmt.Problem.LISTEN_PORT_SHARED -> R.string.aether_listen_port_shared
                 AetherFmt.Problem.PSIPHON_NEEDS_MASQUE -> R.string.aether_psiphon_needs_masque
                 AetherFmt.Problem.NEXT_PORT_TAKEN -> R.string.aether_next_port_taken
                 AetherFmt.Problem.TOR_NEEDS_MASQUE -> R.string.aether_tor_needs_masque

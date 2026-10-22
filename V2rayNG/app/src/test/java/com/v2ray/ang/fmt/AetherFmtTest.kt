@@ -1105,6 +1105,19 @@ class AetherFmtTest {
     }
 
     @Test
+    fun aCommandWhoseListenersShareAPortIsRefused() {
+        assertEquals(
+            AetherFmt.Problem.LISTEN_PORT_SHARED,
+            AetherFmt.normalize(profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:20808" })
+        )
+        // A command naming no listener gets one on the Aether listen port, which its HTTP proxy then shares.
+        onListenPort(20808) {
+            assertEquals(AetherFmt.Problem.LISTEN_PORT_SHARED, AetherFmt.normalize(profile { aetherCommand = "aether --wg --http-proxy 127.0.0.1:20808" }))
+        }
+        assertNull(AetherFmt.normalize(profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:20809" }))
+    }
+
+    @Test
     fun withoutKnownLocalPortsNoPortIsTaken() {
         // The local proxy port is picked at random on every start, or the caller has none to name.
         assertNull(AetherFmt.normalize(profile { aetherPsiphon = "chain"; aetherTor = "reverse" }))

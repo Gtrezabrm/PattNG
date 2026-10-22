@@ -611,6 +611,8 @@
     <string name="aether_secondary_port_taken">此設定的某個入站已在 %1$d 上監聽，而這是比 Aether 監聽連接埠大 3 的連接埠，Aether 核心經由它向外連線；請在設定中變更 Aether 監聽連接埠</string>
     <string name="aether_listen_port_in_use">Aether 核心監聽的連接埠 %1$d 已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠，或變更命令中的連接埠</string>
     <string name="aether_secondary_port_in_use">連接埠 %1$d 比 Aether 監聽連接埠大 3，Xray 在此開放入站供 Aether 核心向外連線，但它已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠</string>
+    <string name="aether_listen_port_invalid">Aether 設定檔的命令讓核心監聽 %1$d，這不是有效的連接埠（1 到 65535）；請變更命令中的連接埠</string>
+    <string name="aether_listen_port_shared">Aether 設定檔的命令讓核心以兩個監聽器監聽同一個連接埠；請為每個監聽器指定各自的連接埠</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon 連線方式</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN 前置 IP</string>
@@ -658,6 +660,7 @@
     <string name="aether_unsupported_abi">此裝置不支援 Aether 核心</string>
     <string name="aether_core_stopped">Aether 核心已停止執行</string>
     <string name="aether_core_stopped_no_ech_key">Aether 核心已停止：ECH 已開啟，但找不到可用的 ECH 金鑰。沒有金鑰，伺服器名稱就會以明文傳送。</string>
+    <string name="aether_core_stopped_chain_ended">Aether 通道內的 Tor 或 Psiphon 已結束，因此連線已停止：%1$s</string>
     <string name="aether_core_connecting">Aether 核心仍在連線中</string>
     <string name="menu_item_import_config_manually_aether">手動新增 Aether 設定</string>
     <string name="aether_action_renew_key">取得新的 WARP 金鑰…</string>

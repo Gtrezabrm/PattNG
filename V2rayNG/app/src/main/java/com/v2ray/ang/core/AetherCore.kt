@@ -41,6 +41,20 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
             .filter { it != 0 }
             .distinct()
 
+    /**
+     * The first port two of the listeners the core is told to bind share, as a command written by hand may name;
+     * null when each has a port of its own. The core would bind one of them and fail on the other, once its
+     * tunnel is up and Xray dials it. Ports are told apart by number, as everywhere else in the app.
+     */
+    val sharedPort: Int?
+        get() {
+            val seen = mutableSetOf<Int>()
+            return LISTENERS
+                .mapNotNull { AetherCoreManager.portAfter(arguments, it) }
+                .filter { it != 0 }
+                .firstOrNull { !seen.add(it) }
+        }
+
     /** The protocol, which tells whose identity files the core uses. */
     val protocol: AetherProtocol get() = AetherCoreManager.protocolOf(arguments)
 

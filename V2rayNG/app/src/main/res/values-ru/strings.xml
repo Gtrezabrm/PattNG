@@ -617,6 +617,8 @@
     <string name="aether_secondary_port_taken">Один из входящих (inbound) этой конфигурации уже слушает порт %1$d — порт на три выше порта прослушивания Aether, через который ядро Aether выходит наружу; измените порт прослушивания Aether в настройках</string>
     <string name="aether_listen_port_in_use">Порт %1$d, который слушает ядро Aether, занят другим приложением; измените порт прослушивания Aether в настройках или порты команды</string>
     <string name="aether_secondary_port_in_use">Порт %1$d — на три выше порта прослушивания Aether, Xray открывает его, чтобы ядро Aether выходило через него наружу, — занят другим приложением; измените порт прослушивания Aether в настройках</string>
+    <string name="aether_listen_port_invalid">Команда профиля Aether велит ядру слушать %1$d, но это не порт (от 1 до 65535); измените порты команды</string>
+    <string name="aether_listen_port_shared">Команда профиля Aether велит ядру слушать один порт двумя своими слушателями; дайте каждому слушателю свой порт</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Подключение Psiphon</string>
     <string name="aether_lab_psiphon_cdn_ips">IP-адреса CDN</string>
@@ -664,6 +666,7 @@
     <string name="aether_unsupported_abi">Ядро Aether недоступно для этого устройства</string>
     <string name="aether_core_stopped">Ядро Aether остановлено</string>
     <string name="aether_core_stopped_no_ech_key">Ядро Aether остановлено: ECH включён, но пригодный ключ ECH не найден. Без него имя сервера ушло бы в открытом виде.</string>
+    <string name="aether_core_stopped_chain_ended">Tor или Psiphon внутри туннеля Aether завершился, поэтому соединение остановлено: %1$s</string>
     <string name="aether_core_connecting">Ядро Aether ещё подключается</string>
     <string name="menu_item_import_config_manually_aether">Добавить конфигурацию Aether вручную</string>
     <string name="aether_action_renew_key">Получить новые ключи WARP…</string>
