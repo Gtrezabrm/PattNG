@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -87,6 +88,24 @@ class MainViewModel(
         )
     )
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+
+    /**
+     * The remark of the selected profile, read off the main thread, and read again when the groups change, as an edit
+     * of the profile does. Collected only while a screen shows it.
+     */
+    val selectedServerName: StateFlow<String?> = _uiState
+        .map { it.selectedGuid to it.groups }
+        .distinctUntilChanged()
+        .map { (guid, _) ->
+            if (guid.isNullOrEmpty()) null
+            else withContext(ioDispatcher) { dataSource.decodeServerConfig(guid)?.remarks }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Whether the user asked for the change of the service now under way, so that its stop is not a dropped one. */
+    @Volatile
+    private var userRequestedChange = false
+    private var startTimeoutJob: Job? = null
 
     // ---------- Keyword filtering ----------
     @Volatile
@@ -171,7 +190,8 @@ class MainViewModel(
     private fun handleServiceEvent(event: MainServiceEvent) {
         when (event) {
             MainServiceEvent.StateRunning -> updateRunningState(true, clearTestingText = false)
-            MainServiceEvent.StateNotRunning -> updateRunningState(false, clearTestingText = false)
+            MainServiceEvent.StateNotRunning ->
+                updateRunningState(false, clearTestingText = false, signal = RunningSignal.NOT_RUNNING)
             MainServiceEvent.StateStartSuccess -> {
                 toastSuccess(R.string.toast_services_success)
                 updateRunningState(true)
@@ -185,7 +205,7 @@ class MainViewModel(
                 } else {
                     toastError(R.string.toast_services_failure)
                 }
-                updateRunningState(false)
+                updateRunningState(false, signal = RunningSignal.START_FAILED)
             }
 
             is MainServiceEvent.StateConnecting -> {
@@ -194,10 +214,17 @@ class MainViewModel(
                 }
             }
 
-            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            MainServiceEvent.StateStopSuccess -> updateRunningState(false, signal = RunningSignal.STOPPED)
             is MainServiceEvent.MeasureDelayResult -> {
                 if (!uiState.value.isRunning || !testRequests.completeCurrent(event.requestId)) return
-                _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
+                _uiState.update {
+                    it.copy(
+                        isTesting = testRequests.isTesting,
+                        status = MainStatus.ConnectionTest(event.result),
+                        connectionPingMillis = event.result.delayMillis.takeIf { millis -> millis >= 0 }
+                            ?: it.connectionPingMillis,
+                    )
+                }
             }
 
             is MainServiceEvent.MeasureConfigSuccess -> {
@@ -1088,14 +1115,49 @@ class MainViewModel(
     }
 
     // ---------- Running state ----------
-    private fun updateRunningState(running: Boolean, clearTestingText: Boolean = true) {
+    private fun updateRunningState(
+        running: Boolean,
+        clearTestingText: Boolean = true,
+        signal: RunningSignal = if (running) RunningSignal.RUNNING else RunningSignal.NOT_RUNNING,
+    ) {
         if (!running || clearTestingText) testRequests.invalidateCurrent()
+        val userRequested = userRequestedChange
+        val now = System.nanoTime()
         _uiState.update { state ->
             state.copy(
                 isRunning = running,
                 isTesting = testRequests.isTesting,
-                status = runningStatus(state.status, state.isRunning, running, clearTestingText)
+                status = runningStatus(state.status, state.isRunning, running, clearTestingText),
+                pendingStart = HomeConnection.pendingStartAfter(state.pendingStart, signal),
+                connectionIssue = HomeConnection.issueAfter(state.connectionIssue, state.isRunning, signal, userRequested),
+                connectionPingMillis = if (running) state.connectionPingMillis else null,
+                connectedSinceNanos = if (running) state.connectedSinceNanos ?: now else null,
             )
+        }
+        if (signal == RunningSignal.RUNNING || signal == RunningSignal.START_FAILED) {
+            userRequestedChange = false
+            startTimeoutJob?.cancel()
+            startTimeoutJob = null
+        }
+    }
+
+    /**
+     * The user asked the service to start ([starting]) or to stop, or the app restarts it for the user: what follows is
+     * not a dropped connection, and a start not answered within [HomeConnection.START_TIMEOUT_MILLIS] is shown as
+     * failed. The user is never connected again by this; only the user starts the service.
+     */
+    fun onUserServiceRequest(starting: Boolean) {
+        userRequestedChange = true
+        startTimeoutJob?.cancel()
+        startTimeoutJob = null
+        _uiState.update { it.copy(pendingStart = starting, connectionIssue = null) }
+        if (starting) {
+            startTimeoutJob = viewModelScope.launch {
+                kotlinx.coroutines.delay(HomeConnection.START_TIMEOUT_MILLIS)
+                if (uiState.value.pendingStart && !uiState.value.isRunning) {
+                    updateRunningState(false, signal = RunningSignal.START_FAILED)
+                }
+            }
         }
     }
 

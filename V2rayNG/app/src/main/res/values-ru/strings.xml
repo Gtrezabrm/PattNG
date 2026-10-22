@@ -794,5 +794,7 @@
     <string name="home_details_duration">Длительность</string>
     <string name="home_details_download">Загрузка</string>
     <string name="home_details_upload">Отдача</string>
+    <string name="home_details_title">Сведения о подключении</string>
+    <string name="home_change_server">Нажмите, чтобы сменить сервер</string>
 
 </resources>

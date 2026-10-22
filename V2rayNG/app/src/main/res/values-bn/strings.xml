@@ -790,5 +790,7 @@
     <string name="home_details_duration">সময়কাল</string>
     <string name="home_details_download">ডাউনলোড</string>
     <string name="home_details_upload">আপলোড</string>
+    <string name="home_details_title">সংযোগের বিবরণ</string>
+    <string name="home_change_server">সার্ভার পরিবর্তন করতে ট্যাপ করুন</string>
 
 </resources>

@@ -791,5 +791,7 @@
     <string name="home_details_duration">Müddət</string>
     <string name="home_details_download">Endirmə</string>
     <string name="home_details_upload">Yükləmə</string>
+    <string name="home_details_title">Bağlantı təfərrüatları</string>
+    <string name="home_change_server">Serveri dəyişmək üçün toxunun</string>
 
 </resources>

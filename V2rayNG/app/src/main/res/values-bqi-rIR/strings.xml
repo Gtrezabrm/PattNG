@@ -790,5 +790,7 @@
     <string name="home_details_duration">مدت</string>
     <string name="home_details_download">دانلود</string>
     <string name="home_details_upload">آپلود</string>
+    <string name="home_details_title">جزئیات منپیز</string>
+    <string name="home_change_server">واسه عوض کردن سرور بزن</string>
 
 </resources>

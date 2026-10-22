@@ -788,5 +788,7 @@
     <string name="home_details_duration">Thời lượng</string>
     <string name="home_details_download">Tải xuống</string>
     <string name="home_details_upload">Tải lên</string>
+    <string name="home_details_title">Chi tiết kết nối</string>
+    <string name="home_change_server">Chạm để đổi máy chủ</string>
 
 </resources>

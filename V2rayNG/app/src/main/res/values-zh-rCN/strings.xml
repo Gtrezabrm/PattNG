@@ -788,5 +788,7 @@
     <string name="home_details_duration">时长</string>
     <string name="home_details_download">下载</string>
     <string name="home_details_upload">上传</string>
+    <string name="home_details_title">连接详情</string>
+    <string name="home_change_server">点按以更换服务器</string>
 
 </resources>

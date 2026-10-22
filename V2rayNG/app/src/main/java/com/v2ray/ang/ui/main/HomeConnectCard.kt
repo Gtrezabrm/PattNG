@@ -1,5 +1,17 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -26,21 +39,25 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
 
-/**
- * What the home card shows. Slice 2 of the home redesign: presentation only, fed by mock data until it is mapped from
- * [MainStatus] by [MainViewModel] in slice 3.
- */
+/** What the home card shows; [HomeConnection.cardStatus] maps the state of the main screen to it. */
 enum class HomeCardStatus {
     /** No server is selected. */
     Empty,
@@ -55,12 +72,13 @@ enum class HomeCardStatus {
     DisconnectedUnexpected,
 }
 
+/** The figures of a running connection that the state has; [download] and [upload] stay null until it has them. */
 @Immutable
 data class HomeCardDetails(
-    val pingMillis: Int,
+    val pingMillis: Int?,
     val duration: String,
-    val download: String,
-    val upload: String,
+    val download: String? = null,
+    val upload: String? = null,
 )
 
 @Immutable
@@ -74,7 +92,8 @@ data class HomeCardModel(
 
 /**
  * The centered connection card: a round connect button, the state in words, and the one action the state offers.
- * It owns no state beyond what it is given; every user operation leaves through a callback.
+ * It owns no state beyond what it is given and whether its details are open; every user operation leaves through a
+ * callback. Colors, size and the button spring from one state to the next.
  */
 @Composable
 fun HomeConnectCard(
@@ -83,7 +102,17 @@ fun HomeConnectCard(
     onStatusActionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = homeCardColors(model.status)
+    val target = homeCardColors(model.status)
+    val colorSpec = spring<Color>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+    val colors = HomeCardColors(
+        container = animateColorAsState(target.container, colorSpec, label = "home-card-container").value,
+        content = animateColorAsState(target.content, colorSpec, label = "home-card-content").value,
+        button = animateColorAsState(target.button, colorSpec, label = "home-card-button").value,
+        onButton = animateColorAsState(target.onButton, colorSpec, label = "home-card-on-button").value,
+    )
+    var detailsOpen by rememberSaveable { mutableStateOf(false) }
+    val showDetails = model.status == HomeCardStatus.Connected && model.details != null
+
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val landscape = maxWidth > maxHeight
         Card(
@@ -102,26 +131,37 @@ fun HomeConnectCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
                         .padding(24.dp),
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     HomeCardMain(model, colors, onConnectClick, onStatusActionClick, modifier = Modifier.weight(1f))
-                    if (model.status == HomeCardStatus.Connected && model.details != null) {
-                        HomeCardDetailsBlock(model.details, modifier = Modifier.weight(1f))
+                    if (showDetails) {
+                        HomeCardDetailsSection(
+                            details = model.details!!,
+                            open = detailsOpen,
+                            onToggle = { detailsOpen = it },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 }
             } else {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     HomeCardMain(model, colors, onConnectClick, onStatusActionClick)
-                    if (model.status == HomeCardStatus.Connected && model.details != null) {
-                        HomeCardDetailsBlock(model.details)
+                    if (showDetails) {
+                        HomeCardDetailsSection(
+                            details = model.details!!,
+                            open = detailsOpen,
+                            onToggle = { detailsOpen = it },
+                        )
                     }
                 }
             }
@@ -165,14 +205,26 @@ private fun HomeConnectButton(status: HomeCardStatus, colors: HomeCardColors, on
     val running = status == HomeCardStatus.Connected
     val busy = status == HomeCardStatus.Connecting
     val label = stringResource(if (running) R.string.acc_stop else R.string.acc_start)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.92f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "home-button-scale",
+    )
     Surface(
         onClick = onClick,
         enabled = !busy && status != HomeCardStatus.Empty,
         shape = homeConnectShape(if (running) HomeConnectShape.Active else HomeConnectShape.Idle),
         color = colors.button,
         contentColor = colors.onButton,
+        interactionSource = interaction,
         modifier = Modifier
             .size(168.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .semantics { contentDescription = label },
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -217,32 +269,66 @@ private fun HomeStatusAction(status: HomeCardStatus, onClick: () -> Unit) {
     }
 }
 
+/** The header that opens and closes the figures, and the figures; open only on the user's say, and only while connected. */
 @Composable
-private fun HomeCardDetailsBlock(details: HomeCardDetails, modifier: Modifier = Modifier) {
+private fun HomeCardDetailsSection(
+    details: HomeCardDetails,
+    open: Boolean,
+    onToggle: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val rotation by animateFloatAsState(
+        targetValue = if (open) 180f else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "home-details-arrow",
+    )
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            HomeDetailTile(
-                label = stringResource(R.string.home_details_ping),
-                value = stringResource(R.string.server_test_delay_value, details.pingMillis),
-                modifier = Modifier.weight(1f),
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .toggleable(value = open, role = Role.Button, onValueChange = onToggle)
+                .padding(vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.home_details_title),
+                style = MaterialTheme.typography.titleMedium,
             )
-            HomeDetailTile(
-                label = stringResource(R.string.home_details_duration),
-                value = details.duration,
-                modifier = Modifier.weight(1f),
+            Icon(
+                painter = painterResource(R.drawable.ic_expand_more_24dp),
+                contentDescription = null,
+                modifier = Modifier.graphicsLayer { rotationZ = rotation },
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            HomeDetailTile(
-                label = stringResource(R.string.home_details_download),
-                value = details.download,
-                modifier = Modifier.weight(1f),
-            )
-            HomeDetailTile(
-                label = stringResource(R.string.home_details_upload),
-                value = details.upload,
-                modifier = Modifier.weight(1f),
-            )
+        AnimatedVisibility(
+            visible = open,
+            enter = expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
+            exit = shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(),
+        ) {
+            HomeCardDetailsBlock(details)
+        }
+    }
+}
+
+@Composable
+private fun HomeCardDetailsBlock(details: HomeCardDetails, modifier: Modifier = Modifier) {
+    val pingText = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) }
+        ?: stringResource(R.string.value_unknown)
+    val tiles = buildList {
+        add(stringResource(R.string.home_details_ping) to pingText)
+        add(stringResource(R.string.home_details_duration) to details.duration)
+        details.download?.let { add(stringResource(R.string.home_details_download) to it) }
+        details.upload?.let { add(stringResource(R.string.home_details_upload) to it) }
+    }
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        tiles.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                pair.forEach { (label, value) ->
+                    HomeDetailTile(label = label, value = value, modifier = Modifier.weight(1f))
+                }
+                if (pair.size == 1) Box(modifier = Modifier.weight(1f))
+            }
         }
     }
 }

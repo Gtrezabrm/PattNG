@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.main
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -69,6 +70,9 @@ fun MainScreen(
     val isDarkTheme = LocalDarkTheme.current
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // The home card is the first screen; the list of servers is a screen of its own, opened from it.
+    var showServerList by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = showServerList) { showServerList = false }
     var showSearch by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var showDelAllConfirm by remember { mutableStateOf(false) }
@@ -165,6 +169,16 @@ fun MainScreen(
             )
         }
     ) {
+        if (!showServerList) {
+            HomeScreen(
+                mainViewModel = mainViewModel,
+                uiState = uiState,
+                onAction = onAction,
+                onMenuClick = { scope.launch { drawerState.open() } },
+                onOpenServerList = { showServerList = true },
+            )
+            return@ModalNavigationDrawer
+        }
         Scaffold(
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {

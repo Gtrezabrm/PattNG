@@ -790,5 +790,7 @@
     <string name="home_details_duration">مدت اتصال</string>
     <string name="home_details_download">دانلود</string>
     <string name="home_details_upload">آپلود</string>
+    <string name="home_details_title">جزئیات اتصال</string>
+    <string name="home_change_server">برای تغییر سرور بزنید</string>
 
 </resources>

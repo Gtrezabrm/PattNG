@@ -798,5 +798,7 @@
     <string name="home_details_duration">المدة</string>
     <string name="home_details_download">تنزيل</string>
     <string name="home_details_upload">رفع</string>
+    <string name="home_details_title">تفاصيل الاتصال</string>
+    <string name="home_change_server">اضغط لتغيير الخادم</string>
 
 </resources>

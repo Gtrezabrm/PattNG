@@ -797,5 +797,7 @@
     <string name="home_details_duration">Duration</string>
     <string name="home_details_download">Download</string>
     <string name="home_details_upload">Upload</string>
+    <string name="home_details_title">Connection details</string>
+    <string name="home_change_server">Tap to change server</string>
 
 </resources>
