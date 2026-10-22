@@ -57,5 +57,12 @@ internal enum class ReloadOutcome {
          */
         fun serviceRuns(coreRunning: Boolean, reloading: Boolean, stoppedMeanwhile: Boolean): Boolean =
             coreRunning || (reloading && !stoppedMeanwhile)
+
+        /**
+         * Whether a reload goes on to start Xray again once a wait of its own is over: only while [current], the
+         * service's network monitor now, is still [askedBy], the monitor that asked for the reload. A stop clears
+         * the monitor and a new start brings its own; either way what runs next is not the reload's to start.
+         */
+        fun goesOn(askedBy: Any, current: Any?): Boolean = current === askedBy
     }
 }

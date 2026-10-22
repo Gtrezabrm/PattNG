@@ -2,6 +2,7 @@ package com.v2ray.ang.core
 
 import android.util.Log
 import com.google.gson.JsonParser
+import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.V2rayConfig
 import com.v2ray.ang.dto.entities.ProfileItem
@@ -39,11 +40,14 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -1592,8 +1596,19 @@ class AetherCoreManagerTest {
     }
 
     @Test
+    fun aNumberACommandNamesThatIsNoPortIsLeftOutOfTheSessionPorts() {
+        // The core opens no HTTP proxy there; the check could not bind it either.
+        val core = AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1")!!
+        assertEquals(listOf(10819, 70000, -1), core.ports)
+        assertEquals(
+            listOf(AetherCoreManager.SessionPort(10819, secondary = false)),
+            AetherCoreManager.sessionPorts(core, """{"inbounds": []}""", secondaryPort = 10822)
+        )
+    }
+
+    @Test
     fun aPortSomethingListensOnIsTakenAndAFreeOneIsNot() {
-        val listener = ServerSocket(0, 50, InetAddress.getLoopbackAddress())
+        val listener = ServerSocket(0, 50, InetAddress.getByName(AppConfig.LOOPBACK))
         val port = AetherCoreManager.SessionPort(listener.localPort, secondary = false)
         listener.use {
             assertFalse(AetherCoreManager.isFree(port))
@@ -1603,11 +1618,34 @@ class AetherCoreManagerTest {
 
     @Test
     fun theSecondaryInboundNeedsItsUdpPortFreeAsWell() {
-        DatagramSocket(0, InetAddress.getLoopbackAddress()).use { udp ->
+        udpWithFreeTcpTwin().use { udp ->
             // Xray's mixed inbound opens UDP on its port too; the listeners of the core take TCP alone.
             assertFalse(AetherCoreManager.isFree(AetherCoreManager.SessionPort(udp.localPort, secondary = true)))
             assertTrue(AetherCoreManager.isFree(AetherCoreManager.SessionPort(udp.localPort, secondary = false)))
         }
+    }
+
+    /**
+     * A UDP socket on the loopback address whose port number is free over TCP. Another TCP socket of the machine,
+     * a client's among them, may hold the same number now and then, so a few are tried.
+     */
+    private fun udpWithFreeTcpTwin(): DatagramSocket {
+        val loopback = InetAddress.getByName(AppConfig.LOOPBACK)
+        repeat(20) {
+            val udp = DatagramSocket(0, loopback)
+            val tcpFree = try {
+                ServerSocket().use { tcp ->
+                    tcp.reuseAddress = true
+                    tcp.bind(InetSocketAddress(loopback, udp.localPort))
+                }
+                true
+            } catch (_: IOException) {
+                false
+            }
+            if (tcpFree) return udp
+            udp.close()
+        }
+        error("no loopback UDP port whose number is free over TCP")
     }
 
     @Test
@@ -1652,7 +1690,7 @@ class AetherCoreManagerTest {
     }
 
     @Test
-    fun aCheckThatDoesNotEndInTimeGivesNothingAndNeverRunsLate() {
+    fun aCheckThatHasNotBegunInTimeGivesNothingAndNeverRuns() {
         val executor = Executors.newSingleThreadExecutor()
         val busy = CountDownLatch(1)
         val ran = AtomicBoolean(false)
@@ -1665,6 +1703,38 @@ class AetherCoreManagerTest {
             assertFalse(ran.get())
         } finally {
             executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun aCheckThatHasBegunButNotEndedInTimeGivesNothingAndIsInterrupted() {
+        val begun = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val interrupted = CountDownLatch(1)
+        val ranOn = AtomicBoolean(false)
+        // Runs the check on a thread of its own and comes back once the check has begun.
+        val executor = Executor { command ->
+            thread(isDaemon = true) { command.run() }
+            begun.await()
+        }
+        try {
+            val result = AetherCoreManager.awaitOn(executor, timeoutMs = 100) {
+                begun.countDown()
+                try {
+                    release.await()
+                } catch (e: InterruptedException) {
+                    interrupted.countDown()
+                    throw e
+                }
+                ranOn.set(true)
+                "late"
+            }
+            assertNull(result)
+            // No one waits for it any more: its wait ends it, and what would follow the wait is left undone.
+            assertTrue(interrupted.await(2, TimeUnit.SECONDS))
+            assertFalse(ranOn.get())
+        } finally {
+            release.countDown()
         }
     }
 

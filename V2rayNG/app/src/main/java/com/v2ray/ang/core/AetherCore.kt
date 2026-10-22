@@ -53,7 +53,7 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
     /** The command line a profile or a custom configuration carries for this core; [ofCommand] reads it back. */
     val command: String get() = (listOf(COMMAND_NAME) + arguments).joinToString(" ", transform = ::quoted)
 
-    /** True when a process started with [processArguments] runs this core, on whatever ports and at whatever log level. */
+    /** True when a process started with [processArguments] runs this core, on whatever SOCKS ports and at whatever log level. */
     fun runsAs(processArguments: List<String>): Boolean =
         AetherCoreManager.tunnelArguments(processArguments) == AetherCoreManager.tunnelArguments(arguments)
 

@@ -27,6 +27,16 @@ class ReloadOutcomeTest {
     }
 
     @Test
+    fun aReloadGoesOnOnlyWhileTheMonitorThatAskedForItIsTheServicesStill() {
+        val asked = Any()
+        assertTrue(ReloadOutcome.goesOn(askedBy = asked, current = asked))
+        // Stopped while the reload waited: the stop cleared the monitor.
+        assertFalse(ReloadOutcome.goesOn(askedBy = asked, current = null))
+        // Stopped and started again: the new start has a monitor of its own.
+        assertFalse(ReloadOutcome.goesOn(askedBy = asked, current = Any()))
+    }
+
+    @Test
     fun aServiceThatReloadsIsUpThoughXrayIsStoppedForAMoment() {
         assertTrue(ReloadOutcome.serviceRuns(coreRunning = true, reloading = false, stoppedMeanwhile = false))
         // A client that asked then would be told "not running" with nothing to correct it later, and a

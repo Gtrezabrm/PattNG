@@ -556,17 +556,19 @@ object AetherCoreManager {
         /** Something else holds [port], the first of the session's ports that could not be bound. */
         data class Taken(val port: Int, val secondary: Boolean) : PortCheck
 
-        /** The check did not end within its bound, or failed; nothing is known about the ports. */
-        data object Unchecked : PortCheck
+        /** The check did not end within its bound, or failed with [cause]; nothing is known about the ports. */
+        data class Unchecked(val cause: Exception? = null) : PortCheck
     }
 
     /**
      * The loopback ports a session on [core] takes: the core's listeners and, when the configuration [content]
      * has an inbound on [secondaryPort], that inbound, which is the secondary-socks one. A command that names an
-     * upstream of its own has none, and the program it names there has to be listening.
+     * upstream of its own has none, and the program it names there has to be listening. A number outside 1..65535,
+     * which a command written by hand may name, is no port and is left out: the core opens no HTTP proxy there, and
+     * Xray refuses to dial a listener there.
      */
     internal fun sessionPorts(core: AetherCore, content: String, secondaryPort: Int = secondarySocksPort): List<SessionPort> =
-        core.ports.map { SessionPort(it, secondary = false) } +
+        core.ports.filter { it in 1..65535 }.map { SessionPort(it, secondary = false) } +
             listOfNotNull(SessionPort(secondaryPort, secondary = true).takeIf { AetherDependency.inboundListensOn(content, secondaryPort) })
 
     /**
@@ -600,37 +602,36 @@ object AetherCoreManager {
      * Checks, before Xray starts a session on [core], that nothing else holds the loopback [ports] the session
      * takes. Xray's Aether outbounds dial the core's port as soon as Xray runs, before the core binds it, so a
      * program already listening there would take that traffic until the core failed to bind the port and the
-     * session stopped. The check runs on the core's executor, behind the stop of the previous session's core,
-     * after what a session start does there before it spawns its core: with [afterProbes] it waits for the cores
-     * of tests and scans to be gone, and it ends a leftover core of the app that holds the core's listener. The
-     * caller waits for it at most [timeoutMs].
+     * session stopped. The check runs on the core's executor, behind the stop of the previous session's core. It
+     * ends a leftover core of the app that holds the core's listener, a test's core among them, as the spawn of a
+     * session's core does, and waits for it and the helpers it had to kill to be gone; it does not wait for the
+     * cores of tests and scans as the spawn does, which a start would wait for on the main thread here. The
+     * caller waits for the check at most [timeoutMs].
      */
     internal fun checkSessionPorts(
         context: Context,
         core: AetherCore,
         ports: List<SessionPort>,
-        afterProbes: Boolean,
         timeoutMs: Long,
     ): PortCheck {
         val appContext = context.applicationContext
         return awaitOn(lifecycle, timeoutMs) {
             try {
-                if (afterProbes && !awaitProbeCores(appContext)) {
-                    LogUtil.w(AppConfig.TAG, "AetherCore: a core of a test or scan is still up as the ports of the session are checked")
+                val killed = reapStale(appContext, listenerAddressOf(core.arguments))
+                if (!awaitGone(killed)) {
+                    LogUtil.w(AppConfig.TAG, "AetherCore: a process killed as a leftover is still there as the ports of the session are checked, pids=$killed")
                 }
-                reapStale(appContext, listenerAddressOf(core.arguments))
                 firstTaken(ports)?.let { PortCheck.Taken(it.port, it.secondary) } ?: PortCheck.Free
             } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "AetherCore: the ports of the session could not be checked", e)
-                PortCheck.Unchecked
+                PortCheck.Unchecked(e)
             }
-        } ?: PortCheck.Unchecked
+        } ?: PortCheck.Unchecked()
     }
 
     /**
      * Runs [task] on [executor] and waits for its result at most [timeoutMs]; null when it did not end in time,
-     * failed, or the wait was interrupted. A task that has not begun by then never runs; one that has goes on to
-     * its end, which no one waits for.
+     * failed, or the wait was interrupted. A task that has not begun by then never runs; one that has is
+     * interrupted, so that its next wait ends it and it does nothing more that no one waits for.
      */
     internal fun <T : Any> awaitOn(executor: Executor, timeoutMs: Long, task: () -> T): T? {
         val future = FutureTask(Callable { task() })
@@ -638,12 +639,12 @@ object AetherCoreManager {
         return try {
             future.get(timeoutMs, TimeUnit.MILLISECONDS)
         } catch (_: TimeoutException) {
-            future.cancel(false)
+            future.cancel(true)
             null
         } catch (_: ExecutionException) {
             null
         } catch (_: InterruptedException) {
-            future.cancel(false)
+            future.cancel(true)
             Thread.currentThread().interrupt()
             null
         }
@@ -1042,8 +1043,10 @@ object AetherCoreManager {
      * [bindAddress] is given, any still holding that listener address. Android can kill the
      * daemon, the editor or the test service without their child processes following, and a
      * survivor on the session port would otherwise make every later start fail until a reboot.
+     * Returns the pids of the processes it killed, the cores and the helpers [reapOrphans] had to
+     * kill: a killed process holds its listeners until it is gone, see [awaitGone].
      */
-    internal fun reapStale(context: Context, bindAddress: String?) {
+    internal fun reapStale(context: Context, bindAddress: String?): Set<Int> {
         val killed = mutableSetOf<Int>()
         for (core in coreProcesses(context)) {
             if (!isStale(core.argv, core.ownerAlive, bindAddress)) continue
@@ -1054,8 +1057,12 @@ object AetherCoreManager {
             android.os.Process.killProcess(core.pid)
             killed += core.pid
         }
-        reapOrphans(context, killed)
+        return killed + reapOrphans(context, killed)
     }
+
+    /** Waits, at most [EXIT_WAIT_MS], until none of the processes [pids] is left in /proc; false when one still is. */
+    private fun awaitGone(pids: Set<Int>): Boolean =
+        awaitUntil(EXIT_WAIT_MS, EXIT_POLL_MS) { pids.none { File(procDir, it.toString()).isDirectory } }
 
     /**
      * Ends [process], a core, and then whatever it started. The core has no signal handling, so
@@ -1092,16 +1099,19 @@ object AetherCoreManager {
     /**
      * Ends the helper processes of the app, Psiphon's client and the pluggable transport, that no
      * living core has as a parent, [gone] cores not counting as living: a term first, for Psiphon
-     * to close its tunnel and datastore, and a kill for one that has not gone in time.
+     * to close its tunnel and datastore, and a kill for one that has not gone in time. Returns the
+     * pids of the helpers it killed.
      */
-    internal fun reapOrphans(context: Context, gone: Set<Int> = emptySet()) {
+    internal fun reapOrphans(context: Context, gone: Set<Int> = emptySet()): Set<Int> {
         val live = coreProcesses(context).map { it.pid }.toSet() - gone
         val orphans = orphanedHelpers(helperProcesses(context), live)
-        if (orphans.isEmpty()) return
+        if (orphans.isEmpty()) return emptySet()
         LogUtil.w(AppConfig.TAG, "AetherCore: ending ${orphans.size} helper process(es) left behind by a core, pids=$orphans")
         orphans.forEach { android.os.Process.sendSignal(it, SIGTERM) }
         awaitUntil(EXIT_WAIT_MS, EXIT_POLL_MS) { orphans.none { File(procDir, it.toString()).isDirectory } }
-        orphans.filter { File(procDir, it.toString()).isDirectory }.forEach { android.os.Process.killProcess(it) }
+        val killed = orphans.filter { File(procDir, it.toString()).isDirectory }.toSet()
+        killed.forEach { android.os.Process.killProcess(it) }
+        return killed
     }
 
     /** The pids among [helpers], each with its parent pid, whose parent is none of [liveCores]; a parent that could not be read counts as none. */
@@ -1159,7 +1169,7 @@ object AetherCoreManager {
     fun runsProfile(arguments: List<String>, profile: ProfileItem): Boolean = AetherCore.of(profile).runsAs(arguments)
 
     /**
-     * [arguments] without the listeners, the log level and the upstream proxy: what tells one tunnel
+     * [arguments] without the SOCKS listeners, the log level and the upstream proxy: what tells one tunnel
      * from another. The session's core dials out through Xray and its profile does not say so.
      */
     internal fun tunnelArguments(arguments: List<String>): List<String> =

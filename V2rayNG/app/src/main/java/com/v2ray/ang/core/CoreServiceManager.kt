@@ -165,8 +165,19 @@ object CoreServiceManager {
         startNetworkMonitor(service)
     }
 
+    /**
+     * Builds the configuration and starts Xray and the Aether core on it. A reload passes [goesOn], which says
+     * whether it still goes on once the ports of its Aether session were checked.
+     *
+     * @return false when [goesOn] said no after that check; nothing of this attempt was started then.
+     */
     @Throws(Exception::class)
-    private fun launchCore(service: Service, vpnInterface: ParcelFileDescriptor?, isReload: Boolean = false) {
+    private fun launchCore(
+        service: Service,
+        vpnInterface: ParcelFileDescriptor?,
+        isReload: Boolean = false,
+        goesOn: () -> Boolean = { true },
+    ): Boolean {
         val guid = MmkvManager.getSelectServer() ?: error("No server selected")
         val config = MmkvManager.decodeServerConfig(guid) ?: error("Failed to decode server config")
 
@@ -199,7 +210,8 @@ object CoreServiceManager {
             if (!AetherCoreManager.isSupported(service)) {
                 throw StartFailure(service.getString(R.string.aether_unsupported_abi))
             }
-            // Xray would take the port first, and the Aether outbound would dial the configuration's own inbound.
+            // Xray would take the port first: the Aether outbound would dial the configuration's own inbound, or the
+            // core could not open the HTTP proxy a command names there.
             val aetherPort = aether.ports.firstOrNull { AetherDependency.inboundListensOn(result.content, it) }
             if (aetherPort != null) {
                 LogUtil.w(
@@ -217,6 +229,9 @@ object CoreServiceManager {
         AetherCoreManager.stop()
         if (aether != null) {
             checkAetherPorts(service, guid, aether, result.content, isReload)
+            // The check can take seconds. A reload starts Xray again only while the monitor that asked for it is
+            // still the service's (the handover rule of NetworkMonitor): a stop that came meanwhile owns what follows.
+            if (!goesOn()) return false
         }
 
         try {
@@ -226,6 +241,7 @@ object CoreServiceManager {
             AetherCoreManager.stop()
             throw e
         }
+        return true
     }
 
     /**
@@ -245,7 +261,6 @@ object CoreServiceManager {
             service,
             aether,
             ports,
-            afterProbes = !isReload,
             timeoutMs = AetherCoreManager.PORT_CHECK_WAIT_MS,
         )
         when (check) {
@@ -255,9 +270,15 @@ object CoreServiceManager {
                 throw StartFailure(service.getString(AetherCoreManager.takenMessage(check), check.port))
             }
 
-            AetherCoreManager.PortCheck.Unchecked -> {
-                LogUtil.w(AppConfig.TAG, "StartCore-Manager: $attempt refused, the ports of the Aether session were not checked in time, guid=$guid")
-                error("The ports of the Aether session could not be checked")
+            is AetherCoreManager.PortCheck.Unchecked -> {
+                val refused = "StartCore-Manager: $attempt refused, the ports of the Aether session could not be checked"
+                val cause = check.cause
+                if (cause != null) {
+                    LogUtil.w(AppConfig.TAG, "$refused, guid=$guid", cause)
+                } else {
+                    LogUtil.w(AppConfig.TAG, "$refused within ${AetherCoreManager.PORT_CHECK_WAIT_MS} ms, guid=$guid")
+                }
+                throw IllegalStateException("The ports of the Aether session could not be checked", cause)
             }
         }
     }
@@ -473,9 +494,11 @@ object CoreServiceManager {
             LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload start...")
 
             coreController.stopLoop()
-            launchCore(service, tunFd, isReload = true)
-
-            LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload finished")
+            if (launchCore(service, tunFd, isReload = true, goesOn = { ReloadOutcome.goesOn(askedBy = monitor, current = networkMonitor) })) {
+                LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload finished")
+            } else {
+                LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload given up, the service was stopped while the Aether ports were checked")
+            }
         } catch (e: Exception) {
             val message = e.message?.takeUnless { it.isBlank() } ?: e.javaClass.simpleName
             LogUtil.e(AppConfig.TAG, "StartCore-Manager: Failed to reload core: $message", e)
