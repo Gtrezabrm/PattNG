@@ -163,8 +163,6 @@ fun HomeConnectCard(
                     if (showDetails) {
                         HomeCardDetailsSection(
                             details = model.details!!,
-                            open = detailsOpen,
-                            onToggle = { detailsOpen = it },
                             onRefreshPingClick = onRefreshPingClick,
                         )
                     }
