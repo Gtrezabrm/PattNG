@@ -88,6 +88,11 @@ data class HomeCardModel(
     val serverName: String? = null,
     /** Shown only while [HomeCardStatus.Connected]. */
     val details: HomeCardDetails? = null,
+    /**
+     * Whether the service already runs while [HomeCardStatus.Connecting], so that the button stops it. An Aether
+     * profile can take minutes to connect, and the user must be able to give up on it.
+     */
+    val cancellable: Boolean = false,
 )
 
 /**
@@ -182,7 +187,7 @@ private fun HomeCardMain(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        HomeConnectButton(model.status, colors, onConnectClick)
+        HomeConnectButton(model.status, model.cancellable, colors, onConnectClick)
         Text(
             text = homeStatusText(model.status),
             style = MaterialTheme.typography.headlineMedium,
@@ -201,10 +206,15 @@ private fun HomeCardMain(
 }
 
 @Composable
-private fun HomeConnectButton(status: HomeCardStatus, colors: HomeCardColors, onClick: () -> Unit) {
+private fun HomeConnectButton(
+    status: HomeCardStatus,
+    cancellable: Boolean,
+    colors: HomeCardColors,
+    onClick: () -> Unit,
+) {
     val running = status == HomeCardStatus.Connected
     val busy = status == HomeCardStatus.Connecting
-    val label = stringResource(if (running) R.string.acc_stop else R.string.acc_start)
+    val label = stringResource(if (running || (busy && cancellable)) R.string.acc_stop else R.string.acc_start)
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -214,7 +224,7 @@ private fun HomeConnectButton(status: HomeCardStatus, colors: HomeCardColors, on
     )
     Surface(
         onClick = onClick,
-        enabled = !busy && status != HomeCardStatus.Empty,
+        enabled = (!busy || cancellable) && status != HomeCardStatus.Empty,
         shape = homeConnectShape(if (running) HomeConnectShape.Active else HomeConnectShape.Idle),
         color = colors.button,
         contentColor = colors.onButton,

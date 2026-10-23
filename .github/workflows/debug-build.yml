@@ -220,3 +220,24 @@ jobs:
         name: PattNG-debug-apk
         path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/playstore/debug/*.apk
         if-no-files-found: error
+
+    - name: Check the native libraries in the APK
+      if: success()
+      run: |
+        # Same check as build.yml: every ABI built has to carry the Aether core, its Psiphon client and its pluggable transport.
+        status=0
+        for apk in ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/*/debug/*.apk; do
+          entries=$(unzip -Z1 "$apk" | grep '^lib/' || true)
+          echo "$(basename "$apk"):"
+          echo "$entries" | sed 's/^/  /'
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            echo "$entries" | grep -q "^lib/$abi/" || continue
+            for lib in libaether.so libpsiphon-tunnel-core.so liblyrebird.so; do
+              if ! echo "$entries" | grep -qx "lib/$abi/$lib"; then
+                echo "::error::$(basename "$apk") lacks lib/$abi/$lib"
+                status=1
+              fi
+            done
+          done
+        done
+        exit $status

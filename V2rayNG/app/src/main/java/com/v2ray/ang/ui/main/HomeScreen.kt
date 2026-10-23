@@ -63,6 +63,7 @@ fun HomeScreen(
         } else {
             null
         },
+        cancellable = uiState.isRunning,
     )
 
     Scaffold(
