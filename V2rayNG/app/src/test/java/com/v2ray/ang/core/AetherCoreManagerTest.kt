@@ -1663,19 +1663,23 @@ class AetherCoreManagerTest {
     }
 
     @Test
-    fun aStartWaitsForTheCoresOfTestsOnItsListenerAlone() {
-        val listener = "127.0.0.1:10819"
-        val onIt = listOf("--wg", "--bind", listener)
-        assertTrue(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = false, listener = listener))
+    fun aStartWaitsForTheCoresOfTestsOnItsPortsAlone() {
+        val ports = setOf(10819)
+        val onIt = listOf("--wg", "--bind", "127.0.0.1:10819")
+        assertTrue(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = false, ports = ports))
         // Tor inside the tunnel listens there in the core's place.
-        val torOnIt = listOf("--masque", "--tor", "--tor-bind", listener, "--bind", "127.0.0.1:10820")
-        assertTrue(AetherCoreManager.isProbeOn(torOnIt, ownerAlive = true, sessionMarked = false, listener = listener))
+        val torOnIt = listOf("--masque", "--tor", "--tor-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
+        assertTrue(AetherCoreManager.isProbeOn(torOnIt, ownerAlive = true, sessionMarked = false, ports = ports))
+        // PattNG: a test's core on another port the session takes, a default both commands leave out among them.
+        val ownLeftOut = listOf("--wg", "--tor", "--tor-bind", "127.0.0.1:20808")
+        assertTrue(AetherCoreManager.isProbeOn(ownLeftOut, ownerAlive = true, sessionMarked = false, ports = setOf(1819, 10819)))
+        assertFalse(AetherCoreManager.isProbeOn(ownLeftOut, ownerAlive = true, sessionMarked = false, ports = ports))
         // A core of a test elsewhere, the session's own core, a leftover whose owner is gone, or one that cannot be told apart.
         val elsewhere = listOf("--wg", "--bind", "127.0.0.1:20808")
-        assertFalse(AetherCoreManager.isProbeOn(elsewhere, ownerAlive = true, sessionMarked = false, listener = listener))
-        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = true, listener = listener))
-        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = false, sessionMarked = false, listener = listener))
-        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = null, listener = listener))
+        assertFalse(AetherCoreManager.isProbeOn(elsewhere, ownerAlive = true, sessionMarked = false, ports = ports))
+        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = true, ports = ports))
+        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = false, sessionMarked = false, ports = ports))
+        assertFalse(AetherCoreManager.isProbeOn(onIt, ownerAlive = true, sessionMarked = null, ports = ports))
     }
 
     @Test

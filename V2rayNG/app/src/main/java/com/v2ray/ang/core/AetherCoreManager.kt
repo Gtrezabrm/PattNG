@@ -558,18 +558,22 @@ object AetherCoreManager {
     private fun awaitProbeCores(context: Context): Boolean =
         awaitUntil(PROBE_EXIT_WAIT_MS, PROBE_POLL_MS) { coreProcesses(context).none { isProbe(it.ownerAlive, it.sessionMarked) } }
 
-    /** True for a probe core, see [isProbe], whose listener is [listener], the one a session's core takes. */
-    internal fun isProbeOn(argv: List<String>, ownerAlive: Boolean?, sessionMarked: Boolean?, listener: String?): Boolean =
-        isProbe(ownerAlive, sessionMarked) && listenerAddressOf(argv) == listener
+    /**
+     * True for a probe core, see [isProbe], that listens on one of [ports], ports a session's core takes. PattNG: on
+     * the listener the session dials, or on another of its listeners, among them the core's default for a listener
+     * a command leaves out, which two commands written by hand share; see [AetherCore.ports].
+     */
+    internal fun isProbeOn(argv: List<String>, ownerAlive: Boolean?, sessionMarked: Boolean?, ports: Set<Int>): Boolean =
+        isProbe(ownerAlive, sessionMarked) && AetherCore(argv).ports.any { it in ports }
 
     /**
-     * Waits, briefly, until no probe core holds [listener], see [isProbeOn]; true when none does in time. A
-     * start has just asked the test service to cancel its tests, and a test's core on the listener ends on its
-     * own then: the test is left cancelled, where a kill would have it stored as failed.
+     * Waits, briefly, until no probe core holds one of [ports], see [isProbeOn]; true when none does in time. A
+     * start has just asked the test service to cancel its tests, and a test's core on those ports ends on its own
+     * then: the test is left cancelled, where a kill would have it stored as failed.
      */
-    private fun awaitProbesOff(context: Context, listener: String?): Boolean =
+    private fun awaitProbesOff(context: Context, ports: Set<Int>): Boolean =
         awaitUntil(PROBE_EXIT_WAIT_MS, PROBE_POLL_MS) {
-            coreProcesses(context).none { isProbeOn(it.argv, it.ownerAlive, it.sessionMarked, listener) }
+            coreProcesses(context).none { isProbeOn(it.argv, it.ownerAlive, it.sessionMarked, ports) }
         }
 
     /**
@@ -641,7 +645,7 @@ object AetherCoreManager {
      * takes. Xray's Aether outbounds dial the core's port as soon as Xray runs, before the core binds it, so a
      * program already listening there would take that traffic until the core failed to bind the port and the
      * session stopped. The check runs on the core's executor, behind the stop of the previous session's core.
-     * With [afterProbes], as a start passes, it first waits briefly for a test's core on the core's listener to
+     * With [afterProbes], as a start passes, it first waits briefly for a test's core on one of the core's ports to
      * end on its own, see [awaitProbesOff]; cores of tests and scans elsewhere are not waited for, as a start
      * waits on the main thread. It then ends a leftover core of the app that holds the listener, as the spawn of
      * a session's core does, and waits for it and the helpers it had to kill to be gone. The caller waits for
@@ -656,10 +660,11 @@ object AetherCoreManager {
     ): PortCheck {
         val appContext = context.applicationContext
         val listener = listenerAddressOf(core.arguments)
+        val corePorts = ports.filterNot { it.secondary }.map { it.port }.toSet()
         return awaitOn(lifecycle, timeoutMs) {
             try {
-                if (afterProbes && !awaitProbesOff(appContext, listener)) {
-                    LogUtil.w(AppConfig.TAG, "AetherCore: a core of a test or scan still holds the listener as the ports of the session are checked")
+                if (afterProbes && !awaitProbesOff(appContext, corePorts)) {
+                    LogUtil.w(AppConfig.TAG, "AetherCore: a core of a test or scan still holds a port of the session as its ports are checked")
                 }
                 val killed = reapStale(appContext, listener)
                 if (!awaitGone(killed)) {
