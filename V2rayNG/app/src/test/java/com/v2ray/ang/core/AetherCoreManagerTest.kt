@@ -677,7 +677,7 @@ class AetherCoreManagerTest {
         val reverse = AetherCoreManager.buildArguments(profile().copy(aetherTor = "reverse"), 10819)
         assertTrue("--tor-reverse" in reverse)
         assertEquals("127.0.0.1:10819", valueAfter(reverse, "--bind"))
-        // Unlike Psiphon's, Tor's listener gets a real port: the core dials the address Tor was told to listen on.
+        // Unlike Psiphon's, Tor's listener gets a real port, which cores before 2.3.5 needed, see buildArguments.
         assertEquals("127.0.0.1:10820", valueAfter(reverse, "--tor-bind"))
         assertEquals(10819, AetherCoreManager.listenerPortOf(reverse))
     }

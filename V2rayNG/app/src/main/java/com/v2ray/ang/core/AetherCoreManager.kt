@@ -268,8 +268,8 @@ object AetherCoreManager {
 
     /**
      * The port a scan of [profile] binds: none, since nothing dials it, unless Tor around the tunnel
-     * comes along, whose own listener follows the tunnel's and needs a real port, because the core
-     * dials the address Tor was told to listen on. Opens a socket to find one.
+     * comes along, whose own listener follows the tunnel's and so takes a real port as well, see
+     * [buildArguments]. Opens a socket to find one.
      */
     fun scanPort(profile: ProfileItem): Int =
         if (AetherTor.fromString(profile.aetherTor) == AetherTor.REVERSE) Utils.findRandomFreePort() else 0
@@ -333,8 +333,10 @@ object AetherCoreManager {
         // ports after it, in this order: the tunnel's own, then Tor's, then Psiphon's. Psiphon around the
         // tunnel is the exception: nothing of the app dials its listener and the core takes the port
         // Psiphon reports, so an ephemeral port keeps a scan core from colliding with the session's.
-        // Tor around the tunnel gets a real port, since the core dials the address Tor was told to
-        // listen on.
+        // Tor around the tunnel gets a real port: Aether before 2.3.5 made the address Tor was told to
+        // listen on the tunnel's upstream, and with port 0 there set it aside and dialled around Tor.
+        // The core the app ships dials the port Tor bound, so an ephemeral one would do now; the ports
+        // stay as the app has always handed them out.
         val dialsPsiphon = psiphon == AetherPsiphon.CHAIN
         val dialsTor = tor == AetherTor.CHAIN && !dialsPsiphon
         var next = port + 1
