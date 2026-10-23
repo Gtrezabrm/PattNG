@@ -793,6 +793,10 @@
     <string name="home_action_choose_server">Choose a server</string>
     <string name="home_action_retry">Try again</string>
     <string name="home_action_reconnect">Reconnect</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subs</string>
+    <string name="home_quick_settings">Settings</string>
     <string name="home_details_ping">Ping</string>
     <string name="home_details_duration">Duration</string>
     <string name="home_details_download">Download</string>
