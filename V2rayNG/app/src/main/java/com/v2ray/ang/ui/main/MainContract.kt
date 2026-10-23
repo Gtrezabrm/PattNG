@@ -43,6 +43,9 @@ data class MainUiState(
     /** The last delay a test of the running connection measured; null until one did, and once it stops. */
     val connectionPingMillis: Long? = null,
 
+    /** IP address returned by the latest successful test of the running connection. */
+    val connectionIpAddress: String? = null,
+
     /** [System.nanoTime] when the running state began; null while not running. */
     val connectedSinceNanos: Long? = null,
     val locateTarget: LocateTarget? = null,
