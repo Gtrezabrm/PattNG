@@ -34,7 +34,7 @@ private class HomeCardModelProvider : PreviewParameterProvider<HomeCardModel> {
 private fun HomeCardPreviewHost(model: HomeCardModel, dark: Boolean) {
     MaterialTheme(colorScheme = if (dark) darkColorScheme() else lightColorScheme()) {
         Surface(color = MaterialTheme.colorScheme.surface) {
-            HomeConnectCard(model = model, onConnectClick = {}, onStatusActionClick = {})
+            HomeConnectCard(model = model, onConnectClick = {}, onStatusActionClick = {}, onRefreshPingClick = {})
         }
     }
 }
