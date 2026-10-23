@@ -429,6 +429,19 @@ class AetherCoreTest {
             listOf(20808),
             AetherCore(listOf("--register", "masque", "--masque", "--psiphon-reverse", "--psiphon-bind", "127.0.0.1:20808")).ports
         )
+        // That carrier's HTTP proxy too, which it binds as it serves; the core's own is not bound.
+        assertEquals(
+            listOf(1820, 9000),
+            AetherCore(listOf("--register", "masque", "--masque", "--tor-reverse", "--tor-http", "127.0.0.1:9000", "--http-proxy", "127.0.0.1:9001")).ports
+        )
+        assertEquals(
+            9000,
+            AetherCore(listOf("--register", "masque", "--masque", "--tor-reverse", "--tor-bind", "127.0.0.1:9000", "--tor-http", "127.0.0.1:9000")).sharedPort
+        )
+        assertEquals(
+            listOf(1821, 9002),
+            AetherCore(listOf("--register", "masque", "--masque", "--psiphon-reverse", "--psiphon-http", "127.0.0.1:9002")).ports
+        )
     }
 
     @Test
