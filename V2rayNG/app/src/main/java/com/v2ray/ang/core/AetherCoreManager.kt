@@ -48,7 +48,6 @@ import java.io.IOException
 import java.net.DatagramSocket
 import java.net.InetSocketAddress
 import java.net.ServerSocket
-import java.net.Socket
 import java.net.SocketAddress
 import java.util.Locale
 import java.util.concurrent.Callable
@@ -188,9 +187,8 @@ object AetherCoreManager {
     /** The transports lyrebird speaks, as the core names them: the list the core itself assumes for a lyrebird it finds by name. */
     private val torTransports = listOf("obfs4", "snowflake", "webtunnel", "meek_lite", "obfs3", "scramblesuit")
 
-    /** The SOCKS5 greeting, no authentication offered, and the version byte a server answers it with. */
-    private val socksGreeting = byteArrayOf(5, 1, 0)
-    private const val SOCKS_VERSION = 5
+    /** PattNG: asks the loopback SOCKS listeners whether they answer, over one connection per port at a time. */
+    private val socksAnswers = SocksAnswers(PROBE_TIMEOUT_MS)
 
     /**
      * The core's word that Psiphon has a tunnel: "psiphon is ready". The app waits for it as well as for the
@@ -1075,19 +1073,12 @@ object AetherCoreManager {
     /**
      * True when a SOCKS server answers on the loopback [port]: the connection is taken and the
      * greeting gets its reply. A listener bound before anything serves it, as Tor's is bound before
-     * Tor has bootstrapped, takes the connection into its backlog and says nothing, so it does not
-     * count until it does.
+     * Tor has bootstrapped and a core's own is until its tunnel is up, takes the connection into its
+     * backlog and says nothing, so it does not count until it does. PattNG: that greeting is kept
+     * waiting, and the next question about the port reads on, rather than queue another connection
+     * there each time, see [SocksAnswers].
      */
-    internal fun answersSocks(port: Int): Boolean = try {
-        Socket().use { socket ->
-            socket.connect(InetSocketAddress(AppConfig.LOOPBACK, port), PROBE_TIMEOUT_MS)
-            socket.soTimeout = PROBE_TIMEOUT_MS
-            socket.getOutputStream().write(socksGreeting)
-            socket.getInputStream().read() == SOCKS_VERSION
-        }
-    } catch (_: IOException) {
-        false
-    }
+    internal fun answersSocks(port: Int): Boolean = socksAnswers.answers(port)
 
     internal fun relay(line: String, source: String) {
         val text = line.trim()
