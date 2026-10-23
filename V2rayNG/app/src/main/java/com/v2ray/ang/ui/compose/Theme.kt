@@ -6,6 +6,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -18,14 +19,46 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.R
 import com.v2ray.ang.handler.MmkvManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+private val DefaultTypography = Typography()
+
+private val VazirmatnFontFamily = FontFamily(
+    Font(R.font.vazirmatn_regular, weight = FontWeight.Normal),
+    Font(R.font.vazirmatn_bold, weight = FontWeight.Bold),
+)
+
+private val VazirmatnTypography = DefaultTypography.run {
+    copy(
+        displayLarge = displayLarge.copy(fontFamily = VazirmatnFontFamily),
+        displayMedium = displayMedium.copy(fontFamily = VazirmatnFontFamily),
+        displaySmall = displaySmall.copy(fontFamily = VazirmatnFontFamily),
+        headlineLarge = headlineLarge.copy(fontFamily = VazirmatnFontFamily),
+        headlineMedium = headlineMedium.copy(fontFamily = VazirmatnFontFamily),
+        headlineSmall = headlineSmall.copy(fontFamily = VazirmatnFontFamily),
+        titleLarge = titleLarge.copy(fontFamily = VazirmatnFontFamily),
+        titleMedium = titleMedium.copy(fontFamily = VazirmatnFontFamily),
+        titleSmall = titleSmall.copy(fontFamily = VazirmatnFontFamily),
+        bodyLarge = bodyLarge.copy(fontFamily = VazirmatnFontFamily),
+        bodyMedium = bodyMedium.copy(fontFamily = VazirmatnFontFamily),
+        bodySmall = bodySmall.copy(fontFamily = VazirmatnFontFamily),
+        labelLarge = labelLarge.copy(fontFamily = VazirmatnFontFamily),
+        labelMedium = labelMedium.copy(fontFamily = VazirmatnFontFamily),
+        labelSmall = labelSmall.copy(fontFamily = VazirmatnFontFamily),
+    )
+}
 
 // Fallback palette (Android < 12, or dynamic color turned off): violet primary container on a
 // warm near-black / lavender-white surface with a lime accent. Hand-picked from the visual
@@ -171,6 +204,7 @@ fun AppTheme(
 ) {
     val dynamicColor by ThemeManager.dynamicColorEnabled.collectAsState()
     val context = LocalContext.current
+    val usePersianFont = LocalConfiguration.current.locales[0].language == "fa"
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -198,7 +232,8 @@ fun AppTheme(
         LocalAppSnackbar provides snackbarController
     ) {
         MaterialTheme(
-            colorScheme = colorScheme
+            colorScheme = colorScheme,
+            typography = if (usePersianFont) VazirmatnTypography else DefaultTypography,
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 AppSnackbarBridge(controller = snackbarController)
