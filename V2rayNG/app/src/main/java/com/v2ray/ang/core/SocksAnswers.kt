@@ -4,6 +4,7 @@ import com.v2ray.ang.AppConfig
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.SocketAddress
 import java.net.SocketTimeoutException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -46,8 +47,9 @@ internal class SocksAnswers(
     private val waiting = HashMap<Int, Socket>()
 
     /**
-     * True when the SOCKS5 server on the loopback [port] answers the greeting with its version within [waitMs], on the
-     * connection an earlier question left waiting where there is one. Blocks the calling thread.
+     * True when the SOCKS5 server on the loopback [port] answers the greeting with its version and a method the greeting
+     * allows, the version within [waitMs], on the connection an earlier question left waiting where there is one. Blocks
+     * the calling thread.
      */
     fun answers(port: Int): Boolean {
         var mine = false
@@ -58,8 +60,9 @@ internal class SocksAnswers(
             }
         }
         if (!mine) {
-            // The question under way answers this one as well, within the longest it can take.
-            val longest = connectTimeoutMs + 2L * waitMs + SHARED_WAIT_SLACK_MS
+            // The question under way answers this one as well, within the longest it can take: two reads, each of which
+            // may wait for the version and then for the byte after it, and a connect between them.
+            val longest = connectTimeoutMs + 4L * waitMs + SHARED_WAIT_SLACK_MS
             return try {
                 question.done.await(longest, TimeUnit.MILLISECONDS) && question.answered
             } catch (_: InterruptedException) {
@@ -94,11 +97,19 @@ internal class SocksAnswers(
         }
     }
 
-    /** A connection to [port] with the greeting sent, null when none could be made. */
+    /**
+     * A connection to [port] with the greeting sent, null when none could be made. PattNG: a connection to itself is
+     * none: where nothing listens on a port of the range the system picks its own ports from, a connect can be given
+     * that very port to dial from, and the greeting it sends would come back as its answer.
+     */
     private fun greet(port: Int): Socket? {
         val socket = Socket()
         return try {
             socket.connect(InetSocketAddress(AppConfig.LOOPBACK, port), connectTimeoutMs)
+            if (isSelfConnect(socket.localSocketAddress, socket.remoteSocketAddress)) {
+                closeQuietly(socket)
+                return null
+            }
             socket.getOutputStream().write(GREETING)
             socket
         } catch (_: IOException) {
@@ -107,17 +118,30 @@ internal class SocksAnswers(
         }
     }
 
-    /** Waits at most [waitMs] for the answer on [socket], which stays open only while the answer is still to come. */
-    private fun read(socket: Socket): Reply = try {
-        socket.soTimeout = waitMs
-        val reply = if (socket.getInputStream().read() == SOCKS_VERSION) Reply.ANSWERED else Reply.ENDED
+    /**
+     * Waits at most [waitMs] for the answer on [socket], which stays open only while no answer has begun. PattNG: the
+     * whole answer counts, the version and a method the greeting allows, as with PattN: another client's greeting, read on
+     * a connection two probes made to each other, begins with the version as well. Once the version came, the byte after
+     * it decides, within a wait of its own, and the connection is done with either way: a connection is kept for an
+     * answer that has not begun, never for the rest of one.
+     */
+    private fun read(socket: Socket): Reply {
+        val version = try {
+            socket.soTimeout = waitMs
+            socket.getInputStream().read()
+        } catch (_: SocketTimeoutException) {
+            return Reply.WAITING
+        } catch (_: IOException) {
+            -1
+        }
+        val reply = try {
+            if (version == SOCKS_VERSION && socket.getInputStream().read() in ANSWERED_METHODS) Reply.ANSWERED else Reply.ENDED
+        } catch (_: IOException) {
+            // A wait for the rest of an answer that ran out as well: SocketTimeoutException is an IOException.
+            Reply.ENDED
+        }
         closeQuietly(socket)
-        reply
-    } catch (_: SocketTimeoutException) {
-        Reply.WAITING
-    } catch (_: IOException) {
-        closeQuietly(socket)
-        Reply.ENDED
+        return reply
     }
 
     /** Keeps [socket] waiting for its answer, in place of any other for [port]; false, as no answer came yet. */
@@ -133,12 +157,18 @@ internal class SocksAnswers(
         }
     }
 
-    private companion object {
+    internal companion object {
         /** The SOCKS5 greeting, no authentication offered, and the version byte a server answers it with. */
-        val GREETING = byteArrayOf(5, 1, 0)
-        const val SOCKS_VERSION = 5
+        private val GREETING = byteArrayOf(5, 1, 0)
+        private const val SOCKS_VERSION = 5
+
+        /** The methods an answer to [GREETING] names: no authentication, or none of those offered is acceptable. */
+        private val ANSWERED_METHODS = setOf(0x00, 0xFF)
 
         /** Beyond the longest a question takes, for the thread that asks it to be scheduled. */
-        const val SHARED_WAIT_SLACK_MS = 500L
+        private const val SHARED_WAIT_SLACK_MS = 500L
+
+        /** True for a connection whose two ends are one address and port: a connection to itself. */
+        fun isSelfConnect(local: SocketAddress?, remote: SocketAddress?): Boolean = local != null && local == remote
     }
 }

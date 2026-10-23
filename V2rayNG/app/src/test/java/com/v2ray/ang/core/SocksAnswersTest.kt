@@ -148,6 +148,59 @@ class SocksAnswersTest {
     }
 
     @Test
+    fun onlyAWholeAnswerOfASocksServerCounts() {
+        val answers = SocksAnswers(waitMs = 1_000)
+        fun replyingWith(reply: ByteArray): Boolean = ServerSocket(0, 50, InetAddress.getLoopbackAddress()).use { listener ->
+            val server = thread(isDaemon = true) {
+                runCatching {
+                    listener.accept().use { client ->
+                        client.getInputStream().read(ByteArray(3))
+                        client.getOutputStream().write(reply)
+                    }
+                }
+            }
+            answers.answers(listener.localPort).also { server.join(5_000) }
+        }
+        assertTrue(replyingWith(byteArrayOf(5, 0)))
+        // "None of the methods offered is acceptable" is a SOCKS5 server's answer as well.
+        assertTrue(replyingWith(byteArrayOf(5, 0xFF.toByte())))
+        // Another client's greeting, as two probes connected to each other read it: the version, then a count.
+        assertFalse(replyingWith(byteArrayOf(5, 1, 0)))
+        assertFalse(replyingWith(byteArrayOf(4, 0)))
+    }
+
+    @Test
+    fun anAnswerThatBeganIsNotWaitedOnForItsRest() {
+        // Long enough for the server thread below to write the version on a busy machine.
+        val answers = SocksAnswers(waitMs = 1_000)
+        ServerSocket(0, 50, InetAddress.getLoopbackAddress()).use { listener ->
+            var closedByTheProbe = false
+            val server = thread(isDaemon = true) {
+                runCatching {
+                    listener.accept().use { client ->
+                        client.getInputStream().read(ByteArray(3))
+                        // The version, and then nothing: a server that answers so is not waited on again.
+                        client.getOutputStream().write(byteArrayOf(5))
+                        client.soTimeout = 5_000
+                        closedByTheProbe = client.getInputStream().read() == -1
+                    }
+                }
+            }
+            assertFalse(answers.answers(listener.localPort))
+            server.join(5_000)
+            assertTrue(closedByTheProbe)
+        }
+    }
+
+    @Test
+    fun aConnectionToItselfIsTold() {
+        val loopback = InetAddress.getLoopbackAddress()
+        assertTrue(SocksAnswers.isSelfConnect(InetSocketAddress(loopback, 40_000), InetSocketAddress(loopback, 40_000)))
+        assertFalse(SocksAnswers.isSelfConnect(InetSocketAddress(loopback, 40_000), InetSocketAddress(loopback, 40_001)))
+        assertFalse(SocksAnswers.isSelfConnect(null, null))
+    }
+
+    @Test
     fun aPortNothingListensOnAnswersNothing() {
         val answers = SocksAnswers(waitMs = 100)
         val closedPort = ServerSocket(0).use { it.localPort }
