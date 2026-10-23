@@ -221,9 +221,15 @@ object CoreServiceManager {
                     service.getString(R.string.aether_listen_port_invalid, port)
                 }
             }
+            // PattNG: nor an address the core does not read, where it would quietly listen on its default instead.
+            aether.invalidListener?.let { option ->
+                refuseAether(service, guid, isReload, "the Aether command gives $option an address the core does not take") {
+                    service.getString(R.string.aether_listen_address_invalid, option)
+                }
+            }
             aether.sharedPort?.let { port ->
                 refuseAether(service, guid, isReload, "the Aether command names port $port for two of its listeners") {
-                    service.getString(R.string.aether_listen_port_shared)
+                    service.getString(R.string.aether_listen_port_shared, port)
                 }
             }
             // Xray would take the port first: the Aether outbound would dial the configuration's own inbound, or the

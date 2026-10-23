@@ -1407,6 +1407,57 @@ object AetherCoreManager {
         valueAfter(argv, flag)?.substringAfterLast(':', "")?.toIntOrNull()
 
     /**
+     * PattNG: true when the core takes [address] for a listener, as Rust's SocketAddr reads it: an IPv4 address, or an
+     * IPv6 one in brackets, then a colon and a port from 0 to 65535, leading zeros allowed. A host name is no such address.
+     */
+    internal fun isSocketAddress(address: String): Boolean {
+        val colon = address.lastIndexOf(':')
+        if (colon <= 0 || !isDecimalUpTo(address.substring(colon + 1), 65_535)) return false
+        val host = address.substring(0, colon)
+        return if (host.startsWith('[') && host.endsWith(']')) isIpv6Literal(host.substring(1, host.length - 1)) else isIpv4Literal(host)
+    }
+
+    /** PattNG: four numbers from 0 to 255, joined by dots, none with a leading zero, as Rust reads an IPv4 address. */
+    internal fun isIpv4Literal(text: String): Boolean {
+        val parts = text.split('.')
+        return parts.size == 4 && parts.all { part ->
+            part.isNotEmpty() && part.length <= 3 && part.all { it in '0'..'9' } && (part == "0" || !part.startsWith('0')) &&
+                part.toInt() <= 255
+        }
+    }
+
+    /**
+     * PattNG: an IPv6 address as Rust reads one: up to eight groups of one to four hex digits joined by colons, one "::"
+     * at most standing for one or more groups of zeros, an IPv4 address in place of the last two groups, and a scope
+     * after a "%", a number a u32 holds.
+     */
+    internal fun isIpv6Literal(text: String): Boolean {
+        val address = text.substringBefore('%')
+        if ('%' in text && !isDecimalUpTo(text.substringAfter('%'), 4_294_967_295)) return false
+        val halves = address.split("::")
+        if (halves.size > 2) return false
+        val head = if (halves[0].isEmpty()) emptyList() else halves[0].split(':')
+        val tail = if (halves.size < 2 || halves[1].isEmpty()) emptyList() else halves[1].split(':')
+        val groups = head + tail
+        var count = 0
+        for ((index, group) in groups.withIndex()) {
+            count += when {
+                '.' in group -> if (index == groups.lastIndex && isIpv4Literal(group) && (halves.size == 1 || tail.isNotEmpty())) 2 else return false
+                group.isNotEmpty() && group.length <= 4 && group.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' } -> 1
+                else -> return false
+            }
+        }
+        return if (halves.size == 2) count <= 7 else count == 8
+    }
+
+    /** PattNG: one or more ASCII digits whose value, leading zeros and all, is at most [max], as Rust reads a port or a scope. */
+    private fun isDecimalUpTo(text: String, max: Long): Boolean {
+        if (text.isEmpty() || !text.all { it in '0'..'9' }) return false
+        val significant = text.trimStart('0')
+        return significant.length <= 10 && (significant.isEmpty() || significant.toLong() <= max)
+    }
+
+    /**
      * The protocol [argv] selects, read the way the core reads it: the last of --protocol and the
      * protocol flags wins, a hop named without any of them selects the two-hop protocol it belongs
      * to, warp-in-warp before masque-in-masque, and nothing at all is masque. Gool is WireGuard over
@@ -1478,7 +1529,7 @@ object AetherCoreManager {
     private val scanKeywords = setOf("auto", "scan", "none", "off", "0")
 
     /** The value after the last [flag] in [argv]; the last one is the one the core keeps. */
-    private fun valueAfter(argv: List<String>, flag: String): String? =
+    internal fun valueAfter(argv: List<String>, flag: String): String? =
         argv.lastIndexOf(flag).takeIf { it >= 0 }?.let { argv.getOrNull(it + 1) }
 
     internal fun ownerPid(environ: List<String>?): Int? =

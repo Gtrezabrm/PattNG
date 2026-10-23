@@ -614,7 +614,8 @@
     <string name="aether_listen_port_in_use">Aether কোর যে পোর্ট %1$d-এ শোনে, সেটি অন্য একটি অ্যাপ ব্যবহার করছে; সেটিংসে Aether-এর লিসেন পোর্ট, অথবা কমান্ডের পোর্টগুলো বদলান</string>
     <string name="aether_secondary_port_in_use">পোর্ট %1$d, যা Aether-এর লিসেন পোর্টের চেয়ে তিন বেশি এবং যা Xray খোলে যাতে Aether কোর এটির মধ্য দিয়ে বাইরে সংযোগ করতে পারে, সেটি অন্য একটি অ্যাপ ব্যবহার করছে; সেটিংসে Aether-এর লিসেন পোর্ট বদলান</string>
     <string name="aether_listen_port_invalid">Aether কমান্ড কোরকে %1$d-এ শুনতে বলে, যা কোনো পোর্ট নয় (1 থেকে 65535); কমান্ডের পোর্টগুলো বদলান</string>
-    <string name="aether_listen_port_shared">Aether কমান্ড কোরকে তার দুটি লিসেনার দিয়ে একই পোর্টে শুনতে বলে; প্রতিটি লিসেনারকে আলাদা পোর্ট দিন</string>
+    <string name="aether_listen_address_invalid">Aether কমান্ড %1$s-কে এমন একটি ঠিকানা দেয় যা কোর নেয় না; এর পরে একটি IP ঠিকানা ও একটি পোর্ট লিখুন, যেমন 127.0.0.1:20808</string>
+    <string name="aether_listen_port_shared">Aether কমান্ড কোরকে তার দুটি লিসেনার দিয়ে %1$d-এ শুনতে বলে (কমান্ড যে লিসেনারের উল্লেখ করে না, সেটিও শোনে: অ্যাপ যেটিতে সংযোগ করে সেটি Aether-এর লিসেন পোর্টে, অন্যগুলো কোরের ডিফল্ট পোর্টে: 1819, 1820 বা 1821); প্রতিটি লিসেনারকে আলাদা পোর্ট দিন</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon সংযোগ</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN ফ্রন্টিং IP</string>

@@ -614,7 +614,8 @@
     <string name="aether_listen_port_in_use">یه برنامه دیه پورت %1$d نه، که هسته Aether رو وو گوش ایده، و کار گرؽڌه؛ پورت شنود Aether نه تو تنظیمات، یا پورت‌یای فرمان نه آلشت کنین</string>
     <string name="aether_secondary_port_in_use">یه برنامه دیه پورت %1$d نه، که سه تا بالاتر زه پورت شنود Aether ـه وو Xray وازس اکۊنه تا هسته Aether زه ری وو بیرون وصل بۊ، و کار گرؽڌه؛ پورت شنود Aether نه تو تنظیمات آلشت کنین</string>
     <string name="aether_listen_port_invalid">فرمان Aether وو هسته ایگه رو %1$d گوش بیه، که پورت نی (1 تا 65535)؛ پورت‌یای فرمان نه آلشت کنین</string>
-    <string name="aether_listen_port_shared">فرمان Aether وو هسته ایگه وا دو تا شنونده رو یه پورت گوش بیه؛ وو هر شنونده یه پورت جدا بیین</string>
+    <string name="aether_listen_address_invalid">فرمان Aether وو %1$s یه نشونی ایده که هسته قبولش نیکونه؛ یه نشونی IP وو یه پورت بنویسین، مثل 127.0.0.1:20808</string>
+    <string name="aether_listen_port_shared">فرمان Aether وو هسته ایگه وا دو تا شنونده رو %1$d گوش بیه (شنونده‌ای که فرمان نومش نیاره باز گوش ایده: اونی که برنامه وو وو وصل ابۊ رو پورت شنود Aether، وو بقیه رو پورت پؽش فرز هسته: 1819، 1820 یا 1821)؛ وو هر شنونده یه پورت جدا بیین</string>
     <string name="aether_lab_psiphon">سایفون</string>
     <string name="aether_lab_psiphon_mode">نحوه اتصال سایفون</string>
     <string name="aether_lab_psiphon_cdn_ips">آی‌پی‌های CDN</string>

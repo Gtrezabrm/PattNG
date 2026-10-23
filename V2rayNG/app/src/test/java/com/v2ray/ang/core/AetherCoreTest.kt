@@ -419,6 +419,35 @@ class AetherCoreTest {
     }
 
     @Test
+    fun aListenerWhoseAddressTheCoreDoesNotTakeIsFound() {
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy [::1]:8118")!!.invalidListener)
+        // The core would quietly listen on its default instead, where the app would dial 20808.
+        assertEquals("--bind", AetherCore.ofCommand("aether --wg --bind localhost:20808")!!.invalidListener)
+        assertEquals(AetherCoreManager.TOR_BIND, AetherCore.ofCommand("aether --masque --tor-reverse --bind 127.0.0.1:10819 --tor-bind 1830")!!.invalidListener)
+        // The core reads its own listener's address as written, and the others trimmed.
+        assertEquals("--bind", AetherCore.ofCommand("aether --wg --bind ' 127.0.0.1:10819'")!!.invalidListener)
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy ' 127.0.0.1:8118 '")!!.invalidListener)
+        // An HTTP proxy written blank or "off" is off, and a listener of a mode that does not run binds nothing.
+        assertNull(AetherCore.ofCommand("aether --wg --tor --bind 127.0.0.1:10820 --tor-bind 127.0.0.1:10819 --tor-http off")!!.invalidListener)
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy ''")!!.invalidListener)
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --tor-bind nowhere")!!.invalidListener)
+        // The app's own commands write addresses the core takes.
+        assertNull(AetherCore.of(pinned.copy(aetherTor = "chain")).invalidListener)
+    }
+
+    @Test
+    fun theListenersOtherThanItsOwnAreCountedTrimmedAsTheCoreReadsThem() {
+        assertEquals(
+            listOf(10819, 8118),
+            AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy '127.0.0.1:8118 '")!!.ports
+        )
+        assertEquals(
+            8118,
+            AetherCore.ofCommand("aether --wg --bind 127.0.0.1:8118 --http-proxy '127.0.0.1:8118 '")!!.sharedPort
+        )
+    }
+
+    @Test
     fun aRegistrationOfKeysListensOnlyWhereACarrierAroundTheTunnelDoes() {
         // The core registers and ends: no listener of its own, though the command names none to leave to a default.
         assertEquals(emptyList<Int>(), AetherCore(listOf("--register", "wg", "--wg")).ports)

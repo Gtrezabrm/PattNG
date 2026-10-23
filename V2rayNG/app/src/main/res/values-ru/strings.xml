@@ -618,7 +618,8 @@
     <string name="aether_listen_port_in_use">Порт %1$d, который слушает ядро Aether, занят другим приложением; измените порт прослушивания Aether в настройках или порты команды</string>
     <string name="aether_secondary_port_in_use">Порт %1$d — на три выше порта прослушивания Aether, Xray открывает его, чтобы ядро Aether выходило через него наружу, — занят другим приложением; измените порт прослушивания Aether в настройках</string>
     <string name="aether_listen_port_invalid">Команда Aether велит ядру слушать %1$d, но это не порт (от 1 до 65535); измените порты команды</string>
-    <string name="aether_listen_port_shared">Команда Aether велит ядру слушать один порт двумя своими слушателями; дайте каждому слушателю свой порт</string>
+    <string name="aether_listen_address_invalid">Команда Aether даёт %1$s адрес, который ядро не принимает; укажите после него IP-адрес и порт, например 127.0.0.1:20808</string>
+    <string name="aether_listen_port_shared">Команда Aether велит ядру слушать %1$d двумя своими слушателями (слушатель, которого команда не указывает, всё равно слушает: тот, к которому подключается приложение, — порт прослушивания Aether, остальные — порт ядра по умолчанию: 1819, 1820 или 1821); дайте каждому слушателю свой порт</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Подключение Psiphon</string>
     <string name="aether_lab_psiphon_cdn_ips">IP-адреса CDN</string>

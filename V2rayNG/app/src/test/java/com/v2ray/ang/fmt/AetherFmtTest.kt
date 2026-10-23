@@ -1143,6 +1143,40 @@ class AetherFmtTest {
     }
 
     @Test
+    fun theMessageOfASharedPortNamesIt() {
+        val shared = profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:20808" }
+        assertEquals(20808, AetherFmt.sharedListenPort(shared))
+        // The core's own listener, left out, listens on its default, which the command writes only for Tor's HTTP proxy.
+        val onDefault = profile { aetherCommand = "aether --wg --tor --tor-bind 127.0.0.1:10819 --tor-http 127.0.0.1:1819" }
+        assertEquals(AetherFmt.Problem.LISTEN_PORT_SHARED, AetherFmt.normalize(onDefault))
+        assertEquals(1819, AetherFmt.sharedListenPort(onDefault))
+        assertNull(AetherFmt.sharedListenPort(profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:20809" }))
+        assertNull(AetherFmt.sharedListenPort(profile { }))
+    }
+
+    @Test
+    fun aCommandListeningWhereTheCoreCannotIsRefusedAsAStartRefusesIt() {
+        // A number that is no port comes first, then an address the core does not take, then ports two listeners share.
+        val noPort = profile { aetherCommand = "aether --wg --bind localhost:70000 --http-proxy 127.0.0.1:70000" }
+        assertEquals(AetherFmt.Problem.LISTEN_PORT_INVALID, AetherFmt.normalize(noPort))
+        assertEquals(70000, AetherFmt.invalidListenPort(noPort))
+        val noAddress = profile { aetherCommand = "aether --wg --bind localhost:20808 --http-proxy 127.0.0.1:20808" }
+        assertEquals(AetherFmt.Problem.LISTEN_ADDRESS_INVALID, AetherFmt.normalize(noAddress, takenPorts = setOf(20808)))
+        assertEquals("--bind", AetherFmt.invalidListener(noAddress))
+        assertNull(AetherFmt.invalidListenPort(noAddress))
+        // A listener the app does not dial, on port 0, takes any port, which the core can bind.
+        val anyPort = profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:0" }
+        assertNull(AetherFmt.normalize(anyPort))
+        assertNull(AetherFmt.invalidListenPort(anyPort))
+        assertNull(AetherFmt.invalidListener(anyPort))
+        // The app's own listener on port 0 is no port it can dial.
+        assertEquals(AetherFmt.Problem.LISTEN_PORT_INVALID, AetherFmt.normalize(profile { aetherCommand = "aether --wg --bind 127.0.0.1:0" }))
+        // Nothing to name for a profile built from its settings, nor for a blank command.
+        assertNull(AetherFmt.invalidListenPort(profile { }))
+        assertNull(AetherFmt.invalidListener(profile { aetherCommand = "   " }))
+    }
+
+    @Test
     fun withoutKnownLocalPortsNoPortIsTaken() {
         // The local proxy port is picked at random on every start, or the caller has none to name.
         assertNull(AetherFmt.normalize(profile { aetherPsiphon = "chain"; aetherTor = "reverse" }))

@@ -54,14 +54,35 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
         }
 
     /**
+     * PattNG: the first option of a listener the core binds whose address the core does not take; null when it takes
+     * each. The core reads each as an IP address and a port, and where it cannot read one it quietly listens on its
+     * default, for its own, Tor's or Psiphon's listener, or not at all, for an HTTP proxy, while the app would go by the
+     * address written (aether lib.rs, tor.rs and psiphon.rs). A blank address, or "off", turns an HTTP proxy off. A
+     * message names the option, not the address, which is free text the log must not carry.
+     */
+    val invalidListener: String?
+        get() = boundListeners.firstOrNull { flag ->
+            val address = addressAfter(flag) ?: return@firstOrNull false
+            !AetherCoreManager.isSocketAddress(address) && !(flag in HTTP_LISTENERS && (address.isEmpty() || address == "off"))
+        }
+
+    /**
      * The ports of [listeners], in their order, but 0, which asks for any port: the port the arguments name, or the
      * core's default for a listener they leave out, see [AetherCoreManager.defaultListenerPorts]. A command written by
      * hand that names only Tor's listener still has the core's own on 1819.
      */
     private fun portsOf(listeners: List<String>): List<Int> =
         listeners.mapNotNull { flag ->
-            if (flag in arguments) AetherCoreManager.portAfter(arguments, flag) else AetherCoreManager.defaultListenerPorts[flag]
+            if (flag in arguments) {
+                addressAfter(flag)?.substringAfterLast(':', "")?.toIntOrNull()
+            } else {
+                AetherCoreManager.defaultListenerPorts[flag]
+            }
         }.filter { it != 0 }
+
+    /** PattNG: the address written after [flag], as the core reads it: its own listener's as written, the others trimmed. */
+    private fun addressAfter(flag: String): String? =
+        AetherCoreManager.valueAfter(arguments, flag)?.let { if (flag == "--bind") it else it.trim() }
 
     /** Every listener option the core binds as [arguments] run it, in the order of [LISTENERS], see [listenerGroups]. */
     private val boundListeners: List<String>
@@ -151,6 +172,9 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
             AetherCoreManager.TOR_HTTP,
             AetherCoreManager.PSIPHON_HTTP,
         )
+
+        /** PattNG: the HTTP proxies among [LISTENERS], which a blank address or "off" turns off. */
+        private val HTTP_LISTENERS = setOf(AetherCoreManager.HTTP_PROXY, AetherCoreManager.TOR_HTTP, AetherCoreManager.PSIPHON_HTTP)
 
         /**
          * The core of [profile]: the command line it carries, or its settings as arguments on

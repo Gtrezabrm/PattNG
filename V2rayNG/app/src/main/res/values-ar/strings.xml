@@ -622,7 +622,8 @@
     <string name="aether_listen_port_in_use">المنفذ %1$d، الذي تستمع عليه نواة Aether، يستخدمه تطبيق آخر؛ غيّر منفذ الاستماع لـ Aether في الإعدادات، أو منافذ الأمر</string>
     <string name="aether_secondary_port_in_use">المنفذ %1$d، الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether ويفتحه Xray لتتصل عبره نواة Aether بالخارج، يستخدمه تطبيق آخر؛ غيّر منفذ الاستماع لـ Aether في الإعدادات</string>
     <string name="aether_listen_port_invalid">يطلب أمر Aether من النواة الاستماع على %1$d، وهذا ليس منفذًا (من 1 إلى 65535)؛ غيّر منافذ الأمر</string>
-    <string name="aether_listen_port_shared">يطلب أمر Aether من النواة الاستماع على منفذ واحد بمستمعَين من مستمعيها؛ أعطِ كل مستمع منفذًا خاصًا به</string>
+    <string name="aether_listen_address_invalid">يعطي أمر Aether الخيار %1$s عنوانًا لا تقبله النواة؛ اكتب بعده عنوان IP ومنفذًا، مثل 127.0.0.1:20808</string>
+    <string name="aether_listen_port_shared">يطلب أمر Aether من النواة الاستماع على %1$d بمستمعَين من مستمعيها (المستمع الذي لا يذكره الأمر يستمع مع ذلك: الذي يتصل به التطبيق على منفذ الاستماع لـ Aether، والبقية على المنفذ الافتراضي للنواة: 1819 أو 1820 أو 1821)؛ أعطِ كل مستمع منفذًا خاصًا به</string>
     <string name="aether_lab_psiphon">سايفون</string>
     <string name="aether_lab_psiphon_mode">طريقة اتصال سايفون</string>
     <string name="aether_lab_psiphon_cdn_ips">عناوين IP لشبكة CDN</string>

@@ -615,7 +615,8 @@
     <string name="aether_listen_port_in_use">Aether nüvəsinin dinlədiyi %1$d portu başqa bir tətbiq tərəfindən istifadə olunur; tənzimləmələrdə Aether dinləmə portunu və ya əmrin portlarını dəyişin</string>
     <string name="aether_secondary_port_in_use">Aether dinləmə portundan üç yuxarı olan və Xray-in Aether nüvəsinin xaricə qoşulması üçün açdığı %1$d portu başqa bir tətbiq tərəfindən istifadə olunur; tənzimləmələrdə Aether dinləmə portunu dəyişin</string>
     <string name="aether_listen_port_invalid">Aether əmri nüvəyə %1$d üzərində dinləməyi bildirir, lakin bu, port deyil (1-dən 65535-ə qədər); əmrin portlarını dəyişin</string>
-    <string name="aether_listen_port_shared">Aether əmri nüvəyə iki dinləyicisi ilə eyni portda dinləməyi bildirir; hər dinləyiciyə ayrıca port verin</string>
+    <string name="aether_listen_address_invalid">Aether əmri %1$s üçün nüvənin qəbul etmədiyi ünvan yazır; ondan sonra IP ünvanı və port yazın, məsələn, 127.0.0.1:20808</string>
+    <string name="aether_listen_port_shared">Aether əmri nüvəyə iki dinləyicisi ilə %1$d portunda dinləməyi bildirir (əmrin göstərmədiyi dinləyici yenə də dinləyir: tətbiqin qoşulduğu dinləyici Aether dinləmə portunda, digərləri nüvənin standart portunda: 1819, 1820 və ya 1821); hər dinləyiciyə ayrıca port verin</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon bağlantısı</string>
     <string name="aether_lab_psiphon_cdn_ips">CDN fronting IP-ləri</string>

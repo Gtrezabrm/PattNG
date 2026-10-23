@@ -1686,6 +1686,22 @@ class AetherCoreManagerTest {
     }
 
     @Test
+    fun anAddressTheCoreTakesIsAnIpAddressAndAPort() {
+        listOf(
+            "127.0.0.1:10819", "0.0.0.0:0", "255.255.255.255:65535", "[::1]:10819", "[::]:1", "[fe80::1%2]:10819",
+            "[::ffff:127.0.0.1]:1", "[1:2:3:4:5:6:7:8]:1", "[1:2:3:4:5:6:1.2.3.4]:1", "[1::]:1", "[1:2:3:4:5:6:7::]:1",
+            // Rust reads a port, and a scope, with any number of leading zeros.
+            "127.0.0.1:000080", "127.0.0.1:0000000000000065535", "[::1%0004294967295]:1",
+        ).forEach { assertTrue(AetherCoreManager.isSocketAddress(it), it) }
+        listOf(
+            "localhost:10819", "10819", "127.0.0.1", "127.0.0.1:", "127.0.0.1:65536", "127.0.0.1:-1", "127.0.0.01:1", "1.2.3:1",
+            "256.0.0.1:1", "::1:10819", "[::1]", "[:::1]:1", "[1:2:3:4:5:6:7:8:9]:1", "[1:2:3:4:5:6:7:8::]:1", "[1.2.3.4::]:1",
+            "[1::2::3]:1", "[fe80::1%]:1", "[gggg::1]:1", "[12345::1]:1", " 127.0.0.1:1", "127.0.0.1:1 ",
+            "127.0.0.1:0065536", "127.0.0.1:+80", "[::1%4294967296]:1", "[::1%eth0]:1", "127.0.0.1:۱۰۸۱۹",
+        ).forEach { assertFalse(AetherCoreManager.isSocketAddress(it), it) }
+    }
+
+    @Test
     fun aNumberACommandNamesThatIsNoPortIsFoundBeforeThePortsAreChecked() {
         val core = AetherCore.ofCommand(
             "aether --wg --tor --bind 127.0.0.1:10819 --tor-bind 127.0.0.1:10820 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1"
