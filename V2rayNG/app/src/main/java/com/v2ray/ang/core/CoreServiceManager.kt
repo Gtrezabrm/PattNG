@@ -490,6 +490,7 @@ object CoreServiceManager {
             connectivity = connectivity,
             onUnderlyingNetworksChanged = { networks -> serviceControl?.get()?.setUnderlyingNetworks(networks) },
             onHandover = { monitor -> reloadCore(askedBy = monitor) },
+            describe = { "${service.javaClass.simpleName}, guid=${MmkvManager.getSelectServer()}" },
         ).also { it.register() }
     }
 
@@ -504,18 +505,20 @@ object CoreServiceManager {
      */
     private fun reloadCore(askedBy: NetworkMonitor): Boolean {
         val service = getService() ?: return false
-        // The handover rule of NetworkMonitor: a reload is the service's only while the monitor that saw the handover is
-        // the service's monitor still, and Xray runs. A stop clears the monitor and a new start brings its own, so a
-        // handover of an earlier monitor that arrives late reloads nothing; one that arrives during the reload is told
-        // by goesOn and afterwards.
-        if (!ReloadOutcome.handoverReloads(askedBy, current = networkMonitor, coreRunning = isRunning(), reloading = isReloading)) {
-            return false
-        }
+        // The handover rule of NetworkMonitor: the reload is claimed while the monitor that saw the handover is still
+        // registered, so that none begins once its unregister() has returned, and only while that monitor is the
+        // service's and Xray runs. A stop unregisters and clears the monitor and a new start brings its own, so a
+        // handover of an earlier monitor reloads nothing; a stop that comes during the reload is told by goesOn and
+        // afterwards. The claim marks the reload under way, so that a second handover does not begin one as well.
+        val claimed = askedBy.whileRegistered {
+            ReloadOutcome.handoverReloads(askedBy, current = networkMonitor, coreRunning = isRunning(), reloading = isReloading)
+                .also { if (it) isReloading = true }
+        } == true
+        if (!claimed) return false
 
         try {
             val tunFd = currentVpnInterface
 
-            isReloading = true
             connectionTestScope.coroutineContext.cancelChildren()
             LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload start...")
 
