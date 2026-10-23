@@ -436,6 +436,17 @@ class AetherCoreTest {
     }
 
     @Test
+    fun theListenerTheAppDialsIsReadTrimmedAsTheCoreReadsIt() {
+        // Tor inside the tunnel, dialled on its listener, which the core reads trimmed: the app dials the same port.
+        val tor = AetherCore.ofCommand("aether --masque --tor --tor-bind '127.0.0.1:10820 '")!!
+        assertEquals(10820, tor.port)
+        assertEquals(listOf(1819, 10820), tor.ports)
+        assertNull(tor.invalidListener)
+        // The core's own listener is read as written, so a space keeps the app from reading its port at all.
+        assertNull(AetherCore.ofCommand("aether --wg --bind '127.0.0.1:10819 '"))
+    }
+
+    @Test
     fun theListenersOtherThanItsOwnAreCountedTrimmedAsTheCoreReadsThem() {
         assertEquals(
             listOf(10819, 8118),

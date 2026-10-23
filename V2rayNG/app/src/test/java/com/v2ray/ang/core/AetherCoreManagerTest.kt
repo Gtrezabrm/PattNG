@@ -1702,6 +1702,27 @@ class AetherCoreManagerTest {
     }
 
     @Test
+    fun aListenerAddressIsReadAsTheCoreReadsIt() {
+        // The core's own listener as written, every other trimmed, the one the app dials among them.
+        val argv = listOf("--tor", "--bind", " 127.0.0.1:10820 ", "--tor-bind", " 127.0.0.1:10819 ", "--http-proxy", "127.0.0.1:8118 ")
+        assertEquals(" 127.0.0.1:10820 ", AetherCoreManager.listenerAddressAfter(argv, "--bind"))
+        assertEquals("127.0.0.1:10819", AetherCoreManager.listenerAddressAfter(argv, AetherCoreManager.TOR_BIND))
+        assertEquals("127.0.0.1:10819", AetherCoreManager.listenerAddressOf(argv))
+        assertEquals(10819, AetherCoreManager.listenerPortOf(argv))
+        assertEquals(8118, AetherCoreManager.portAfter(argv, AetherCoreManager.HTTP_PROXY))
+        assertNull(AetherCoreManager.portAfter(argv, "--bind"))
+        assertNull(AetherCoreManager.listenerAddressAfter(argv, AetherCoreManager.PSIPHON_BIND))
+    }
+
+    @Test
+    fun anAddressIsTrimmedByTheWhitespaceOfTheCore() {
+        // Rust's: a next line (U+0085) goes, an information separator (U+001F), which Kotlin's trim() takes, stays.
+        assertEquals("127.0.0.1:10819", AetherCoreManager.listenerAddressAfter(listOf("--tor-bind", "127.0.0.1:10819\u0085"), AetherCoreManager.TOR_BIND))
+        assertEquals("127.0.0.1:10819\u001F", AetherCoreManager.listenerAddressAfter(listOf("--tor-bind", "127.0.0.1:10819\u001F"), AetherCoreManager.TOR_BIND))
+        assertEquals("127.0.0.1:1", AetherCoreManager.listenerAddressAfter(listOf("--http-proxy", "\u3000 127.0.0.1:1\u00A0"), AetherCoreManager.HTTP_PROXY))
+    }
+
+    @Test
     fun aNumberACommandNamesThatIsNoPortIsFoundBeforeThePortsAreChecked() {
         val core = AetherCore.ofCommand(
             "aether --wg --tor --bind 127.0.0.1:10819 --tor-bind 127.0.0.1:10820 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1"

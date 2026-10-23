@@ -62,7 +62,7 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
      */
     val invalidListener: String?
         get() = boundListeners.firstOrNull { flag ->
-            val address = addressAfter(flag) ?: return@firstOrNull false
+            val address = AetherCoreManager.listenerAddressAfter(arguments, flag) ?: return@firstOrNull false
             !AetherCoreManager.isSocketAddress(address) && !(flag in HTTP_LISTENERS && (address.isEmpty() || address == "off"))
         }
 
@@ -73,16 +73,8 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
      */
     private fun portsOf(listeners: List<String>): List<Int> =
         listeners.mapNotNull { flag ->
-            if (flag in arguments) {
-                addressAfter(flag)?.substringAfterLast(':', "")?.toIntOrNull()
-            } else {
-                AetherCoreManager.defaultListenerPorts[flag]
-            }
+            if (flag in arguments) AetherCoreManager.portAfter(arguments, flag) else AetherCoreManager.defaultListenerPorts[flag]
         }.filter { it != 0 }
-
-    /** PattNG: the address written after [flag], as the core reads it: its own listener's as written, the others trimmed. */
-    private fun addressAfter(flag: String): String? =
-        AetherCoreManager.valueAfter(arguments, flag)?.let { if (flag == "--bind") it else it.trim() }
 
     /** Every listener option the core binds as [arguments] run it, in the order of [LISTENERS], see [listenerGroups]. */
     private val boundListeners: List<String>

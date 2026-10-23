@@ -1395,16 +1395,35 @@ object AetherCoreManager {
     /** The port of the core's own listener, null when [argv] names none. */
     internal fun bindPortOf(argv: List<String>): Int? = portAfter(argv, "--bind")
 
-    /** The address of the listener the app dials, see [listenerFlagOf]; null when [argv] names none. */
-    internal fun listenerAddressOf(argv: List<String>): String? = valueAfter(argv, listenerFlagOf(argv))
+    /**
+     * The address of the listener the app dials, see [listenerFlagOf], as the core reads it, see [listenerAddressAfter];
+     * null when [argv] names none.
+     */
+    internal fun listenerAddressOf(argv: List<String>): String? = listenerAddressAfter(argv, listenerFlagOf(argv))
 
     /** The port of the listener the app dials, null when [argv] names none. */
     internal fun listenerPortOf(argv: List<String>): Int? =
         listenerAddressOf(argv)?.substringAfterLast(':', "")?.toIntOrNull()
 
-    /** The port of the address after [flag], null when there is none or it cannot be read. */
+    /** The port of the address after the listener option [flag], as the core reads it; null when there is none or it cannot be read. */
     internal fun portAfter(argv: List<String>, flag: String): Int? =
-        valueAfter(argv, flag)?.substringAfterLast(':', "")?.toIntOrNull()
+        listenerAddressAfter(argv, flag)?.substringAfterLast(':', "")?.toIntOrNull()
+
+    /**
+     * PattNG: the address after the listener option [flag] in [argv], as the core reads it: its own listener's (--bind) as
+     * written, Tor's, Psiphon's and the HTTP proxies' trimmed (aether lib.rs, tor.rs and psiphon.rs); null when there is
+     * none. Every reader of a listener's address or port goes by it, so that the app and the core agree on it.
+     */
+    internal fun listenerAddressAfter(argv: List<String>, flag: String): String? =
+        valueAfter(argv, flag)?.let { if (flag == "--bind") it else it.trim(::isRustWhitespace) }
+
+    /**
+     * PattNG: whitespace as the core trims it, Rust's char::is_whitespace, the Unicode White_Space property. Kotlin's
+     * trim() takes U+001C to U+001F as well and leaves U+0085 out, so an address it trims could be one the core does not.
+     */
+    internal fun isRustWhitespace(c: Char): Boolean =
+        c in '\u0009'..'\u000D' || c == ' ' || c == '\u0085' || c == '\u00A0' || c == '\u1680' || c in '\u2000'..'\u200A' ||
+            c == '\u2028' || c == '\u2029' || c == '\u202F' || c == '\u205F' || c == '\u3000'
 
     /**
      * PattNG: true when the core takes [address] for a listener, as Rust's SocketAddr reads it: an IPv4 address, or an
