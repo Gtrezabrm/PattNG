@@ -489,7 +489,7 @@ object CoreServiceManager {
         networkMonitor = NetworkMonitor(
             connectivity = connectivity,
             onUnderlyingNetworksChanged = { networks -> serviceControl?.get()?.setUnderlyingNetworks(networks) },
-            onHandover = { reloadCore() },
+            onHandover = { monitor -> reloadCore(askedBy = monitor) },
         ).also { it.register() }
     }
 
@@ -502,13 +502,15 @@ object CoreServiceManager {
      *
      * @return True if the core is running again.
      */
-    private fun reloadCore(): Boolean {
-        if (isReloading) return false
+    private fun reloadCore(askedBy: NetworkMonitor): Boolean {
         val service = getService() ?: return false
-        if (!isRunning()) return false
-        // Only a monitor asks for a reload, and a stop clears it: without one the service is going down
-        // already, and a stop that arrives during the reload is told by it afterwards.
-        val monitor = networkMonitor ?: return false
+        // The handover rule of NetworkMonitor: a reload is the service's only while the monitor that saw the handover is
+        // the service's monitor still, and Xray runs. A stop clears the monitor and a new start brings its own, so a
+        // handover of an earlier monitor that arrives late reloads nothing; one that arrives during the reload is told
+        // by goesOn and afterwards.
+        if (!ReloadOutcome.handoverReloads(askedBy, current = networkMonitor, coreRunning = isRunning(), reloading = isReloading)) {
+            return false
+        }
 
         try {
             val tunFd = currentVpnInterface
@@ -518,16 +520,20 @@ object CoreServiceManager {
             LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload start...")
 
             coreController.stopLoop()
-            if (launchCore(service, tunFd, isReload = true, goesOn = { ReloadOutcome.goesOn(askedBy = monitor, current = networkMonitor) })) {
+            if (launchCore(service, tunFd, isReload = true, goesOn = { ReloadOutcome.goesOn(askedBy = askedBy, current = networkMonitor) })) {
                 LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload finished")
             } else {
                 LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload given up, the service was stopped while the configuration was built or the Aether ports were checked")
             }
         } catch (e: Exception) {
             val message = e.message?.takeUnless { it.isBlank() } ?: e.javaClass.simpleName
-            LogUtil.e(AppConfig.TAG, "StartCore-Manager: Failed to reload core: $message", e)
+            LogUtil.e(
+                AppConfig.TAG,
+                "StartCore-Manager: ${service.javaClass.simpleName} reload failed: $message, guid=${MmkvManager.getSelectServer()}",
+                e
+            )
             // After a stop the screen has been told of it, and after a new start its state is that start's to report.
-            if (networkMonitor === monitor) {
+            if (networkMonitor === askedBy) {
                 MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_START_FAILURE, userFacingReason(e))
             }
         } finally {
@@ -538,7 +544,7 @@ object CoreServiceManager {
         return when (ReloadOutcome.of(coreRunning = isRunning(), stoppedMeanwhile = networkMonitor == null)) {
             ReloadOutcome.KEEP_RUNNING -> true
             ReloadOutcome.STOP_SERVICE -> {
-                stopServiceAfterFailedReload(monitor)
+                stopServiceAfterFailedReload(askedBy)
                 false
             }
 
