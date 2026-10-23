@@ -486,17 +486,33 @@ object CoreServiceManager {
         if (networkMonitor != null) return
 
         val connectivity = service.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return
+        // PattNG: the name alone, so that a monitor left registered does not keep the service alive.
+        val runMode = service.javaClass.simpleName
         networkMonitor = NetworkMonitor(
             connectivity = connectivity,
             onUnderlyingNetworksChanged = { networks -> serviceControl?.get()?.setUnderlyingNetworks(networks) },
+            claimHandover = { monitor -> claimReload(askedBy = monitor) },
             onHandover = { monitor -> reloadCore(askedBy = monitor) },
-            describe = { "${service.javaClass.simpleName}, guid=${MmkvManager.getSelectServer()}" },
+            describe = { "$runMode, guid=${MmkvManager.getSelectServer()}" },
         ).also { it.register() }
     }
 
     /**
+     * Claims the reload a handover seen by [askedBy] asks for, and marks it under way, so that a second
+     * handover does not begin one as well: only while [askedBy] is the service's monitor still, Xray runs
+     * and no reload is under way. The handover rule of NetworkMonitor: it calls this under the gate its
+     * unregister() closes first, so no reload is claimed once that has returned, and it has to be short. A
+     * stop unregisters and clears the monitor and a new start brings its own, so a handover of an earlier
+     * monitor reloads nothing; a stop that comes during the reload is told by goesOn and afterwards.
+     */
+    private fun claimReload(askedBy: NetworkMonitor): Boolean =
+        ReloadOutcome.handoverReloads(askedBy, current = networkMonitor, coreRunning = isRunning(), reloading = isReloading)
+            .also { if (it) isReloading = true }
+
+    /**
      * Restarts the core in place after the upstream network changed: the service, the notification
-     * and the VPN interface all stay up, so nothing of this is visible.
+     * and the VPN interface all stay up, so nothing of this is visible. PattNG: it runs once
+     * [claimReload] has claimed the reload, and ends it.
      *
      * The config is rebuilt on purpose, outbound server domains are resolved while building it and
      * an address resolved on a network that is gone can be unusable on the new one.
@@ -504,17 +520,10 @@ object CoreServiceManager {
      * @return True if the core is running again.
      */
     private fun reloadCore(askedBy: NetworkMonitor): Boolean {
-        val service = getService() ?: return false
-        // The handover rule of NetworkMonitor: the reload is claimed while the monitor that saw the handover is still
-        // registered, so that none begins once its unregister() has returned, and only while that monitor is the
-        // service's and Xray runs. A stop unregisters and clears the monitor and a new start brings its own, so a
-        // handover of an earlier monitor reloads nothing; a stop that comes during the reload is told by goesOn and
-        // afterwards. The claim marks the reload under way, so that a second handover does not begin one as well.
-        val claimed = askedBy.whileRegistered {
-            ReloadOutcome.handoverReloads(askedBy, current = networkMonitor, coreRunning = isRunning(), reloading = isReloading)
-                .also { if (it) isReloading = true }
-        } == true
-        if (!claimed) return false
+        val service = getService() ?: run {
+            isReloading = false
+            return false
+        }
 
         try {
             val tunFd = currentVpnInterface
