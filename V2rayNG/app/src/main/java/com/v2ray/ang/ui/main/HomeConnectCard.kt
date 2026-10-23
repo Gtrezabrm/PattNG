@@ -77,6 +77,7 @@ enum class HomeCardStatus {
 data class HomeCardDetails(
     val pingMillis: Int?,
     val duration: String,
+    val ipAddress: String? = null,
     val download: String? = null,
     val upload: String? = null,
 )
@@ -324,10 +325,11 @@ private fun HomeCardDetailsSection(
 @Composable
 private fun HomeCardDetailsBlock(details: HomeCardDetails, modifier: Modifier = Modifier) {
     val pingText = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) }
-        ?: stringResource(R.string.value_unknown)
+        ?: "—"
     val tiles = buildList {
         add(stringResource(R.string.home_details_ping) to pingText)
         add(stringResource(R.string.home_details_duration) to details.duration)
+        add(stringResource(R.string.home_details_ip) to (details.ipAddress?.takeIf { it.isNotBlank() } ?: "—"))
         details.download?.let { add(stringResource(R.string.home_details_download) to it) }
         details.upload?.let { add(stringResource(R.string.home_details_upload) to it) }
     }
