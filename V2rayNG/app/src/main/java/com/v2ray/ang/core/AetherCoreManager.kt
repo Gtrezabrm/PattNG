@@ -89,6 +89,13 @@ object AetherCoreManager {
     internal const val TOR_HTTP = "--tor-http"
     internal const val PSIPHON_HTTP = "--psiphon-http"
 
+    /**
+     * PattNG: the ports the core's SOCKS listeners take where a command written by hand does not name them (aether
+     * cli.rs): its own 1819, Tor's 1820 and Psiphon's 1821. The HTTP proxies are off unless named, and the app's own
+     * commands name every listener they run.
+     */
+    internal val defaultListenerPorts = mapOf("--bind" to 1819, TOR_BIND to 1820, PSIPHON_BIND to 1821)
+
     /** The option that names the proxy the core dials out through. */
     internal const val UPSTREAM = "--upstream"
 

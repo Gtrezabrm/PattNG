@@ -35,8 +35,8 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
     val port: Int get() = AetherCoreManager.listenerPortOf(arguments) ?: AetherCoreManager.socksPort
 
     /**
-     * Every port the core is told to listen on and binds as its modes run, its HTTP proxies' too, see
-     * [boundListeners]; an inbound of the configuration cannot share one.
+     * Every port the core listens on as its modes run, its HTTP proxies' too, see [boundListeners]: the ports it is told,
+     * and its defaults for the listeners it is not told about; an inbound of the configuration cannot share one.
      */
     val ports: List<Int>
         get() = boundPorts.distinct()
@@ -52,9 +52,15 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
             return boundPorts.firstOrNull { !seen.add(it) }
         }
 
-    /** The ports of [boundListeners], in their order, but 0, which asks for any port. */
+    /**
+     * The ports of [boundListeners], in their order, but 0, which asks for any port: the port the arguments name, or the
+     * core's default for a listener they leave out, see [AetherCoreManager.defaultListenerPorts]. A command written by
+     * hand that names only Tor's listener still has the core's own on 1819.
+     */
     private val boundPorts: List<Int>
-        get() = boundListeners.mapNotNull { AetherCoreManager.portAfter(arguments, it) }.filter { it != 0 }
+        get() = boundListeners.mapNotNull { flag ->
+            if (flag in arguments) AetherCoreManager.portAfter(arguments, flag) else AetherCoreManager.defaultListenerPorts[flag]
+        }.filter { it != 0 }
 
     /**
      * The listener options the core binds as [arguments] run it: its own and its HTTP proxy always, Tor's

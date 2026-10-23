@@ -391,6 +391,22 @@ class AetherCoreTest {
     }
 
     @Test
+    fun aListenerACommandDoesNotNameListensOnTheCoresDefaultPort() {
+        // Tor inside the tunnel gets the app's port; the core's own listener, left out, is on 1819 all the same.
+        assertEquals(listOf(1819, 10819), AetherCore.ofCommand("aether --wg --tor")!!.ports)
+        // Tor's and Psiphon's listeners around the tunnel, left out, are on 1820 and 1821.
+        assertEquals(listOf(10819, 1820), AetherCore.ofCommand("aether --masque --tor-reverse --bind 127.0.0.1:10819")!!.ports)
+        assertEquals(listOf(10819, 1821), AetherCore.ofCommand("aether --masque --psiphon-reverse --bind 127.0.0.1:10819")!!.ports)
+        // A default the command does not see can be the port it names for another listener.
+        assertEquals(1819, AetherCore.ofCommand("aether --wg --tor --tor-bind 127.0.0.1:1819")!!.sharedPort)
+        assertEquals(1820, AetherCore.ofCommand("aether --masque --tor-reverse --bind 127.0.0.1:1820")!!.sharedPort)
+        // An HTTP proxy left out is off, and a listener of a mode that does not run binds nothing.
+        assertEquals(listOf(10819), AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819")!!.ports)
+        // The commands of the app name every listener they run.
+        assertEquals(listOf(10820, 10819), AetherCore.of(pinned.copy(aetherTor = "chain")).ports)
+    }
+
+    @Test
     fun anUpdateThatLeavesAProfileAsItWasLeavesItsDigestAsItWas() {
         // A subscription's update builds every profile again, added anew, and may move it to another subscription or
         // describe it anew; what it connects with is what tells an exit-node, or the hops of a chain, apart.

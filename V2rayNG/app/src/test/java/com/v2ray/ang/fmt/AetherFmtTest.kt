@@ -1121,6 +1121,15 @@ class AetherFmtTest {
     }
 
     @Test
+    fun theDefaultPortOfAListenerACommandLeavesOutCanBeTaken() {
+        // Tor inside the tunnel is named; the core's own listener, left out, listens on its default, 1819.
+        val torInside = profile { aetherCommand = "aether --wg --tor --tor-bind 127.0.0.1:10819" }
+        assertEquals(AetherFmt.Problem.LISTEN_PORT_TAKEN, AetherFmt.normalize(torInside, setOf(1819)))
+        assertEquals(1819, AetherFmt.takenListenPort(torInside, setOf(1819)))
+        assertNull(AetherFmt.normalize(torInside, setOf(1820)))
+    }
+
+    @Test
     fun aCommandWhoseListenersShareAPortIsRefused() {
         assertEquals(
             AetherFmt.Problem.LISTEN_PORT_SHARED,
