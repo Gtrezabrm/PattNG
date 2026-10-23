@@ -176,6 +176,10 @@ fun MainScreen(
                 onAction = onAction,
                 onMenuClick = { scope.launch { drawerState.open() } },
                 onOpenServerList = { showServerList = true },
+                onNavigate = { route ->
+                    scope.launch { drawerState.close() }
+                    onNavigate(route)
+                },
             )
             return@ModalNavigationDrawer
         }
