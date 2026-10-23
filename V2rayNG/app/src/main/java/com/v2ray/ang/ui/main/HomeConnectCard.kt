@@ -106,6 +106,7 @@ fun HomeConnectCard(
     model: HomeCardModel,
     onConnectClick: () -> Unit,
     onStatusActionClick: () -> Unit,
+    onRefreshPingClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val target = homeCardColors(model.status)
@@ -148,6 +149,7 @@ fun HomeConnectCard(
                             details = model.details!!,
                             open = detailsOpen,
                             onToggle = { detailsOpen = it },
+                            onRefreshPingClick = onRefreshPingClick,
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -167,6 +169,7 @@ fun HomeConnectCard(
                             details = model.details!!,
                             open = detailsOpen,
                             onToggle = { detailsOpen = it },
+                            onRefreshPingClick = onRefreshPingClick,
                         )
                     }
                 }
@@ -286,6 +289,7 @@ private fun HomeCardDetailsSection(
     details: HomeCardDetails,
     open: Boolean,
     onToggle: (Boolean) -> Unit,
+    onRefreshPingClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val rotation by animateFloatAsState(
@@ -317,13 +321,17 @@ private fun HomeCardDetailsSection(
             enter = expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
             exit = shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(),
         ) {
-            HomeCardDetailsBlock(details)
+            HomeCardDetailsBlock(details, onRefreshPingClick)
         }
     }
 }
 
 @Composable
-private fun HomeCardDetailsBlock(details: HomeCardDetails, modifier: Modifier = Modifier) {
+private fun HomeCardDetailsBlock(
+    details: HomeCardDetails,
+    onRefreshPingClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val pingText = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) }
         ?: "—"
     val tiles = buildList {
@@ -341,6 +349,9 @@ private fun HomeCardDetailsBlock(details: HomeCardDetails, modifier: Modifier = 
                 }
                 if (pair.size == 1) Box(modifier = Modifier.weight(1f))
             }
+        }
+        OutlinedButton(onClick = onRefreshPingClick, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.home_details_test_ping))
         }
     }
 }
