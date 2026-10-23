@@ -39,52 +39,64 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
      * and its defaults for the listeners it is not told about; an inbound of the configuration cannot share one.
      */
     val ports: List<Int>
-        get() = boundPorts.distinct()
+        get() = portsOf(boundListeners).distinct()
 
     /**
-     * The first port two of the listeners the core binds share, as a command written by hand may name; null when
-     * each has a port of its own. The core would bind one of them and fail on the other as it starts. Ports are told
-     * apart by number, as everywhere else in the app.
+     * The first port two of the listeners the core holds at one time share, as a command written by hand may name;
+     * null when each has a port of its own. The core would bind one of them and fail on the other. Ports are told
+     * apart by number, as everywhere else in the app. PattNG: Tor or Psiphon alone lets the core's own HTTP proxy go
+     * before that carrier's is bound, so those two may share a port, see [listenerGroups].
      */
     val sharedPort: Int?
-        get() {
+        get() = listenerGroups.firstNotNullOfOrNull { group ->
             val seen = mutableSetOf<Int>()
-            return boundPorts.firstOrNull { !seen.add(it) }
+            portsOf(group).firstOrNull { !seen.add(it) }
         }
 
     /**
-     * The ports of [boundListeners], in their order, but 0, which asks for any port: the port the arguments name, or the
+     * The ports of [listeners], in their order, but 0, which asks for any port: the port the arguments name, or the
      * core's default for a listener they leave out, see [AetherCoreManager.defaultListenerPorts]. A command written by
      * hand that names only Tor's listener still has the core's own on 1819.
      */
-    private val boundPorts: List<Int>
-        get() = boundListeners.mapNotNull { flag ->
+    private fun portsOf(listeners: List<String>): List<Int> =
+        listeners.mapNotNull { flag ->
             if (flag in arguments) AetherCoreManager.portAfter(arguments, flag) else AetherCoreManager.defaultListenerPorts[flag]
         }.filter { it != 0 }
 
-    /**
-     * The listener options the core binds as [arguments] run it: its own and its HTTP proxy always, Tor's
-     * listener with Tor inside or around the tunnel and Tor's HTTP proxy with Tor run in any way, and the same for
-     * Psiphon. An option of a mode that does not run binds nothing (aether lib.rs, tor.rs and psiphon.rs). Tor or
-     * Psiphon alone serves the core's own listener and its own HTTP proxy, and the core runs nothing else, not even
-     * its HTTP proxy, see [AetherCoreManager.aloneOf]. PattNG: a registration of keys serves no proxy, and binds
-     * only the listener of a carrier around the tunnel, which carries its requests (lib.rs, register_identities).
-     */
+    /** Every listener option the core binds as [arguments] run it, in the order of [LISTENERS], see [listenerGroups]. */
     private val boundListeners: List<String>
+        get() {
+            val bound = listenerGroups.flatten().toSet()
+            return LISTENERS.filter { it in bound }
+        }
+
+    /**
+     * The listener options the core binds as [arguments] run it, in the groups it holds at one time: its own and its
+     * HTTP proxy always, Tor's listener with Tor inside or around the tunnel and Tor's HTTP proxy with Tor run in any
+     * way, and the same for Psiphon, all of them for the whole run. An option of a mode that does not run binds nothing
+     * (aether lib.rs, tor.rs and psiphon.rs). Tor or Psiphon alone, see [AetherCoreManager.aloneOf]: the core binds its
+     * own listener and its own HTTP proxy as it starts, then lets that HTTP proxy go and serves its own listener with
+     * Tor or Psiphon, which binds that carrier's HTTP proxy (lib.rs, Listeners::bind and into_socks). PattNG: a
+     * registration of keys serves no proxy, and binds only the listener of a carrier around the tunnel, which carries
+     * its requests (lib.rs, register_identities).
+     */
+    private val listenerGroups: List<List<String>>
         get() {
             val tor = AetherCoreManager.torModeOf(arguments)
             val psiphon = AetherCoreManager.psiphonModeOf(arguments)
             if (AetherKeys.REGISTER in arguments) {
-                return LISTENERS.filter { flag ->
-                    (flag == AetherCoreManager.TOR_BIND && tor == AetherTor.REVERSE) ||
-                        (flag == AetherCoreManager.PSIPHON_BIND && psiphon == AetherPsiphon.REVERSE)
-                }
+                return listOf(
+                    LISTENERS.filter { flag ->
+                        (flag == AetherCoreManager.TOR_BIND && tor == AetherTor.REVERSE) ||
+                            (flag == AetherCoreManager.PSIPHON_BIND && psiphon == AetherPsiphon.REVERSE)
+                    }
+                )
             }
             if (AetherCoreManager.aloneOf(arguments) != null) {
                 val aloneHttp = if (tor == AetherTor.ONLY) AetherCoreManager.TOR_HTTP else AetherCoreManager.PSIPHON_HTTP
-                return LISTENERS.filter { it == "--bind" || it == aloneHttp }
+                return listOf(listOf("--bind", AetherCoreManager.HTTP_PROXY), listOf("--bind", aloneHttp))
             }
-            return LISTENERS.filter { flag ->
+            return listOf(LISTENERS.filter { flag ->
                 when (flag) {
                     AetherCoreManager.TOR_BIND -> tor == AetherTor.CHAIN || tor == AetherTor.REVERSE
                     AetherCoreManager.TOR_HTTP -> tor != AetherTor.OFF
@@ -92,7 +104,7 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
                     AetherCoreManager.PSIPHON_HTTP -> psiphon != AetherPsiphon.OFF
                     else -> true
                 }
-            }
+            })
         }
 
     /** The protocol, which tells whose identity files the core uses. */

@@ -407,6 +407,18 @@ class AetherCoreTest {
     }
 
     @Test
+    fun aloneTheCoreHoldsItsOwnHttpProxyAsItStartsAndThenTheCarriersOne() {
+        // The core binds its own HTTP proxy as it starts, beside its own listener: it counts, and cannot share that one.
+        assertEquals(listOf(10819, 8118), AetherCore.ofCommand("aether --tor-only --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:8118")!!.ports)
+        assertEquals(10819, AetherCore.ofCommand("aether --tor-only --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:10819")!!.sharedPort)
+        // It lets it go before Tor's HTTP proxy is bound, so those two may share a port; Tor's and the core's own listener may not.
+        assertNull(
+            AetherCore.ofCommand("aether --tor-only --bind 127.0.0.1:10819 --http-proxy 127.0.0.1:8118 --tor-http 127.0.0.1:8118")!!.sharedPort
+        )
+        assertEquals(10819, AetherCore.ofCommand("aether --psiphon-only --bind 127.0.0.1:10819 --psiphon-http 127.0.0.1:10819")!!.sharedPort)
+    }
+
+    @Test
     fun aRegistrationOfKeysListensOnlyWhereACarrierAroundTheTunnelDoes() {
         // The core registers and ends: no listener of its own, though the command names none to leave to a default.
         assertEquals(emptyList<Int>(), AetherCore(listOf("--register", "wg", "--wg")).ports)
