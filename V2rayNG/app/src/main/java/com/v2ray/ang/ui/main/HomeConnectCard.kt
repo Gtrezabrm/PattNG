@@ -332,6 +332,7 @@ private fun HomeCardDetailsBlock(
 /** One read-only figure; it is a single semantic node, so it is spoken as "label, value". */
 @Composable
 private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: String?, modifier: Modifier = Modifier) {
+    val normalizedCountry = normalizeCountryCode(countryCode)
     val flag = countryFlagEmoji(countryCode)
     Surface(
         shape = RoundedCornerShape(16.dp),
@@ -346,7 +347,14 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (flag.isNotEmpty()) {
+                if (normalizedCountry == "IR") {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
+                        contentDescription = "Lion and Sun flag of Iran",
+                        modifier = Modifier.size(width = 24.dp, height = 16.dp),
+                        tint = Color.Unspecified,
+                    )
+                } else if (flag.isNotEmpty()) {
                     Text(text = flag, style = MaterialTheme.typography.titleMedium)
                 }
                 Text(
