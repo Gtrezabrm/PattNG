@@ -11,11 +11,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -39,9 +41,17 @@ fun HomeScreen(
     onAction: (MainAction) -> Unit,
     onMenuClick: () -> Unit,
     onOpenServerList: () -> Unit,
+    onNavigate: (MainDestination) -> Unit,
 ) {
     val serverName by mainViewModel.selectedServerName.collectAsStateWithLifecycle()
     val status = HomeConnection.cardStatus(uiState)
+
+    // Test the active route once when it reaches Connected; never poll in a loop.
+    LaunchedEffect(status, uiState.connectionPingMillis) {
+        if (status == HomeCardStatus.Connected && uiState.connectionPingMillis == null) {
+            onAction(MainAction.TestCurrentServer)
+        }
+    }
 
     val since = uiState.connectedSinceNanos
     val duration by produceState(initialValue = HomeConnection.formatDuration(0), since) {
@@ -59,7 +69,11 @@ fun HomeScreen(
         status = status,
         serverName = serverName,
         details = if (status == HomeCardStatus.Connected) {
-            HomeCardDetails(pingMillis = uiState.connectionPingMillis?.toInt(), duration = duration)
+            HomeCardDetails(
+                pingMillis = uiState.connectionPingMillis?.toInt(),
+                duration = duration,
+                ipAddress = uiState.connectionIpAddress,
+            )
         } else {
             null
         },
@@ -101,7 +115,12 @@ fun HomeScreen(
                 onClick = onOpenServerList,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+            )
+            HomeQuickActions(
+                onOpenServerList = onOpenServerList,
+                onNavigate = onNavigate,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
             )
         }
     }
@@ -135,6 +154,33 @@ private fun HomeServerSelector(serverName: String?, onClick: () -> Unit, modifie
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+
+@Composable
+private fun HomeQuickActions(
+    onOpenServerList: () -> Unit,
+    onNavigate: (MainDestination) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TextButton(onClick = onOpenServerList) {
+            Icon(painterResource(R.drawable.ic_subscriptions_24dp), contentDescription = null)
+            Text(stringResource(R.string.home_quick_servers), modifier = Modifier.padding(start = 6.dp))
+        }
+        TextButton(onClick = { onNavigate(MainDestination.Subscriptions) }) {
+            Icon(painterResource(R.drawable.ic_subscriptions_24dp), contentDescription = null)
+            Text(stringResource(R.string.home_quick_subscriptions), modifier = Modifier.padding(start = 6.dp))
+        }
+        TextButton(onClick = { onNavigate(MainDestination.Settings) }) {
+            Icon(painterResource(R.drawable.ic_settings_24dp), contentDescription = null)
+            Text(stringResource(R.string.home_quick_settings), modifier = Modifier.padding(start = 6.dp))
         }
     }
 }
