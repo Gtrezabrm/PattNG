@@ -214,30 +214,10 @@ object CoreServiceManager {
             if (!AetherCoreManager.isSupported(service)) {
                 throw StartFailure(service.getString(R.string.aether_unsupported_abi))
             }
-            // A command written by hand may name a number that is no port, or one port for two of its listeners:
-            // the core could not listen as told, and the session would fail only once Xray had started.
-            AetherCoreManager.invalidPort(aether)?.let { port ->
-                refuseAether(service, guid, isReload, "the Aether command names $port, which is no port") {
-                    service.getString(R.string.aether_listen_port_invalid, port)
-                }
-            }
-            // PattNG: nor an address the core does not read, where it would quietly listen on its default instead.
-            aether.invalidListener?.let { option ->
-                refuseAether(service, guid, isReload, "the Aether command gives $option an address the core does not take") {
-                    service.getString(R.string.aether_listen_address_invalid, option)
-                }
-            }
-            aether.sharedPort?.let { port ->
-                refuseAether(service, guid, isReload, "the Aether command names port $port for two of its listeners") {
-                    service.getString(R.string.aether_listen_port_shared, port)
-                }
-            }
-            // Xray would take the port first: the Aether outbound would dial the configuration's own inbound, or the
-            // core could not open the HTTP proxy a command names there.
-            aether.ports.firstOrNull { AetherDependency.inboundListensOn(result.content, it) }?.let { port ->
-                refuseAether(service, guid, isReload, "an inbound of the configuration listens on the Aether port $port") {
-                    service.getString(R.string.aether_listen_port_taken, port)
-                }
+            // A command the core could not run as told, or a port Xray would take first: see refusalOf, which
+            // checks them in the editor's order.
+            AetherCoreManager.refusalOf(aether, result.content)?.let { refusal ->
+                refuseAether(service, guid, isReload, refusal.reason) { service.getString(refusal.message, refusal.argument) }
             }
         }
         // A reload still has the previous session's core; it ends before Xray starts again. The new core,

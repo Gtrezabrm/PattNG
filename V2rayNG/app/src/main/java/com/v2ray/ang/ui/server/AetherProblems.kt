@@ -32,6 +32,8 @@ internal fun messageOfAetherProblem(problem: AetherFmt.Problem, config: ProfileI
             EditorMessage(R.string.aether_listen_port_invalid, AetherFmt.invalidListenPort(config, listenPort) ?: listenPort)
         AetherFmt.Problem.LISTEN_ADDRESS_INVALID ->
             EditorMessage(R.string.aether_listen_address_invalid, AetherFmt.invalidListener(config, listenPort).orEmpty())
+        AetherFmt.Problem.LISTEN_ADDRESS_UNREACHABLE ->
+            EditorMessage(R.string.aether_listen_address_unreachable, AetherFmt.unreachableListener(config, listenPort).orEmpty())
         AetherFmt.Problem.PSIPHON_NEEDS_MASQUE -> EditorMessage(R.string.aether_psiphon_needs_masque)
         AetherFmt.Problem.NEXT_PORT_TAKEN -> EditorMessage(R.string.aether_next_port_taken)
         AetherFmt.Problem.TOR_NEEDS_MASQUE -> EditorMessage(R.string.aether_tor_needs_masque)

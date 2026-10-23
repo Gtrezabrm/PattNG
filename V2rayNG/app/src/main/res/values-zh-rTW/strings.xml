@@ -613,6 +613,7 @@
     <string name="aether_secondary_port_in_use">連接埠 %1$d 比 Aether 監聽連接埠大 3，Xray 在此開放入站供 Aether 核心向外連線，但它已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠</string>
     <string name="aether_listen_port_invalid">Aether 命令讓核心監聽 %1$d，這不是有效的連接埠（1 到 65535）；請變更命令中的連接埠</string>
     <string name="aether_listen_address_invalid">Aether 命令給 %1$s 寫了核心不接受的位址；請在它後面寫 IP 位址和連接埠，例如 127.0.0.1:20808</string>
+    <string name="aether_listen_address_unreachable">Aether 命令給 %1$s 寫了應用程式不會連線的位址：應用程式透過 127.0.0.1 連線核心，請在它後面寫 127.0.0.1（或表示所有位址的 0.0.0.0）和連接埠</string>
     <string name="aether_listen_port_shared">Aether 命令讓核心以兩個監聽器監聽 %1$d（命令未寫出的監聽器仍會監聽：應用程式連線的那個在 Aether 監聽連接埠上，其他的在核心的預設連接埠上：1819、1820 或 1821）；請為每個監聽器指定各自的連接埠</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Psiphon 連線方式</string>

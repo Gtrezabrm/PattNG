@@ -67,6 +67,21 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
         }
 
     /**
+     * PattNG: the option of the listener the app dials, see [AetherCoreManager.listenerFlagOf], when the core takes its
+     * address but the app does not reach it there; null when it does, or when the command names none and the app gives it
+     * one. The app dials the core on 127.0.0.1 (the Xray outbound, the readiness probe, the port checks), which a listener
+     * on 0.0.0.0 or :: answers as well, see [AetherCoreManager.reachesLoopback], but one on 127.0.0.2, ::1 or a network's
+     * address does not: the session would stay connecting.
+     */
+    val unreachableListener: String?
+        get() {
+            val flag = AetherCoreManager.listenerFlagOf(arguments)
+            val address = AetherCoreManager.listenerAddressAfter(arguments, flag) ?: return null
+            if (!AetherCoreManager.isSocketAddress(address)) return null
+            return flag.takeUnless { AetherCoreManager.reachesLoopback(address.substringBeforeLast(':')) }
+        }
+
+    /**
      * The ports of [listeners], in their order, but 0, which asks for any port: the port the arguments name, or the
      * core's default for a listener they leave out, see [AetherCoreManager.defaultListenerPorts]. A command written by
      * hand that names only Tor's listener still has the core's own on 1819.

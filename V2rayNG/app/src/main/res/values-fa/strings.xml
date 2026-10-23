@@ -615,6 +615,7 @@
     <string name="aether_secondary_port_in_use">پورت %1$d، که سه تا بالاتر از پورت شنود Aether است و Xray آن را باز می‌کند تا هستهٔ Aether از راه آن به بیرون وصل شود، در اختیار برنامهٔ دیگری است؛ پورت شنود Aether را در تنظیمات تغییر دهید</string>
     <string name="aether_listen_port_invalid">فرمان Aether به هسته می‌گوید روی %1$d گوش دهد که پورت نیست (1 تا 65535)؛ پورت‌های فرمان را تغییر دهید</string>
     <string name="aether_listen_address_invalid">فرمان Aether به %1$s نشانی‌ای می‌دهد که هسته نمی‌پذیرد؛ پس از آن یک نشانی IP و یک پورت بنویسید، مانند 127.0.0.1:20808</string>
+    <string name="aether_listen_address_unreachable">فرمان Aether به %1$s نشانی‌ای می‌دهد که برنامه به آن وصل نمی‌شود: برنامه از راه 127.0.0.1 به هسته وصل می‌شود؛ بنابراین پس از آن 127.0.0.1 (یا 0.0.0.0 برای همهٔ نشانی‌ها) و یک پورت بنویسید</string>
     <string name="aether_listen_port_shared">فرمان Aether به هسته می‌گوید با دو شنونده روی %1$d گوش دهد (شنونده‌ای که فرمان نامی از آن نمی‌برد باز هم گوش می‌دهد: آنکه برنامه به آن وصل می‌شود روی پورت شنود Aether، و بقیه روی پورت پیش‌فرض هسته: 1819، 1820 یا 1821)؛ به هر شنونده پورت جداگانه‌ای بدهید</string>
     <string name="aether_lab_psiphon">سایفون</string>
     <string name="aether_lab_psiphon_mode">نحوه اتصال سایفون</string>

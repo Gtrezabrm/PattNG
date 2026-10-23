@@ -613,6 +613,7 @@
     <string name="aether_secondary_port_in_use">Cổng %1$d, lớn hơn cổng lắng nghe của Aether ba đơn vị, là cổng Xray mở để lõi Aether kết nối ra ngoài, đang được một ứng dụng khác sử dụng; hãy đổi cổng lắng nghe của Aether trong phần cài đặt</string>
     <string name="aether_listen_port_invalid">Lệnh Aether bảo lõi lắng nghe trên %1$d, nhưng đó không phải là cổng (từ 1 đến 65535); hãy đổi các cổng của lệnh</string>
     <string name="aether_listen_address_invalid">Lệnh Aether cho %1$s một địa chỉ mà lõi không nhận; hãy viết sau nó một địa chỉ IP và một cổng, chẳng hạn 127.0.0.1:20808</string>
+    <string name="aether_listen_address_unreachable">Lệnh Aether cho %1$s một địa chỉ mà ứng dụng không kết nối tới: ứng dụng kết nối với lõi qua 127.0.0.1, vì vậy hãy viết sau nó 127.0.0.1 (hoặc 0.0.0.0 cho mọi địa chỉ) và một cổng</string>
     <string name="aether_listen_port_shared">Lệnh Aether bảo lõi lắng nghe trên %1$d bằng hai trình lắng nghe của nó (trình lắng nghe mà lệnh bỏ qua vẫn lắng nghe: trình mà ứng dụng kết nối tới nằm trên cổng lắng nghe của Aether, các trình khác nằm trên cổng mặc định của lõi: 1819, 1820 hoặc 1821); hãy cho mỗi trình lắng nghe một cổng riêng</string>
     <string name="aether_lab_psiphon">Psiphon</string>
     <string name="aether_lab_psiphon_mode">Kết nối Psiphon</string>

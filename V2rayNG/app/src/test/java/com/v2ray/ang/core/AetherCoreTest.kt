@@ -436,12 +436,40 @@ class AetherCoreTest {
     }
 
     @Test
+    fun theListenerTheAppDialsIsWhereTheAppReachesIt() {
+        // The app dials the core on 127.0.0.1, which a listener on 0.0.0.0 answers as well.
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819")!!.unreachableListener)
+        assertNull(AetherCore.ofCommand("aether --wg --bind 0.0.0.0:10819")!!.unreachableListener)
+        // :: as well: Android opens an IPv6 socket to IPv4 too.
+        assertNull(AetherCore.ofCommand("aether --wg --bind [::]:10819")!!.unreachableListener)
+        assertNull(AetherCore.ofCommand("aether --wg --bind [::ffff:127.0.0.1]:10819")!!.unreachableListener)
+        // Another loopback address, IPv6's, or a network's: the session would stay connecting.
+        assertEquals("--bind", AetherCore.ofCommand("aether --wg --bind 127.0.0.2:10819")!!.unreachableListener)
+        assertEquals("--bind", AetherCore.ofCommand("aether --wg --bind [::1]:10819")!!.unreachableListener)
+        assertEquals("--bind", AetherCore.ofCommand("aether --wg --bind 192.168.1.5:10819")!!.unreachableListener)
+        // With Tor or Psiphon inside the tunnel the app dials theirs, and the core's own may listen anywhere.
+        assertNull(AetherCore.ofCommand("aether --wg --tor --bind 192.168.1.5:10820 --tor-bind 127.0.0.1:10819")!!.unreachableListener)
+        assertEquals(AetherCoreManager.TOR_BIND, AetherCore.ofCommand("aether --wg --tor --tor-bind [::1]:10819")!!.unreachableListener)
+        assertEquals(
+            AetherCoreManager.PSIPHON_BIND,
+            AetherCore.ofCommand("aether --wg --psiphon --psiphon-bind 10.0.0.1:10819")!!.unreachableListener,
+        )
+        // An HTTP proxy may listen on a network's address; nobody in the app dials it.
+        assertNull(AetherCore.ofCommand("aether --wg --bind 127.0.0.1:10819 --http-proxy 192.168.1.5:8118")!!.unreachableListener)
+        // An address the core does not take is another problem, and one the command leaves out the app gives on 127.0.0.1.
+        assertNull(AetherCore.ofCommand("aether --wg --bind localhost:20808")!!.unreachableListener)
+        assertNull(AetherCore.ofCommand("aether --wg --http-proxy 192.168.1.5:8118")!!.unreachableListener)
+        assertNull(AetherCore.of(pinned.copy(aetherTor = "chain")).unreachableListener)
+    }
+
+    @Test
     fun theListenerTheAppDialsIsReadTrimmedAsTheCoreReadsIt() {
         // Tor inside the tunnel, dialled on its listener, which the core reads trimmed: the app dials the same port.
         val tor = AetherCore.ofCommand("aether --masque --tor --tor-bind '127.0.0.1:10820 '")!!
         assertEquals(10820, tor.port)
         assertEquals(listOf(1819, 10820), tor.ports)
         assertNull(tor.invalidListener)
+        assertNull(tor.unreachableListener)
         // The core's own listener is read as written, so a space keeps the app from reading its port at all.
         assertNull(AetherCore.ofCommand("aether --wg --bind '127.0.0.1:10819 '"))
     }

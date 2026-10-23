@@ -1,6 +1,7 @@
 package com.v2ray.ang.ui.server
 
 import com.v2ray.ang.R
+import com.v2ray.ang.core.AetherCoreManager
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.fmt.AetherFmt
@@ -17,6 +18,7 @@ class AetherProblemsTest {
         AetherFmt.Problem.LISTEN_PORT_SHARED,
         AetherFmt.Problem.LISTEN_PORT_INVALID,
         AetherFmt.Problem.LISTEN_ADDRESS_INVALID,
+        AetherFmt.Problem.LISTEN_ADDRESS_UNREACHABLE,
     )
 
     @Test
@@ -65,6 +67,11 @@ class AetherProblemsTest {
             EditorMessage(R.string.aether_listen_address_invalid, "--bind"),
             messageOfAetherProblem(AetherFmt.Problem.LISTEN_ADDRESS_INVALID, noAddress, emptySet(), 10819),
         )
+        val unreachable = profile("aether --wg --tor --tor-bind [::1]:20808")
+        assertEquals(
+            EditorMessage(R.string.aether_listen_address_unreachable, AetherCoreManager.TOR_BIND),
+            messageOfAetherProblem(AetherFmt.Problem.LISTEN_ADDRESS_UNREACHABLE, unreachable, emptySet(), 10819),
+        )
     }
 
     @Test
@@ -86,6 +93,10 @@ class AetherProblemsTest {
         assertEquals(
             EditorMessage(R.string.aether_listen_address_invalid, ""),
             messageOfAetherProblem(AetherFmt.Problem.LISTEN_ADDRESS_INVALID, profile("   "), emptySet(), 20808),
+        )
+        assertEquals(
+            EditorMessage(R.string.aether_listen_address_unreachable, ""),
+            messageOfAetherProblem(AetherFmt.Problem.LISTEN_ADDRESS_UNREACHABLE, settings, emptySet(), 20808),
         )
     }
 }

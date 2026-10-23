@@ -1723,6 +1723,51 @@ class AetherCoreManagerTest {
     }
 
     @Test
+    fun aListenerAnswersTheAppOnLoopbackOrOnEveryAddress() {
+        listOf(
+            "127.0.0.1", "0.0.0.0", "[::]", "[0:0:0:0:0:0:0:0]", "[::0]", "[::ffff:127.0.0.1]", "[::FFFF:7f00:1]",
+            "[0:0:0:0:0:ffff:127.0.0.1]", "[::ffff:0.0.0.0]",
+        ).forEach { assertTrue(AetherCoreManager.reachesLoopback(it), it) }
+        listOf("127.0.0.2", "192.168.1.5", "[::1]", "[::ffff:127.0.0.2]", "[::ffff:10.0.0.1]", "[1::]", "[fe80::1%2]", "[::ffff:0:1]")
+            .forEach { assertFalse(AetherCoreManager.reachesLoopback(it), it) }
+    }
+
+    @Test
+    fun theGroupsOfAnIpv6AddressAreReadAsRustReadsThem() {
+        assertEquals(listOf(0, 0, 0, 0, 0, 0xFFFF, 0x7F00, 1), AetherCoreManager.ipv6Groups("::ffff:127.0.0.1")!!.toList())
+        assertEquals(listOf(1, 2, 0, 0, 0, 0, 0, 8), AetherCoreManager.ipv6Groups("1:2::8")!!.toList())
+        assertEquals(listOf(1, 2, 3, 4, 5, 6, 7, 8), AetherCoreManager.ipv6Groups("1:2:3:4:5:6:7:8")!!.toList())
+        assertNull(AetherCoreManager.ipv6Groups("1::2::3"))
+        assertNull(AetherCoreManager.ipv6Groups("fe80::1%2"))
+    }
+
+    @Test
+    fun aStartRefusesACommandTheCoreCannotRunAsTheEditorDoesAndInItsOrder() {
+        fun refusal(command: String, content: String = "{}") = AetherCoreManager.refusalOf(AetherCore.ofCommand(command)!!, content)
+        val inbound = """{"inbounds": [{"protocol": "socks", "port": 20808}]}"""
+        // A number that is no port first, then an address the core does not take, one the app does not reach, a port
+        // two listeners share, and a port an inbound of the configuration listens on.
+        assertEquals(R.string.aether_listen_port_invalid to 70000, refusal("aether --wg --bind localhost:70000", inbound)?.let { it.message to it.argument })
+        assertEquals(
+            R.string.aether_listen_address_invalid to "--bind",
+            refusal("aether --wg --bind localhost:20808 --http-proxy 127.0.0.1:20808", inbound)?.let { it.message to it.argument },
+        )
+        assertEquals(
+            R.string.aether_listen_address_unreachable to "--bind",
+            refusal("aether --wg --bind [::1]:20808 --http-proxy 127.0.0.1:20808", inbound)?.let { it.message to it.argument },
+        )
+        assertEquals(
+            R.string.aether_listen_port_shared to 20808,
+            refusal("aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:20808", inbound)?.let { it.message to it.argument },
+        )
+        assertEquals(R.string.aether_listen_port_taken to 20808, refusal("aether --wg --bind 127.0.0.1:20808", inbound)?.let { it.message to it.argument })
+        // The log names the port or the option, never the address written.
+        assertEquals("the Aether command gives --bind an address the app does not dial", refusal("aether --wg --bind [::1]:20808")?.reason)
+        assertNull(refusal("aether --wg --bind 127.0.0.1:20808"))
+        assertNull(refusal("aether --wg --bind [::]:20808", inbound.replace("20808", "20809")))
+    }
+
+    @Test
     fun aNumberACommandNamesThatIsNoPortIsFoundBeforeThePortsAreChecked() {
         val core = AetherCore.ofCommand(
             "aether --wg --tor --bind 127.0.0.1:10819 --tor-bind 127.0.0.1:10820 --http-proxy 127.0.0.1:70000 --tor-http 127.0.0.1:-1"

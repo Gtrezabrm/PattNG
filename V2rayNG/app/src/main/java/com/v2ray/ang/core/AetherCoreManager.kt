@@ -613,6 +613,33 @@ object AetherCoreManager {
     internal fun invalidPort(core: AetherCore): Int? =
         core.port.takeIf { it !in 1..65535 } ?: core.ports.firstOrNull { it !in 1..65535 }
 
+    /** PattNG: why a start refuses its session: [reason] for the log, [message] with [argument] for the main screen. */
+    internal data class Refusal(val reason: String, @StringRes val message: Int, val argument: Any)
+
+    /**
+     * PattNG: why a start refuses a session on [core], whose configuration is [content], before it looks at the ports
+     * other programs hold; null when it does not. A command written by hand may name a number that is no port, an address
+     * the core does not take, where it would quietly listen on its default instead, a listener the app dials where it
+     * does not reach it, where the session would stay connecting, or one port for two of its listeners: the core could not
+     * run as told, and the session would fail only once Xray had started. Then a port an inbound of the configuration
+     * listens on: Xray would take it first, and the Aether outbound would dial the configuration's own inbound, or the
+     * core could not open the HTTP proxy a command names there. In this order, the editor's too (AetherFmt.normalize).
+     */
+    internal fun refusalOf(core: AetherCore, content: String): Refusal? {
+        invalidPort(core)?.let { return Refusal("the Aether command names $it, which is no port", R.string.aether_listen_port_invalid, it) }
+        core.invalidListener?.let {
+            return Refusal("the Aether command gives $it an address the core does not take", R.string.aether_listen_address_invalid, it)
+        }
+        core.unreachableListener?.let {
+            return Refusal("the Aether command gives $it an address the app does not dial", R.string.aether_listen_address_unreachable, it)
+        }
+        core.sharedPort?.let { return Refusal("the Aether command names port $it for two of its listeners", R.string.aether_listen_port_shared, it) }
+        core.ports.firstOrNull { AetherDependency.inboundListensOn(content, it) }?.let {
+            return Refusal("an inbound of the configuration listens on the Aether port $it", R.string.aether_listen_port_taken, it)
+        }
+        return null
+    }
+
     /**
      * True when [port] can be bound on the loopback address now: over TCP, and over UDP as well for the
      * secondary-socks inbound. The TCP probe reuses the address as the listeners of the core and of Xray do, so
@@ -1424,6 +1451,38 @@ object AetherCoreManager {
     internal fun isRustWhitespace(c: Char): Boolean =
         c in '\u0009'..'\u000D' || c == ' ' || c == '\u0085' || c == '\u00A0' || c == '\u1680' || c in '\u2000'..'\u200A' ||
             c == '\u2028' || c == '\u2029' || c == '\u202F' || c == '\u205F' || c == '\u3000'
+
+    /**
+     * PattNG: whether a listener bound on [host], an IPv4 address, or an IPv6 one in brackets, as [isSocketAddress] takes
+     * it, answers a connection to 127.0.0.1, where the app dials the core: 127.0.0.1 itself and every IPv4 address,
+     * 0.0.0.0; and, since Android, as Linux, opens an IPv6 socket to IPv4 as well unless told otherwise, which the core
+     * never does (tokio and mio set no IPV6_V6ONLY), every address of IPv6, ::, and the IPv4-mapped spellings of those two.
+     */
+    internal fun reachesLoopback(host: String): Boolean {
+        if (!host.startsWith('[')) return host == AppConfig.LOOPBACK || host == "0.0.0.0"
+        val groups = ipv6Groups(host.removePrefix("[").removeSuffix("]").substringBefore('%')) ?: return false
+        if (groups.all { it == 0 }) return true
+        val mapped = (0..4).all { groups[it] == 0 } && groups[5] == 0xFFFF
+        return mapped && ((groups[6] == 0x7F00 && groups[7] == 0x0001) || (groups[6] == 0 && groups[7] == 0))
+    }
+
+    /** PattNG: the eight 16-bit groups of the IPv6 address [text], as [isIpv6Literal] takes it without a scope; null for none. */
+    internal fun ipv6Groups(text: String): IntArray? {
+        if ('%' in text || !isIpv6Literal(text)) return null
+        fun groupsOf(part: String): List<Int> = if (part.isEmpty()) emptyList() else part.split(':').flatMap { group ->
+            if ('.' in group) {
+                val octets = group.split('.').map { it.toInt() }
+                listOf((octets[0] shl 8) or octets[1], (octets[2] shl 8) or octets[3])
+            } else {
+                listOf(group.toInt(16))
+            }
+        }
+        val halves = text.split("::")
+        val head = groupsOf(halves[0])
+        val tail = if (halves.size == 2) groupsOf(halves[1]) else emptyList()
+        val zeros = if (halves.size == 2) 8 - head.size - tail.size else 0
+        return (head + List(zeros) { 0 } + tail).toIntArray()
+    }
 
     /**
      * PattNG: true when the core takes [address] for a listener, as Rust's SocketAddr reads it: an IPv4 address, or an

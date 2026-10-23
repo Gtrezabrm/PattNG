@@ -41,6 +41,7 @@ object AetherFmt : FmtBase() {
         LISTEN_PORT_SHARED,
         LISTEN_PORT_INVALID,
         LISTEN_ADDRESS_INVALID,
+        LISTEN_ADDRESS_UNREACHABLE,
         PSIPHON_NEEDS_MASQUE,
         NEXT_PORT_TAKEN,
         TOR_NEEDS_MASQUE,
@@ -437,9 +438,11 @@ object AetherFmt : FmtBase() {
         config.aetherCommand = text.ifEmpty { null }
         if (text.isEmpty()) return null
         val core = AetherCore.ofCommand(text, listenPort) ?: return Problem.INVALID_COMMAND
-        // PattNG: as a start checks it: a number that is no port, an address the core does not take, then ports.
+        // PattNG: as a start checks it: a number that is no port, an address the core does not take, one where the app
+        // does not reach the listener it dials, then ports.
         if (AetherCoreManager.invalidPort(core) != null) return Problem.LISTEN_PORT_INVALID
         if (core.invalidListener != null) return Problem.LISTEN_ADDRESS_INVALID
+        if (core.unreachableListener != null) return Problem.LISTEN_ADDRESS_UNREACHABLE
         if (core.sharedPort != null) return Problem.LISTEN_PORT_SHARED
         return if (core.ports.any { it in takenPorts }) Problem.LISTEN_PORT_TAKEN else null
     }
@@ -464,6 +467,14 @@ object AetherFmt : FmtBase() {
      */
     fun invalidListener(config: ProfileItem, listenPort: Int = AetherCoreManager.socksPort): String? =
         commandCore(config, listenPort)?.invalidListener
+
+    /**
+     * PattNG: the option [Problem.LISTEN_ADDRESS_UNREACHABLE] is about, for its message: the option of the listener the
+     * app dials, when the command [config] carries puts it where the app does not reach it, as [normalize] finds it; null
+     * when there is none.
+     */
+    fun unreachableListener(config: ProfileItem, listenPort: Int = AetherCoreManager.socksPort): String? =
+        commandCore(config, listenPort)?.unreachableListener
 
     /** PattNG: the core of the command [config] carries in place of its settings, as [normalize] reads it; null for none. */
     private fun commandCore(config: ProfileItem, listenPort: Int): AetherCore? =
