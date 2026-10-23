@@ -1,5 +1,7 @@
 package com.v2ray.ang.ui.main
 
+import java.util.Locale
+
 /** What the service last said about its running state, which decides what a stop means. */
 internal enum class RunningSignal {
     /** The service runs: started, or answered a query. */
@@ -68,3 +70,16 @@ internal object HomeConnection {
         return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%d:%02d".format(m, s)
     }
 }
+
+/** Normalize the ISO country code supplied by the exit-IP lookup; names are deliberately not guessed. */
+internal fun normalizeCountryCode(country: String?): String? =
+    country?.trim()?.uppercase(Locale.ROOT)?.takeIf { code ->
+        code.length == 2 && code.all { it in 'A'..'Z' }
+    }
+
+/** Render a regional-indicator flag only when the lookup returned a valid ISO alpha-2 code. */
+internal fun countryFlagEmoji(countryCode: String?): String =
+    normalizeCountryCode(countryCode)
+        ?.map { character -> String(Character.toChars(0x1F1E6 + (character - 'A'))) }
+        ?.joinToString("")
+        .orEmpty()

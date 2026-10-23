@@ -225,8 +225,7 @@ class MainViewModel(
                             ?: it.connectionPingMillis,
                         connectionIpAddress = event.result.ipAddress?.takeIf { ip -> ip.isNotBlank() }
                             ?: it.connectionIpAddress,
-                        connectionCountryCode = event.result.country?.trim()?.uppercase()
-                            ?.takeIf { code -> code.length == 2 && code.all { it in 'A'..'Z' } }
+                        connectionCountryCode = normalizeCountryCode(event.result.country)
                             ?: it.connectionCountryCode,
                     )
                 }

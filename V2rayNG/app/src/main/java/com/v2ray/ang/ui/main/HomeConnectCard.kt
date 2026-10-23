@@ -367,12 +367,7 @@ private fun HomeCardDetailsBlock(
 /** One read-only figure; it is a single semantic node, so it is spoken as "label, value". */
 @Composable
 private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: String?, modifier: Modifier = Modifier) {
-    val flag = countryCode
-        ?.uppercase()
-        ?.takeIf { code -> code.length == 2 && code.all { it in 'A'..'Z' } }
-        ?.map { character -> String(Character.toChars(0x1F1E6 + (character - 'A'))) }
-        ?.joinToString("")
-        .orEmpty()
+    val flag = countryFlagEmoji(countryCode)
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f),
