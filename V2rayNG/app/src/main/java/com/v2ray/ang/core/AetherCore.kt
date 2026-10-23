@@ -43,8 +43,8 @@ data class AetherCore(val arguments: List<String>, val exit: AetherExit = Aether
 
     /**
      * The first port two of the listeners the core binds share, as a command written by hand may name; null when
-     * each has a port of its own. The core would bind one of them and fail on the other, once its tunnel is up and
-     * Xray dials it. Ports are told apart by number, as everywhere else in the app.
+     * each has a port of its own. The core would bind one of them and fail on the other as it starts. Ports are told
+     * apart by number, as everywhere else in the app.
      */
     val sharedPort: Int?
         get() {

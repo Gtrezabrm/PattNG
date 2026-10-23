@@ -1077,13 +1077,13 @@ class AetherCoreManagerTest {
     fun theEndOfTorOrPsiphonInsideTheTunnelIsToldFromTheirOtherLines() {
         val tor = listOf("--masque", "--tor", "--tor-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
         val psiphon = listOf("--masque", "--psiphon", "--psiphon-bind", "127.0.0.1:10819", "--bind", "127.0.0.1:10820")
-        // The core's lines as it writes them (aether lib.rs, run_chain): an error's words start with the label of its
+        // The core's lines as it writes them (aether lib.rs, watch_chain): an error's words start with the label of its
         // kind, as AetherError::Other shows it.
         val torEnded = "[2026-10-23T10:00:00.000Z ERROR aether] [-] tor: other: the tor socks5 listener cannot use 127.0.0.1:10819: " +
-            "Address already in use (os error 98); another program already listens there, so stop it or choose another port with --bind"
+            "Address already in use (os error 98); another program already listens there, so stop it or choose another port with --tor-bind"
         assertEquals(
             "tor: the tor socks5 listener cannot use 127.0.0.1:10819: Address already in use (os error 98); " +
-                "another program already listens there, so stop it or choose another port with --bind",
+                "another program already listens there, so stop it or choose another port with --tor-bind",
             AetherCoreManager.chainEndWords(torEnded, tor)
         )
         assertEquals(

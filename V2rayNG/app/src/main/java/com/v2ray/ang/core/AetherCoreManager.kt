@@ -186,9 +186,10 @@ object AetherCoreManager {
     private const val SOCKS_VERSION = 5
 
     /**
-     * The core's word that Psiphon has a tunnel: "psiphon is ready". Psiphon's listener answers the
-     * greeting as soon as it is bound and closes every connection until then, so the greeting alone
-     * says nothing where the app dials Psiphon.
+     * The core's word that Psiphon has a tunnel: "psiphon is ready". The app waits for it as well as for the
+     * greeting's answer where it dials Psiphon: Psiphon's own listener answers the greeting before it has a tunnel.
+     * The core holds that listener itself and passes clients on to Psiphon only once it has said this word, so the
+     * answer comes with the word there.
      */
     private val psiphonReady = Regex("""psiphon is ready""")
 
@@ -971,11 +972,11 @@ object AetherCoreManager {
     /**
      * PattNG: the core's words, as "tor: ..." or "psiphon: ...", when [line] says that Tor or Psiphon inside the
      * tunnel, whose listener a session started with [arguments] is dialled on, has ended or could not start; null
-     * for any other line, and for a session dialled on the core's own listener. The core logs it and goes on without
-     * that listener (aether lib.rs, run_chain: "[-] tor: {e}" and "[-] psiphon: {e}" at the error level, from the
-     * crate's root, the target "aether"), where another program may listen then and get what Xray sends there. The
-     * notices of the Psiphon client that the core passes on, under the same "[-] psiphon: ", come from its psiphon
-     * module, "aether::psiphon". The label of the error's kind, "other: " or "io: ", is left out of the words.
+     * for any other line, and for a session dialled on the core's own listener. The core logs it and ends (aether
+     * lib.rs, watch_chain: "[-] {name}: {e}" at the error level under the target "aether"), and the session stops
+     * with these words. The notices of the Psiphon client that the core passes on, under the same "[-] psiphon: ",
+     * come from its psiphon module, "aether::psiphon". The label of the error's kind, "other: " or "io: ", is left
+     * out of the words.
      */
     internal fun chainEndWords(line: String, arguments: List<String>): String? {
         val header = logHeader(line.trim()) ?: return null
@@ -1563,8 +1564,8 @@ object AetherCoreManager {
                 if (target.chainEnd == null && session === target) {
                     chainEndWords(line, target.arguments)?.let { words ->
                         target.chainEnd = words
-                        // The core goes on without the listener Xray dials, which another program may hold now. It is
-                        // ended, and its exit stops the session as an exit on its own does.
+                        // The core ends on this line itself; ending it here as well does not wait for that, and its
+                        // exit stops the session as an exit on its own does.
                         LogUtil.w(AppConfig.TAG, "AetherCore: ending the session core, Tor or Psiphon inside the tunnel has ended")
                         process.destroy()
                     }
