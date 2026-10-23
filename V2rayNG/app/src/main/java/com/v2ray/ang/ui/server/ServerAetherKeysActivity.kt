@@ -165,30 +165,38 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
             }
         }
         // Where the calls to the WARP API go, the server name of their ClientHello and their HTTP host: each left blank
-        // follows the next, as the core has them, the address the server name and the server name the host.
-        FormTextField(
-            stringResource(R.string.aether_keys_lab_enroll_address),
-            settings.enrollAddress,
-            viewModel::setEnrollAddress,
+        // follows the next, as the core has them, the address the server name and the server name the host. Each is
+        // written, or picked from the two names of the API.
+        val apiNames = stringArrayResource(R.array.aether_api_name_options).toList()
+        FormDropdownField(
+            label = stringResource(R.string.aether_keys_lab_enroll_address),
+            value = settings.enrollAddress,
+            options = apiNames,
+            onValueChange = viewModel::setEnrollAddress,
+            editable = true,
             enabled = enabled,
-            keyboardType = KeyboardType.Uri,
-            placeholder = stringResource(R.string.aether_keys_hint_enroll_address)
+            placeholder = stringResource(R.string.aether_keys_hint_enroll_address),
+            keyboardType = KeyboardType.Uri
         )
-        FormTextField(
-            stringResource(R.string.aether_keys_lab_api_sni),
-            settings.apiSni,
-            viewModel::setApiSni,
+        FormDropdownField(
+            label = stringResource(R.string.aether_keys_lab_api_sni),
+            value = settings.apiSni,
+            options = apiNames,
+            onValueChange = viewModel::setApiSni,
+            editable = true,
             enabled = enabled,
-            keyboardType = KeyboardType.Uri,
-            placeholder = stringResource(R.string.aether_keys_hint_api_sni)
+            placeholder = stringResource(R.string.aether_keys_hint_api_sni),
+            keyboardType = KeyboardType.Uri
         )
-        FormTextField(
-            stringResource(R.string.aether_keys_lab_api_host),
-            settings.apiHost,
-            viewModel::setApiHost,
+        FormDropdownField(
+            label = stringResource(R.string.aether_keys_lab_api_host),
+            value = settings.apiHost,
+            options = apiNames,
+            onValueChange = viewModel::setApiHost,
+            editable = true,
             enabled = enabled,
-            keyboardType = KeyboardType.Uri,
-            supportingText = stringResource(R.string.aether_keys_hint_api_host)
+            supportingText = stringResource(R.string.aether_keys_hint_api_host),
+            keyboardType = KeyboardType.Uri
         )
         // --fragment, which in a run that only registers keys sends the ClientHello of the calls to the WARP API in
         // pieces, as the editor's fragmenting of MASQUE over HTTP/2 does for those calls and the handshake.

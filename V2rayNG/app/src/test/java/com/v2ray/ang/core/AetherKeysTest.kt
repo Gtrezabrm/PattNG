@@ -187,6 +187,23 @@ class AetherKeysTest {
     }
 
     @Test
+    fun theApiFieldsOfferTheTwoNamesOfTheApiAndStartBlank() {
+        // The dropdowns of the API address, server name and host, read from the app's resources: the name the core goes
+        // by first, then the other one.
+        assertEquals(listOf("api.devices.cloudflare.com", "api.cloudflareclient.com"), AppResources.stringArray("aether_api_name_options"))
+        // None of them is chosen until one is picked or written: blank is the core's own.
+        val defaults = AetherKeysSettings()
+        assertEquals(listOf("", "", ""), listOf(defaults.enrollAddress, defaults.apiSni, defaults.apiHost))
+        // Each name picked goes to the core as it is.
+        for (name in AppResources.stringArray("aether_api_name_options")) {
+            val picked = AetherKeysSettings(enrollAddress = name, apiSni = name, apiHost = name)
+            assertNull(AetherKeys.problem(picked), name)
+            val arguments = AetherKeys.arguments(picked)
+            assertEquals(listOf(name, name, name), listOf("--api-address", "--api-sni", "--api-host").map { valueAfter(arguments, it) })
+        }
+    }
+
+    @Test
     fun theApiServerNameAndHostGoTrimmedAndBlankLeavesTheCoresOwn() {
         val blank = AetherKeys.arguments(AetherKeysSettings(apiSni = " ", apiHost = ""))
         assertFalse("--api-sni" in blank)
