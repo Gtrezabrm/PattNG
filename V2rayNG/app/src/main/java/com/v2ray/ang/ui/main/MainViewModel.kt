@@ -225,6 +225,9 @@ class MainViewModel(
                             ?: it.connectionPingMillis,
                         connectionIpAddress = event.result.ipAddress?.takeIf { ip -> ip.isNotBlank() }
                             ?: it.connectionIpAddress,
+                        connectionCountryCode = event.result.country?.trim()?.uppercase()
+                            ?.takeIf { code -> code.length == 2 && code.all { it in 'A'..'Z' } }
+                            ?: it.connectionCountryCode,
                     )
                 }
             }
@@ -1134,6 +1137,7 @@ class MainViewModel(
                 connectionIssue = HomeConnection.issueAfter(state.connectionIssue, state.isRunning, signal, userRequested),
                 connectionPingMillis = if (running) state.connectionPingMillis else null,
                 connectionIpAddress = if (running) state.connectionIpAddress else null,
+                connectionCountryCode = if (running) state.connectionCountryCode else null,
                 connectedSinceNanos = if (running) state.connectedSinceNanos ?: now else null,
             )
         }

@@ -73,6 +73,7 @@ fun HomeScreen(
                 pingMillis = uiState.connectionPingMillis?.toInt(),
                 duration = duration,
                 ipAddress = uiState.connectionIpAddress,
+                countryCode = uiState.connectionCountryCode,
             )
         } else {
             null

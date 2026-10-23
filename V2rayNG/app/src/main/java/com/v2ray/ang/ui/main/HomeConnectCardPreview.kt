@@ -15,6 +15,8 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 private val mockDetails = HomeCardDetails(
     pingMillis = 84,
     duration = "30:47",
+    ipAddress = "203.0.113.10",
+    countryCode = "DE",
     download = "5.8 MB/s",
     upload = "773 KB/s",
 )

@@ -54,6 +54,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
 
@@ -78,6 +79,7 @@ data class HomeCardDetails(
     val pingMillis: Int?,
     val duration: String,
     val ipAddress: String? = null,
+    val countryCode: String? = null,
     val download: String? = null,
     val upload: String? = null,
 )
@@ -139,7 +141,7 @@ fun HomeConnectCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
-                        .padding(24.dp),
+                        .padding(20.dp),
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -161,7 +163,7 @@ fun HomeConnectCard(
                         .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     HomeCardMain(model, colors, onConnectClick, onStatusActionClick)
                     if (showDetails) {
@@ -297,12 +299,12 @@ private fun HomeCardDetailsSection(
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "home-details-arrow",
     )
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .toggleable(value = open, role = Role.Button, onValueChange = onToggle)
-                .padding(vertical = 8.dp),
+                .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -337,19 +339,25 @@ private fun HomeCardDetailsBlock(
     val tiles = buildList {
         add(stringResource(R.string.home_details_ping) to pingText)
         add(stringResource(R.string.home_details_duration) to details.duration)
-        add(stringResource(R.string.home_details_ip) to (details.ipAddress?.takeIf { it.isNotBlank() } ?: "—"))
         details.download?.let { add(stringResource(R.string.home_details_download) to it) }
         details.upload?.let { add(stringResource(R.string.home_details_upload) to it) }
     }
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         tiles.chunked(2).forEach { pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 pair.forEach { (label, value) ->
                     HomeDetailTile(label = label, value = value, modifier = Modifier.weight(1f))
                 }
-                if (pair.size == 1) Box(modifier = Modifier.weight(1f))
             }
         }
+        HomeIpDetailTile(
+            label = stringResource(R.string.home_details_ip),
+            ipAddress = details.ipAddress?.takeIf { it.isNotBlank() } ?: "—",
+            countryCode = details.countryCode,
+        )
         OutlinedButton(onClick = onRefreshPingClick, modifier = Modifier.fillMaxWidth()) {
             Text(stringResource(R.string.home_details_test_ping))
         }
@@ -358,14 +366,51 @@ private fun HomeCardDetailsBlock(
 
 /** One read-only figure; it is a single semantic node, so it is spoken as "label, value". */
 @Composable
+private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: String?, modifier: Modifier = Modifier) {
+    val flag = countryCode
+        ?.uppercase()
+        ?.takeIf { code -> code.length == 2 && code.all { it in 'A'..'Z' } }
+        ?.map { character -> String(Character.toChars(0x1F1E6 + (character - 'A'))) }
+        ?.joinToString("")
+        .orEmpty()
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f),
+        contentColor = LocalContentColor.current,
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
+            Text(text = label, style = MaterialTheme.typography.labelMedium)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (flag.isNotEmpty()) {
+                    Text(text = flag, style = MaterialTheme.typography.titleMedium)
+                }
+                Text(
+                    text = ipAddress,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun HomeDetailTile(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f),
         contentColor = LocalContentColor.current,
         modifier = modifier.semantics(mergeDescendants = true) {},
     ) {
-        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
             Text(text = label, style = MaterialTheme.typography.labelMedium)
             Text(text = value, style = MaterialTheme.typography.titleLarge)
         }

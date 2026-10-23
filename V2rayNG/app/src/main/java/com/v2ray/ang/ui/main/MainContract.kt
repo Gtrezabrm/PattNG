@@ -46,6 +46,9 @@ data class MainUiState(
     /** IP address returned by the latest successful test of the running connection. */
     val connectionIpAddress: String? = null,
 
+    /** ISO 3166-1 alpha-2 code for the exit IP, when the IP lookup supplies one. */
+    val connectionCountryCode: String? = null,
+
     /** [System.nanoTime] when the running state began; null while not running. */
     val connectedSinceNanos: Long? = null,
     val locateTarget: LocateTarget? = null,
