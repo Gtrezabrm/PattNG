@@ -223,6 +223,8 @@ class MainViewModel(
                         status = MainStatus.ConnectionTest(event.result),
                         connectionPingMillis = event.result.delayMillis.takeIf { millis -> millis >= 0 }
                             ?: it.connectionPingMillis,
+                        connectionIpAddress = event.result.ipAddress?.takeIf { ip -> ip.isNotBlank() }
+                            ?: it.connectionIpAddress,
                     )
                 }
             }
@@ -1131,6 +1133,7 @@ class MainViewModel(
                 pendingStart = HomeConnection.pendingStartAfter(state.pendingStart, signal),
                 connectionIssue = HomeConnection.issueAfter(state.connectionIssue, state.isRunning, signal, userRequested),
                 connectionPingMillis = if (running) state.connectionPingMillis else null,
+                connectionIpAddress = if (running) state.connectionIpAddress else null,
                 connectedSinceNanos = if (running) state.connectedSinceNanos ?: now else null,
             )
         }
