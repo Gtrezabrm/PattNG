@@ -609,7 +609,7 @@
     <string name="aether_invalid_hop">نشانی و پورت را با هم بنویسید، مثل 162.159.192.1:2408</string>
     <string name="aether_same_hop">دو مسیر باید نشانی متفاوت داشته باشند</string>
     <string name="aether_invalid_fragment">یک عدد یا بازه مثل 16-32 بنویسید: اندازه 1 تا 4096 بایت، تأخیر 0 تا 1000 میلی‌ثانیه</string>
-    <string name="aether_listen_port_taken">هسته نمی‌تواند روی پورت پروکسی محلی برنامه، یا روی پورتی که سه تا بالاتر از پورت شنود Aether است گوش دهد؛ پورت شنود Aether را در تنظیمات، یا پورت‌های فرمان را تغییر دهید</string>
+    <string name="aether_listen_port_taken">پورت %1$d، که هستهٔ Aether روی آن گوش می‌دهد، در اختیار یکی از inboundهای این پیکربندی است، مانند پورت پروکسی محلی یا پورتی که سه تا بالاتر از پورت شنود Aether است؛ پورت شنود Aether را در تنظیمات، یا پورت‌های فرمان را تغییر دهید</string>
     <string name="aether_secondary_port_taken">یکی از inboundهای این پیکربندی همین حالا روی %1$d گوش می‌دهد، که سه تا بالاتر از پورت شنود Aether است و هستهٔ Aether از راه آن به بیرون وصل می‌شود؛ پورت شنود Aether را در تنظیمات تغییر دهید</string>
     <string name="aether_listen_port_in_use">پورت %1$d، که هستهٔ Aether روی آن گوش می‌دهد، در اختیار برنامهٔ دیگری است؛ پورت شنود Aether را در تنظیمات، یا پورت‌های فرمان را تغییر دهید</string>
     <string name="aether_secondary_port_in_use">پورت %1$d، که سه تا بالاتر از پورت شنود Aether است و Xray آن را باز می‌کند تا هستهٔ Aether از راه آن به بیرون وصل شود، در اختیار برنامهٔ دیگری است؛ پورت شنود Aether را در تنظیمات تغییر دهید</string>

@@ -230,7 +230,7 @@ object CoreServiceManager {
             // core could not open the HTTP proxy a command names there.
             aether.ports.firstOrNull { AetherDependency.inboundListensOn(result.content, it) }?.let { port ->
                 refuseAether(service, guid, isReload, "an inbound of the configuration listens on the Aether port $port") {
-                    service.getString(R.string.aether_listen_port_taken)
+                    service.getString(R.string.aether_listen_port_taken, port)
                 }
             }
         }

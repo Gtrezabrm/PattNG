@@ -617,7 +617,7 @@
     <string name="aether_invalid_hop">اكتب العنوان والمنفذ معًا، مثل 162.159.192.1:2408</string>
     <string name="aether_same_hop">يجب أن تكون القفزتان بعنوانين مختلفين</string>
     <string name="aether_invalid_fragment">اكتب رقمًا أو نطاقًا مثل 16-32: الحجم من 1 إلى 4096 بايت، والتأخير من 0 إلى 1000 مللي ثانية</string>
-    <string name="aether_listen_port_taken">لا يمكن للنواة أن تستمع على منفذ البروكسي المحلي للتطبيق، ولا على المنفذ الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether؛ غيّر منفذ الاستماع لـ Aether في الإعدادات، أو منافذ الأمر</string>
+    <string name="aether_listen_port_taken">المنفذ %1$d، الذي تستمع عليه نواة Aether، يشغله أحد مداخل هذا الإعداد، مثل منفذ البروكسي المحلي أو المنفذ الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether؛ غيّر منفذ الاستماع لـ Aether في الإعدادات، أو منافذ الأمر</string>
     <string name="aether_secondary_port_taken">أحد مداخل هذا الإعداد يستمع بالفعل على %1$d، وهو المنفذ الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether، والذي تتصل عبره نواة Aether بالخارج؛ غيّر منفذ الاستماع لـ Aether في الإعدادات</string>
     <string name="aether_listen_port_in_use">المنفذ %1$d، الذي تستمع عليه نواة Aether، يستخدمه تطبيق آخر؛ غيّر منفذ الاستماع لـ Aether في الإعدادات، أو منافذ الأمر</string>
     <string name="aether_secondary_port_in_use">المنفذ %1$d، الذي يزيد بثلاثة عن منفذ الاستماع لـ Aether ويفتحه Xray لتتصل عبره نواة Aether بالخارج، يستخدمه تطبيق آخر؛ غيّر منفذ الاستماع لـ Aether في الإعدادات</string>

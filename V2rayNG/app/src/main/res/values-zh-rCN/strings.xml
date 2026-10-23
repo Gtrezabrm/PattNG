@@ -607,7 +607,7 @@
     <string name="aether_invalid_hop">请填写地址和端口，例如 162.159.192.1:2408</string>
     <string name="aether_same_hop">两个节点的地址必须不同</string>
     <string name="aether_invalid_fragment">请填写数字或范围，例如 16-32：大小 1–4096 字节，间隔 0–1000 毫秒</string>
-    <string name="aether_listen_port_taken">内核不能监听应用的本地代理端口，也不能监听比 Aether 监听端口大 3 的端口；请在设置中更改 Aether 监听端口，或更改命令中的端口</string>
+    <string name="aether_listen_port_taken">Aether 内核监听的端口 %1$d 已被此配置的某个入站占用，例如本地代理端口或比 Aether 监听端口大 3 的端口；请在设置中更改 Aether 监听端口，或更改命令中的端口</string>
     <string name="aether_secondary_port_taken">此配置的某个入站已在 %1$d 上监听，而这是比 Aether 监听端口大 3 的端口，Aether 内核经由它向外连接；请在设置中更改 Aether 监听端口</string>
     <string name="aether_listen_port_in_use">Aether 内核监听的端口 %1$d 已被其他应用占用；请在设置中更改 Aether 监听端口，或更改命令中的端口</string>
     <string name="aether_secondary_port_in_use">端口 %1$d 比 Aether 监听端口大 3，Xray 在此开放入站供 Aether 内核向外连接，但它已被其他应用占用；请在设置中更改 Aether 监听端口</string>

@@ -607,7 +607,7 @@
     <string name="aether_invalid_hop">請填寫位址和連接埠，例如 162.159.192.1:2408</string>
     <string name="aether_same_hop">兩個節點的位址必須不同</string>
     <string name="aether_invalid_fragment">請填寫數字或範圍，例如 16-32：大小 1–4096 位元組，間隔 0–1000 毫秒</string>
-    <string name="aether_listen_port_taken">核心不能監聽應用程式的本機代理埠，也不能監聽比 Aether 監聽連接埠大 3 的連接埠；請在設定中變更 Aether 監聽連接埠，或變更命令中的連接埠</string>
+    <string name="aether_listen_port_taken">Aether 核心監聽的連接埠 %1$d 已被此設定的某個入站佔用，例如本機代理埠或比 Aether 監聽連接埠大 3 的連接埠；請在設定中變更 Aether 監聽連接埠，或變更命令中的連接埠</string>
     <string name="aether_secondary_port_taken">此設定的某個入站已在 %1$d 上監聽，而這是比 Aether 監聽連接埠大 3 的連接埠，Aether 核心經由它向外連線；請在設定中變更 Aether 監聽連接埠</string>
     <string name="aether_listen_port_in_use">Aether 核心監聽的連接埠 %1$d 已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠，或變更命令中的連接埠</string>
     <string name="aether_secondary_port_in_use">連接埠 %1$d 比 Aether 監聽連接埠大 3，Xray 在此開放入站供 Aether 核心向外連線，但它已被其他應用程式佔用；請在設定中變更 Aether 監聽連接埠</string>

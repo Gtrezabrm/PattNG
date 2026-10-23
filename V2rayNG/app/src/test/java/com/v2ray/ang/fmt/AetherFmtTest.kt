@@ -1105,6 +1105,22 @@ class AetherFmtTest {
     }
 
     @Test
+    fun theMessageOfATakenPortNamesThatPort() {
+        // A profile built from its settings listens on the Aether listen port.
+        assertEquals(10819, AetherFmt.takenListenPort(profile { }, setOf(10808, 10819)))
+        assertEquals(20808, AetherFmt.takenListenPort(profile { }, setOf(20808), listenPort = 20808))
+        // A command written by hand: the first of its ports that is taken, its HTTP proxy's too; a blank one is none.
+        val command = profile { aetherCommand = "aether --wg --bind 127.0.0.1:20808 --http-proxy 127.0.0.1:10808" }
+        assertEquals(AetherFmt.Problem.LISTEN_PORT_TAKEN, AetherFmt.normalize(command, setOf(10808)))
+        assertEquals(10808, AetherFmt.takenListenPort(command, setOf(10808)))
+        assertEquals(10819, AetherFmt.takenListenPort(profile { aetherCommand = "   " }, setOf(10819)))
+        // Nothing taken: no port to name.
+        assertNull(AetherFmt.takenListenPort(profile { }, setOf(10808)))
+        assertNull(AetherFmt.takenListenPort(command, setOf(10809)))
+        assertNull(AetherFmt.takenListenPort(command, emptySet()))
+    }
+
+    @Test
     fun aCommandWhoseListenersShareAPortIsRefused() {
         assertEquals(
             AetherFmt.Problem.LISTEN_PORT_SHARED,

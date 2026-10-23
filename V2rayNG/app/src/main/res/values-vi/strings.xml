@@ -607,7 +607,7 @@
     <string name="aether_invalid_hop">Nhập địa chỉ và cổng, ví dụ 162.159.192.1:2408</string>
     <string name="aether_same_hop">Hai chặng phải có địa chỉ khác nhau</string>
     <string name="aether_invalid_fragment">Nhập một số hoặc khoảng như 16-32: kích thước 1–4096 byte, độ trễ 0–1000 ms</string>
-    <string name="aether_listen_port_taken">Lõi không thể lắng nghe trên cổng proxy cục bộ của ứng dụng, hay trên cổng lớn hơn cổng lắng nghe của Aether ba đơn vị; hãy đổi cổng lắng nghe của Aether trong phần cài đặt, hoặc các cổng của lệnh</string>
+    <string name="aether_listen_port_taken">Cổng %1$d, nơi lõi Aether lắng nghe, đã bị một inbound của cấu hình chiếm, như cổng proxy cục bộ hoặc cổng lớn hơn cổng lắng nghe của Aether ba đơn vị; hãy đổi cổng lắng nghe của Aether trong phần cài đặt, hoặc các cổng của lệnh</string>
     <string name="aether_secondary_port_taken">Một inbound của cấu hình này đã lắng nghe trên %1$d, là cổng lớn hơn cổng lắng nghe của Aether ba đơn vị, qua đó lõi Aether kết nối ra ngoài; hãy đổi cổng lắng nghe của Aether trong phần cài đặt</string>
     <string name="aether_listen_port_in_use">Cổng %1$d, nơi lõi Aether lắng nghe, đang được một ứng dụng khác sử dụng; hãy đổi cổng lắng nghe của Aether trong phần cài đặt, hoặc các cổng của lệnh</string>
     <string name="aether_secondary_port_in_use">Cổng %1$d, lớn hơn cổng lắng nghe của Aether ba đơn vị, là cổng Xray mở để lõi Aether kết nối ra ngoài, đang được một ứng dụng khác sử dụng; hãy đổi cổng lắng nghe của Aether trong phần cài đặt</string>

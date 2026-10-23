@@ -609,7 +609,7 @@
     <string name="aether_invalid_hop">نشونی و پورت ره با هم بنویسید، مثل 162.159.192.1:2408</string>
     <string name="aether_same_hop">دو مسیر بایس نشونی جیا داشته بوهن</string>
     <string name="aether_invalid_fragment">یه عدد یا بازه مثل 16-32 بنویسین: اندازه 1 تا 4096 بایت، تأخیر 0 تا 1000 میلی‌ثانیه</string>
-    <string name="aether_listen_port_taken">هسته نیتره رو پورت پروکسی محلی برنامه، یا رو پورتی که سه تا بالاتر زه پورت شنود Aether ـه گوش بیه؛ پورت شنود Aether نه تو تنظیمات، یا پورت‌یای فرمان نه آلشت کنین</string>
+    <string name="aether_listen_port_taken">یه inbound ای پیکربندی پورت %1$d نه، که هسته Aether رو وو گوش ایده، و کار گرؽڌه، چی پورت پروکسی محلی برنامه، یا پورتی که سه تا بالاتر زه پورت شنود Aether ـه؛ پورت شنود Aether نه تو تنظیمات، یا پورت‌یای فرمان نه آلشت کنین</string>
     <string name="aether_secondary_port_taken">یه inbound ای پیکربندی ایسا رو %1$d گوش ایده، که سه تا بالاتر زه پورت شنود Aether ـه وو هسته Aether زه ری وو بیرون وصل ابۊ؛ پورت شنود Aether نه تو تنظیمات آلشت کنین</string>
     <string name="aether_listen_port_in_use">یه برنامه دیه پورت %1$d نه، که هسته Aether رو وو گوش ایده، و کار گرؽڌه؛ پورت شنود Aether نه تو تنظیمات، یا پورت‌یای فرمان نه آلشت کنین</string>
     <string name="aether_secondary_port_in_use">یه برنامه دیه پورت %1$d نه، که سه تا بالاتر زه پورت شنود Aether ـه وو Xray وازس اکۊنه تا هسته Aether زه ری وو بیرون وصل بۊ، و کار گرؽڌه؛ پورت شنود Aether نه تو تنظیمات آلشت کنین</string>

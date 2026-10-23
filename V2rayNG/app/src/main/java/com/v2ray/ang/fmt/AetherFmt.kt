@@ -194,6 +194,17 @@ object AetherFmt : FmtBase() {
             ?: normalizeCommand(config, takenPorts, listenPort)
 
     /**
+     * PattNG: the port [Problem.LISTEN_PORT_TAKEN] is about, for its message: the Aether listen port of a profile built
+     * from its settings, or the first port of a command written by hand that [takenPorts] holds, as [normalize] finds
+     * them; null when none is taken.
+     */
+    fun takenListenPort(config: ProfileItem, takenPorts: Set<Int>, listenPort: Int = AetherCoreManager.socksPort): Int? {
+        val command = config.aetherCommand?.trim()
+        if (command.isNullOrEmpty()) return listenPort.takeIf { it in takenPorts }
+        return AetherCore.ofCommand(command, listenPort)?.ports?.firstOrNull { it in takenPorts }
+    }
+
+    /**
      * The core of a profile built from its settings listens on the Aether listen port of the settings,
      * the one port of every such core, which the local proxy may have been moved onto. A command
      * written by hand names its own ports, which [normalizeCommand] checks.
