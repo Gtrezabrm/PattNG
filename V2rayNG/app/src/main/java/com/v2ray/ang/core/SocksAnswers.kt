@@ -17,9 +17,11 @@ import java.util.concurrent.TimeUnit
  * at its next try left a dead connection in that queue each time: a few a second over a long Tor or Psiphon warm-up, and
  * one for each profile a "test all" measures beside the session, ahead of the clients the tunnel serves first, in a
  * backlog of 128 on older Android kernels. Here a greeting that got no answer yet is kept waiting, and the next question
- * about that port reads on, on the same connection; questions asked at the same time share one answer.
+ * about that port reads on, on the same connection, while it stays unanswered; questions asked at the same time share one
+ * answer. Once the kept connection is answered or ended, a new one tells whether the port is served now: an answer that
+ * waited there can be older than the server's end.
  *
- * A kept connection is closed once it is answered or ended; at most one per port stays open while nobody asks.
+ * At most one connection per port stays open while nobody asks.
  */
 internal class SocksAnswers(
     private val waitMs: Int,
@@ -58,7 +60,13 @@ internal class SocksAnswers(
         if (!mine) {
             // The question under way answers this one as well, within the longest it can take.
             val longest = connectTimeoutMs + 2L * waitMs + SHARED_WAIT_SLACK_MS
-            return question.done.await(longest, TimeUnit.MILLISECONDS) && question.answered
+            return try {
+                question.done.await(longest, TimeUnit.MILLISECONDS) && question.answered
+            } catch (_: InterruptedException) {
+                // An interrupted wait gives up as a timeout does, and leaves the thread marked as interrupted.
+                Thread.currentThread().interrupt()
+                false
+            }
         }
         try {
             question.answered = ask(port)
@@ -69,17 +77,15 @@ internal class SocksAnswers(
         return question.answered
     }
 
-    /** Reads on over the connection left waiting for [port]; asks over a new one where there is none, or it has ended. */
+    /**
+     * Reads on over the connection left waiting for [port] while it stays unanswered, so that no new one queues behind it;
+     * asks over a new connection where there is none, or once the kept one was answered or ended. An answer that waited
+     * on the kept one can be older than the end of the server that sent it, so only a new connection tells that the port
+     * is served now.
+     */
     private fun ask(port: Int): Boolean {
         val kept = synchronized(lock) { waiting.remove(port) }
-        if (kept != null) {
-            when (read(kept)) {
-                Reply.ANSWERED -> return true
-                Reply.WAITING -> return keep(port, kept)
-                // The server closed it, or answered it with something else: the core ended, or is another program now.
-                Reply.ENDED -> Unit
-            }
-        }
+        if (kept != null && read(kept) == Reply.WAITING) return keep(port, kept)
         val socket = greet(port) ?: return false
         return when (read(socket)) {
             Reply.ANSWERED -> true

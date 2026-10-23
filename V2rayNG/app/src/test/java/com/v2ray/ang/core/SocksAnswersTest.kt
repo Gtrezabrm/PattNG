@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.DataInputStream
 import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
@@ -41,24 +42,63 @@ class SocksAnswersTest {
 
     @Test
     fun aQuietListenerIsAskedOverOneConnectionUntilItAnswers() {
-        val answers = SocksAnswers(waitMs = 100)
+        // Long enough for the server thread below to answer the question's new connection on a busy machine.
+        val answers = SocksAnswers(waitMs = 1_000)
         quietListener().use { listener ->
-            repeat(3) { assertFalse(answers.answers(listener.localPort)) }
+            repeat(2) { assertFalse(answers.answers(listener.localPort)) }
             // One connection waits in the listener's queue, not one for each question.
             val queued = takeQueued(listener)
             assertEquals(1, queued.size)
-            // The tunnel comes up and answers it: the next question reads that answer on the same connection.
+            // The tunnel comes up: it answers the waiting greeting, and serves the new connection the next question makes.
             queued.single().use { client ->
                 answer(client)
+                val server = thread(isDaemon = true) {
+                    runCatching {
+                        listener.soTimeout = 5_000
+                        listener.accept().use(::answer)
+                    }
+                }
                 assertTrue(answers.answers(listener.localPort))
+                server.join(5_000)
             }
             assertEquals(0, takeQueued(listener).size)
         }
     }
 
     @Test
-    fun aConnectionTheServerEndedIsAskedAnew() {
+    fun anAnswerThatWaitedDoesNotOutliveItsServer() {
         val answers = SocksAnswers(waitMs = 100)
+        val port: Int
+        quietListener().use { listener ->
+            port = listener.localPort
+            assertFalse(answers.answers(port))
+            // The core answers the waiting greeting, then ends, and its listener with it.
+            takeQueued(listener).single().use(::answer)
+        }
+        assertFalse(answers.answers(port))
+    }
+
+    @Test
+    fun anAnswerThatWaitedDoesNotSpeakForTheNextCoreOnThePort() {
+        val answers = SocksAnswers(waitMs = 100)
+        val port: Int
+        quietListener().use { listener ->
+            port = listener.localPort
+            assertFalse(answers.answers(port))
+            takeQueued(listener).single().use(::answer)
+        }
+        // A new core binds the port and says nothing yet, as a test's core does while its tunnel comes up.
+        ServerSocket().use { next ->
+            next.reuseAddress = true
+            next.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), port), 50)
+            assertFalse(answers.answers(port))
+        }
+    }
+
+    @Test
+    fun aConnectionTheServerEndedIsAskedAnew() {
+        // Long enough for the server thread below to answer the question's new connection on a busy machine.
+        val answers = SocksAnswers(waitMs = 1_000)
         quietListener().use { listener ->
             assertFalse(answers.answers(listener.localPort))
             // The core that held it ends it, and the listener is served from then on.
@@ -81,6 +121,29 @@ class SocksAnswersTest {
             val server = thread(isDaemon = true) { runCatching { listener.accept().use(::answer) } }
             assertTrue(answers.answers(listener.localPort))
             server.join(5_000)
+        }
+    }
+
+    @Test
+    fun anInterruptedThreadThatAsksMeanwhileTakesNoAnswer() {
+        val answers = SocksAnswers(waitMs = 1_000)
+        quietListener().use { listener ->
+            val port = listener.localPort
+            // A first question waits for its answer...
+            val first = thread { answers.answers(port) }
+            Thread.sleep(200)
+            // ... and a thread asking meanwhile, interrupted, gives up as a timeout does, rather than throwing.
+            var reply: Boolean? = null
+            var stillInterrupted = false
+            val second = thread {
+                Thread.currentThread().interrupt()
+                reply = answers.answers(port)
+                stillInterrupted = Thread.currentThread().isInterrupted
+            }
+            second.join(5_000)
+            first.join(5_000)
+            assertEquals(false, reply)
+            assertTrue(stillInterrupted)
         }
     }
 
