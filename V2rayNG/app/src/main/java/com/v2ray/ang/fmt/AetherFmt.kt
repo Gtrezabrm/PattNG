@@ -346,9 +346,10 @@ object AetherFmt : FmtBase() {
     }
 
     /**
-     * Whether [value] is a server name the core's --masque-sni takes, which it checks as it starts: a domain name, with
-     * a trailing dot or without, and no IP address, which the core's parser reads as Go's netip does, see
-     * [CoreOutboundBuilder.isNetipAddress]. A label cannot start or end with '-' either, as for [isEchDomain].
+     * Whether [value] is a server name the core's --masque-sni takes, as do its --api-sni and --api-host, which it checks
+     * as it starts: a domain name, with a trailing dot or without, and no IP address, see
+     * [CoreOutboundBuilder.isNetipAddress], which tells one as the core's Rust parser does for every text a domain name
+     * could be. A label cannot start or end with '-' either, as for [isEchDomain], which the core would take.
      */
     internal fun isMasqueSni(value: String): Boolean {
         val name = value.removeSuffix(".")

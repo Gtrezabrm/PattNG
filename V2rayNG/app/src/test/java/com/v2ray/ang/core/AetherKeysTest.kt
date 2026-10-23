@@ -114,16 +114,17 @@ class AetherKeysTest {
     }
 
     @Test
-    fun theDefaultsGetEveryKeyFromTheApisOwnAddressWithChromesRule() {
+    fun theDefaultsGetEveryKeyTheWayTheCoreCallsTheApiWithChromesRule() {
+        // No address, server name or host: the core's own, api.devices.cloudflare.com, then api.cloudflareclient.com
+        // when that one does not serve the call.
         assertEquals(
             listOf(
                 "--register", "all",
-                "--api-address", "api.cloudflareclient.com",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
             ),
             AetherKeys.arguments(AetherKeysSettings())
         )
-        assertEquals("aether --register all --api-address api.cloudflareclient.com --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES", AetherKeys.builtCommand(AetherKeysSettings()))
+        assertEquals("aether --register all --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES", AetherKeys.builtCommand(AetherKeysSettings()))
         // A plain exit-node.
         assertEquals(AetherExit(), AetherKeysSettings().exit)
     }
@@ -186,6 +187,32 @@ class AetherKeysTest {
     }
 
     @Test
+    fun theApiServerNameAndHostGoTrimmedAndBlankLeavesTheCoresOwn() {
+        val blank = AetherKeys.arguments(AetherKeysSettings(apiSni = " ", apiHost = ""))
+        assertFalse("--api-sni" in blank)
+        assertFalse("--api-host" in blank)
+        val given = AetherKeys.arguments(
+            AetherKeysSettings(enrollAddress = "162.159.137.105", apiSni = " api.cloudflareclient.com ", apiHost = "api.cloudflareclient.com ")
+        )
+        // Each one apart, after the address, as the core takes them; the same name for both, as Cloudflare wants.
+        assertEquals(
+            listOf(
+                "--register", "all",
+                "--api-address", "162.159.137.105",
+                "--api-sni", "api.cloudflareclient.com",
+                "--api-host", "api.cloudflareclient.com",
+                "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+            ),
+            given
+        )
+        // One alone leaves the others to the core.
+        val hostOnly = AetherKeys.arguments(AetherKeysSettings(apiHost = "api.cloudflareclient.com"))
+        assertEquals("api.cloudflareclient.com", valueAfter(hostOnly, "--api-host"))
+        assertFalse("--api-sni" in hostOnly)
+        assertFalse("--api-address" in hostOnly)
+    }
+
+    @Test
     fun theRequestAddressIsWhatTheCoreTakes() {
         for (address in listOf(
             "api.cloudflareclient.com", "api.cloudflareclient.com:443", "api.cloudflareclient.com.", "188.114.97.6",
@@ -210,6 +237,16 @@ class AetherKeysTest {
         assertNull(AetherKeys.problem(fine))
         assertEquals(AetherKeys.Problem.INVALID_ENROLL_ADDRESS, AetherKeys.problem(fine.copy(enrollAddress = "-x")))
         assertNull(AetherKeys.problem(fine.copy(enrollAddress = "")))
+        // The server name and the host are domain names, as the core takes them, though no label starts or ends with
+        // '-', which the core would take, so that no value reads as an option; blank, the core's own.
+        for (name in listOf("", "  ", "api.devices.cloudflare.com", " api.cloudflareclient.com. ")) {
+            assertNull(AetherKeys.problem(fine.copy(apiSni = name)), name)
+            assertNull(AetherKeys.problem(fine.copy(apiHost = name)), name)
+        }
+        for (name in listOf("162.159.137.105", "2606:4700:7::a29f:8969", "https://api.devices.cloudflare.com", "api.devices.cloudflare.com:443", "-x", "a b")) {
+            assertEquals(AetherKeys.Problem.INVALID_API_SNI, AetherKeys.problem(fine.copy(apiSni = name)), name)
+            assertEquals(AetherKeys.Problem.INVALID_API_HOST, AetherKeys.problem(fine.copy(apiHost = name)), name)
+        }
         // The ECH fields count while ECH is on.
         assertNull(AetherKeys.problem(fine.copy(echDns = "dns.google")))
         assertEquals(AetherKeys.Problem.INVALID_ECH_DNS, AetherKeys.problem(fine.copy(ech = true, echDns = "dns.google")))
@@ -253,7 +290,6 @@ class AetherKeysTest {
         assertEquals(
             listOf(
                 "--register", "all",
-                "--api-address", "api.cloudflareclient.com",
                 "--fragment",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
             ),

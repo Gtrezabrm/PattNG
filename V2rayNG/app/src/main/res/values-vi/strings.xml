@@ -699,6 +699,13 @@
     <string name="aether_keys_hint_ech">Ẩn tên máy chủ trong các yêu cầu tới WARP API; không có khóa ECH dùng được thì không yêu cầu khóa WARP nào</string>
     <string name="aether_lab_fingerprint">Fingerprint</string>
     <string name="aether_keys_invalid_enroll_address">Địa chỉ API phải là địa chỉ IP hoặc tên miền, có hoặc không có cổng, ví dụ 188.114.97.6:443 hoặc [2606:4700::1]:8443</string>
+    <string name="aether_keys_lab_api_sni">Tên máy chủ API (SNI)</string>
+    <string name="aether_keys_lab_api_host">Host API</string>
+    <string name="aether_keys_hint_enroll_address">Để trống để dùng địa chỉ của tên máy chủ API</string>
+    <string name="aether_keys_hint_api_sni">Để trống để dùng host API</string>
+    <string name="aether_keys_hint_api_host">Để trống để dùng api.devices.cloudflare.com, rồi api.cloudflareclient.com nếu không có phản hồi và tên máy chủ cũng để trống. Cloudflare từ chối tên máy chủ khác với host</string>
+    <string name="aether_keys_invalid_api_sni">Tên máy chủ API phải là một tên miền, ví dụ api.devices.cloudflare.com</string>
+    <string name="aether_keys_invalid_api_host">Host API phải là một tên miền, ví dụ api.devices.cloudflare.com</string>
     <string name="aether_keys_invalid_command">Lệnh phải đăng ký khóa: --register theo sau là all, wg, masque, mim, gool-classic (WARP-in-WARP) hoặc gool (WireGuard over MASQUE)</string>
     <string name="aether_keys_log_empty">Đầu ra của lõi và các khóa WARP sẽ hiển thị ở đây</string>
     <string name="aether_scan_blocked">Hãy ngắt kết nối Aether trước khi quét; việc quét sẽ mở một đường hầm thứ hai bằng khóa của kết nối hiện tại</string>

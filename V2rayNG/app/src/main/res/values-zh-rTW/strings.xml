@@ -699,6 +699,13 @@
     <string name="aether_keys_hint_ech">隱藏 WARP API 請求中的伺服器名稱；沒有可用的 ECH 金鑰時不會請求 WARP 金鑰</string>
     <string name="aether_lab_fingerprint">Fingerprint</string>
     <string name="aether_keys_invalid_enroll_address">API 位址必須是 IP 位址或網域名稱，可帶連接埠，例如 188.114.97.6:443 或 [2606:4700::1]:8443</string>
+    <string name="aether_keys_lab_api_sni">API 伺服器名稱 (SNI)</string>
+    <string name="aether_keys_lab_api_host">API 主機</string>
+    <string name="aether_keys_hint_enroll_address">留空則使用 API 伺服器名稱的位址</string>
+    <string name="aether_keys_hint_api_sni">留空則使用 API 主機</string>
+    <string name="aether_keys_hint_api_host">留空則使用 api.devices.cloudflare.com；若其無回應且伺服器名稱也留空，則改用 api.cloudflareclient.com。Cloudflare 會拒絕與主機不同的伺服器名稱</string>
+    <string name="aether_keys_invalid_api_sni">API 伺服器名稱必須是網域名稱，例如 api.devices.cloudflare.com</string>
+    <string name="aether_keys_invalid_api_host">API 主機必須是網域名稱，例如 api.devices.cloudflare.com</string>
     <string name="aether_keys_invalid_command">命令必須註冊金鑰：--register 後接 all、wg、masque、mim、gool-classic（WARP-in-WARP）或 gool（WireGuard over MASQUE）</string>
     <string name="aether_keys_log_empty">核心輸出和 WARP 金鑰會顯示在這裡</string>
     <string name="aether_scan_blocked">請先中斷 Aether 連線，再進行掃描；掃描會使用目前連線的金鑰開啟第二條隧道</string>

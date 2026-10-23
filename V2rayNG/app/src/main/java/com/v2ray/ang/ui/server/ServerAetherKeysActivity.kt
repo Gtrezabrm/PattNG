@@ -164,12 +164,31 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
                 }
             }
         }
+        // Where the calls to the WARP API go, the server name of their ClientHello and their HTTP host: each left blank
+        // follows the next, as the core has them, the address the server name and the server name the host.
         FormTextField(
             stringResource(R.string.aether_keys_lab_enroll_address),
             settings.enrollAddress,
             viewModel::setEnrollAddress,
             enabled = enabled,
-            keyboardType = KeyboardType.Uri
+            keyboardType = KeyboardType.Uri,
+            placeholder = stringResource(R.string.aether_keys_hint_enroll_address)
+        )
+        FormTextField(
+            stringResource(R.string.aether_keys_lab_api_sni),
+            settings.apiSni,
+            viewModel::setApiSni,
+            enabled = enabled,
+            keyboardType = KeyboardType.Uri,
+            placeholder = stringResource(R.string.aether_keys_hint_api_sni)
+        )
+        FormTextField(
+            stringResource(R.string.aether_keys_lab_api_host),
+            settings.apiHost,
+            viewModel::setApiHost,
+            enabled = enabled,
+            keyboardType = KeyboardType.Uri,
+            supportingText = stringResource(R.string.aether_keys_hint_api_host)
         )
         // --fragment, which in a run that only registers keys sends the ClientHello of the calls to the WARP API in
         // pieces, as the editor's fragmenting of MASQUE over HTTP/2 does for those calls and the handshake.
