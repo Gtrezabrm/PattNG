@@ -407,6 +407,19 @@ class AetherCoreTest {
     }
 
     @Test
+    fun aRegistrationOfKeysListensOnlyWhereACarrierAroundTheTunnelDoes() {
+        // The core registers and ends: no listener of its own, though the command names none to leave to a default.
+        assertEquals(emptyList<Int>(), AetherCore(listOf("--register", "wg", "--wg")).ports)
+        assertEquals(emptyList<Int>(), AetherCore(listOf("--register", "wg", "--wg", "--tor")).ports)
+        // A carrier around the tunnel carries its requests on its listener, the default where none is named.
+        assertEquals(listOf(1820), AetherCore(listOf("--register", "masque", "--masque", "--tor-reverse")).ports)
+        assertEquals(
+            listOf(20808),
+            AetherCore(listOf("--register", "masque", "--masque", "--psiphon-reverse", "--psiphon-bind", "127.0.0.1:20808")).ports
+        )
+    }
+
+    @Test
     fun anUpdateThatLeavesAProfileAsItWasLeavesItsDigestAsItWas() {
         // A subscription's update builds every profile again, added anew, and may move it to another subscription or
         // describe it anew; what it connects with is what tells an exit-node, or the hops of a chain, apart.

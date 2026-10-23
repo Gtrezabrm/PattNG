@@ -1674,6 +1674,9 @@ class AetherCoreManagerTest {
         val ownLeftOut = listOf("--wg", "--tor", "--tor-bind", "127.0.0.1:20808")
         assertTrue(AetherCoreManager.isProbeOn(ownLeftOut, ownerAlive = true, sessionMarked = false, ports = setOf(1819, 10819)))
         assertFalse(AetherCoreManager.isProbeOn(ownLeftOut, ownerAlive = true, sessionMarked = false, ports = ports))
+        // A renewal of keys binds no listener of its own: a start does not wait for it.
+        val renewal = listOf("--register", "wg", "--wg")
+        assertFalse(AetherCoreManager.isProbeOn(renewal, ownerAlive = true, sessionMarked = false, ports = setOf(1819, 10819)))
         // A core of a test elsewhere, the session's own core, a leftover whose owner is gone, or one that cannot be told apart.
         val elsewhere = listOf("--wg", "--bind", "127.0.0.1:20808")
         assertFalse(AetherCoreManager.isProbeOn(elsewhere, ownerAlive = true, sessionMarked = false, ports = ports))

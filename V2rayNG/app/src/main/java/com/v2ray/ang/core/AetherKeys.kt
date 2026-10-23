@@ -45,7 +45,7 @@ data class AetherKeysSettings(
 object AetherKeys {
 
     /** The option that has the core register keys and end, with the word naming which. */
-    private const val REGISTER = "--register"
+    internal const val REGISTER = "--register"
 
     /** Why settings cannot run. */
     enum class Problem {
