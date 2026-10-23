@@ -786,6 +786,11 @@
     <string name="home_action_choose_server">انتخاب سرور</string>
     <string name="home_action_retry">تلاش مجدد</string>
     <string name="home_action_reconnect">اتصال مجدد</string>
+    <string name="home_details_ip">آی‌پی خروجی</string>
+    <string name="home_details_test_ping">آزمایش دوبارهٔ پینگ</string>
+    <string name="home_quick_servers">سرورها</string>
+    <string name="home_quick_subscriptions">اشتراک‌ها</string>
+    <string name="home_quick_settings">تنظیمات</string>
     <string name="home_details_ping">پینگ</string>
     <string name="home_details_duration">مدت اتصال</string>
     <string name="home_details_download">دانلود</string>
