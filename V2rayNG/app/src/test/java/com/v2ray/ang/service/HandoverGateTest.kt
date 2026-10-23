@@ -46,4 +46,19 @@ class HandoverGateTest {
         // A handover that comes after close() has returned begins nothing.
         assertNull(gate.whileOpen { "reload" })
     }
+
+    @Test
+    fun aHandoverIsHandledOnlyOnceClaimedWhileTheGateIsOpen() {
+        val gate = HandoverGate()
+        val handled = mutableListOf<String>()
+        // Before register(): neither claimed nor handled.
+        assertFalse(gate.runClaimed({ error("not claimed while closed") }) { handled += "before" })
+        gate.open()
+        // A claim that says no: not handled.
+        assertFalse(gate.runClaimed({ false }) { handled += "refused" })
+        assertTrue(gate.runClaimed({ true }) { handled += "claimed" })
+        gate.close()
+        assertFalse(gate.runClaimed({ error("not claimed once closed") }) { handled += "after" })
+        assertEquals(listOf("claimed"), handled)
+    }
 }

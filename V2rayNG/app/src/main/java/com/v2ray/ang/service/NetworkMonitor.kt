@@ -139,8 +139,7 @@ class NetworkMonitor(
                     // PattNG: cancelling ends the wait above, not a handover that has just come out of it. The handover
                     // goes on only once claimed under the gate, which unregister() closes first: an unregistered monitor
                     // claims nothing and calls nothing.
-                    if (gate.whileOpen { claimHandover(this@NetworkMonitor) } != true) return@launch
-                    onHandover(this@NetworkMonitor)
+                    gate.runClaimed({ claimHandover(this@NetworkMonitor) }) { onHandover(this@NetworkMonitor) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {

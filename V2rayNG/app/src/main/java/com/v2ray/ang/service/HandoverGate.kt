@@ -26,4 +26,14 @@ internal class HandoverGate {
 
     /** [claim], run under the lock while the gate is open, and what it returns; null once the gate is closed. Keep it short. */
     fun <T> whileOpen(claim: () -> T): T? = synchronized(lock) { if (open) claim() else null }
+
+    /**
+     * Runs [work] once [claim] has said yes under the lock, while the gate is open, and says whether it ran: a handover
+     * claimed before [close] has returned goes on; none is claimed after.
+     */
+    fun runClaimed(claim: () -> Boolean, work: () -> Unit): Boolean {
+        if (whileOpen(claim) != true) return false
+        work()
+        return true
+    }
 }
