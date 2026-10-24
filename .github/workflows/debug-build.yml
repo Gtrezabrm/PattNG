@@ -1,8 +1,9 @@
 name: Debug Build
 
-# Builds an installable, debug-signed APK of a branch on GitHub's runners, so that it needs no signing secrets
-# and no strong computer. The native steps are the same as build.yml's; keep the two in step.
-# Run it by hand: Actions > Debug Build > Run workflow > pick the branch. It also runs on a push to ui/** branches.
+# Fast, installable debug APK for UI iteration.
+# Reuse the exact upstream release's Aether core when its AndroidLibXrayLite gitlink matches;
+# continue using the local cached/build steps for the other native components.
+# Runs on a push to ui/** branches or by hand from Actions.
 
 on:
   workflow_dispatch:
@@ -27,8 +28,6 @@ jobs:
   debug:
     runs-on: ubuntu-latest
     env:
-      # Same pins as build.yml; bump them together.
-      RUST_TOOLCHAIN: "stable"
       GO_VERSION: "1.26"
 
     steps:
@@ -74,31 +73,55 @@ jobs:
         path: ${{ github.workspace }}/libs
         key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
-    - name: Install Rust
-      id: rust-toolchain
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ env.RUST_TOOLCHAIN }}
-        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
-
-    - name: Restore cached libaether
-      id: cache-libaether-restore
-      uses: actions/cache/restore@v6
-      with:
-        path: ${{ github.workspace }}/libs-aether
-        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
-
-    - name: Build libaether
-      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
+    # The upstream owner has already compiled Aether for this exact AndroidLibXrayLite revision.
+    # GitHub Actions caches are repository-scoped, so use the matching official release APK's .so instead.
+    - name: Reuse matching upstream Aether binaries
+      env:
+        ABI_FILTERS: ${{ inputs.abi_filters || 'arm64-v8a' }}
+        UPSTREAM_RELEASE: "2.3.13-P68"
+        EXPECTED_ANDROIDLIBXRAYLITE_SHA: "161a86dc18a97adac49bcf4a817768d7715fdfde"
       run: |
-        bash compile-aether.sh
+        set -euo pipefail
 
-    - name: Save libaether
-      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v6
-      with:
-        path: ${{ github.workspace }}/libs-aether
-        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
+        actual_sha="$(git -C AndroidLibXrayLite rev-parse HEAD)"
+        if [[ "$actual_sha" != "$EXPECTED_ANDROIDLIBXRAYLITE_SHA" ]]; then
+          echo "::error::Refusing upstream Aether binary: AndroidLibXrayLite is $actual_sha, expected $EXPECTED_ANDROIDLIBXRAYLITE_SHA for release $UPSTREAM_RELEASE."
+          exit 1
+        fi
+
+        if [[ -z "$ABI_FILTERS" ]]; then
+          abis="arm64-v8a armeabi-v7a x86_64"
+        else
+          abis="$(printf '%s' "$ABI_FILTERS" | tr ';' ' ')"
+        fi
+
+        mkdir -p libs-aether
+        for abi in $abis; do
+          case "$abi" in
+            arm64-v8a) asset="PattNG_${UPSTREAM_RELEASE}_arm64-v8a.apk" ;;
+            armeabi-v7a) asset="PattNG_${UPSTREAM_RELEASE}_armeabi-v7a.apk" ;;
+            x86_64) asset="PattNG_${UPSTREAM_RELEASE}_x86_64.apk" ;;
+            *)
+              echo "::error::No prebuilt Aether library is provided for ABI '$abi'. Supported Aether ABIs: arm64-v8a, armeabi-v7a, x86_64."
+              exit 1
+              ;;
+          esac
+
+          apk_url="https://github.com/patterniha/PattNG/releases/download/${UPSTREAM_RELEASE}/${asset}"
+          temp_apk="$(mktemp --suffix=.apk)"
+          echo "Fetching the official ${UPSTREAM_RELEASE} APK for ${abi}"
+          curl --fail --location --retry 3 --retry-all-errors --silent --show-error "$apk_url" --output "$temp_apk"
+
+          if ! unzip -Z1 "$temp_apk" | grep -qx "lib/${abi}/libaether.so"; then
+            echo "::error::The official APK ${asset} does not contain lib/${abi}/libaether.so."
+            exit 1
+          fi
+          mkdir -p "libs-aether/${abi}"
+          unzip -p "$temp_apk" "lib/${abi}/libaether.so" > "libs-aether/${abi}/libaether.so"
+          test -s "libs-aether/${abi}/libaether.so"
+          rm -f "$temp_apk"
+          echo "Reused $(du -h "libs-aether/${abi}/libaether.so" | cut -f1) Aether core for ${abi}"
+        done
 
     - name: Install Go
       uses: actions/setup-go@v5
