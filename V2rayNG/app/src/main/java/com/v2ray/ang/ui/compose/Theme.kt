@@ -54,9 +54,9 @@ private val LightColor = lightColorScheme(
     outlineVariant = Color(0xFFCAC4D0), // Light Gray
     inverseSurface = Color(0xFF313033), // Dark Gray
     inverseOnSurface = Color(0xFFF4EFF4), // Very Light Gray
-    inversePrimary = Color(0xFFC0C0C0), // Silver Gray
+    inversePrimary = Color(0xFF006A64), // Deep Persian turquoise
     scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFF000000), // Black
+    surfaceTint = Color(0xFF007F78), // Persian turquoise
     surfaceContainerLowest = Color(0xFFFFFFFF), // White
     surfaceContainerLow = Color(0xFFF7F7F7), // Very Light Gray
     surfaceContainer = Color(0xFFF1F1F1), // Light Gray
@@ -70,7 +70,7 @@ private val DarkColor = darkColorScheme(
     primaryContainer = Color(0xFF00534D), // Deep turquoise
     onPrimaryContainer = Color(0xFFB5F2E9), // Pale turquoise
     secondary = Color(0xFF83CFE5), // Persian tile blue
-    onSecondary = Color(0xFF4E2600), // Dark Brown
+    onSecondary = Color(0xFF003641), // Deep teal-blue
     secondaryContainer = Color(0xFF164B5B), // Deep tile blue
     onSecondaryContainer = Color(0xFFD1F2FA), // Pale blue
     tertiary = Color(0xFF70D8C8), // Mint turquoise
@@ -91,9 +91,9 @@ private val DarkColor = darkColorScheme(
     outlineVariant = Color(0xFF49454F), // Dark Gray
     inverseSurface = Color(0xFFE6E1E5), // Light Gray
     inverseOnSurface = Color(0xFF1C1B1F), // Near Black
-    inversePrimary = Color(0xFF000000), // Black
+    inversePrimary = Color(0xFF72DED1), // Bright turquoise
     scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFFC0C0C0), // Silver Gray
+    surfaceTint = Color(0xFF72DED1), // Bright turquoise
     surfaceContainerLowest = Color(0xFF0F0F12), // Near Black
     surfaceContainerLow = Color(0xFF1A191D), // Dark Gray
     surfaceContainer = Color(0xFF1E1D21), // Dark Gray
@@ -102,10 +102,10 @@ private val DarkColor = darkColorScheme(
 )
 
 // Semantic Colors
-val colorPing = Color(0xFF009966) // Green
-val colorPingRed = Color(0xFFFF0099) // Pink Red
+val colorPing = Color(0xFF008F78) // Persian turquoise-green
+val colorPingRed = Color(0xFFD14343) // Clear red
 val colorConfigType = Color(0xFFf97910) // Orange
-val colorFabActive = Color(0xFFf97910) // Orange
+val colorFabActive = Color(0xFF007F78) // Persian turquoise
 val colorFabInactiveLight = Color(0xFF9C9C9C) // Gray
 val colorFabInactiveDark = Color(0xFF646464) // Dark Gray
 val dividerColorLight = Color(0xFFE0E0E0) // Light Gray
@@ -116,7 +116,7 @@ val toastNormalBgLight = Color(0xD9353A3E) // Dark Gray
 val toastNormalBgDark = Color(0xD94A4F54) // Darker Gray
 val toastSuccessBg = Color(0xD9388E3C) // Green
 val toastErrorBg = Color(0xD9D50000) // Red
-val toastInfoBg = Color(0xD93F51B5) // Indigo Blue
+val toastInfoBg = Color(0xD9176B87) // Persian tile blue
 val toastIconCircleBg = Color(0x33FFFFFF) // Semi-transparent White
 val toastTextColor = Color.White // White
 
@@ -127,7 +127,7 @@ object ThemeManager {
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
     private val _dynamicColorEnabled = MutableStateFlow(
-        MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+        MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     )
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
 
@@ -145,7 +145,7 @@ object ThemeManager {
         _themeMode.value =
             MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "0") ?: "0"
         _dynamicColorEnabled.value =
-            MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+            MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     }
 }
 

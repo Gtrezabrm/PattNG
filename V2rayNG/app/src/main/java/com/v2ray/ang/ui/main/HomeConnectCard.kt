@@ -3,6 +3,7 @@ package com.v2ray.ang.ui.main
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -111,7 +112,7 @@ fun HomeConnectCard(
     modifier: Modifier = Modifier,
 ) {
     val target = homeCardColors(model.status)
-    val colorSpec = spring<Color>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+    val colorSpec = tween<Color>(durationMillis = 260, easing = FastOutSlowInEasing)
     val colors = HomeCardColors(
         container = animateColorAsState(target.container, colorSpec, label = "home-card-container").value,
         content = animateColorAsState(target.content, colorSpec, label = "home-card-content").value,
