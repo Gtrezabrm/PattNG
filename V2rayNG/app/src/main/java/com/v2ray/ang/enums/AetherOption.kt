@@ -235,21 +235,29 @@ enum class AetherKeyKind(val type: String, val register: String) {
 
 /**
  * The cipher suites the TLS handshakes of the core offer, after a client whose ClientHello was captured: its TLS 1.2
- * suites as BoringSSL names them, in its order, or Chrome's own rule, and whether it sends GREASE values. BoringSSL
- * writes its TLS 1.3 suites first, in an order of its own, so only the TLS 1.2 part follows the client.
+ * suites as BoringSSL names them, in its order, or Chrome's own rule, and whether it sends GREASE values; and its
+ * groups, where they are named, else the core's. BoringSSL writes its TLS 1.3 suites first, in an order of its own, so
+ * only the TLS 1.2 part follows the client.
  */
-enum class AetherFingerprint(val type: String, val ciphers: String, val grease: Boolean) {
+enum class AetherFingerprint(val type: String, val ciphers: String, val grease: Boolean, val groups: String? = null) {
     /**
      * Chrome's own rule rather than a list, which BoringSSL orders as it does for Chrome, by the phone's AES
      * instructions as the TLS 1.3 suites: c02b c02f c02c c030 cca9 cca8 c013 c014 009c 009d 002f 0035 with them,
      * ChaCha20 first without. A fixed list would keep AES-GCM first there while the TLS 1.3 suites go ChaCha20 first, a
-     * ClientHello no Chrome sends. Named, though it is the core's default as well, so that it stays Chrome's whatever
-     * the core's default becomes. After a GREASE value.
+     * ClientHello no Chrome sends. Chrome's BoringSSL of October 2026 still orders both lists so. After a GREASE value.
+     *
+     * Chrome's groups, as its ClientHello of October 2026 lists them after a GREASE value: X25519MLKEM768, X25519,
+     * P-256, P-384. BoringSSL gives the first a key share, and X25519, the first that is not post-quantum, another, as
+     * Chrome does.
+     *
+     * The rule and the groups are named, and GREASE left on by giving no --disable-grease, so that the fingerprint stays
+     * Chrome's whatever the core's defaults become.
      */
     CHROME(
         "chrome",
         "ALL:!aPSK:!ECDSA+SHA1:!3DES",
         true,
+        "X25519MLKEM768:X25519:P-256:P-384",
     ),
 
     /** c02b c02f cca9 cca8 c02c c030 c013 c014 009c 009d 002f 0035. */
@@ -284,9 +292,14 @@ enum class AetherFingerprint(val type: String, val ciphers: String, val grease: 
         false,
     );
 
-    /** The core's options for this fingerprint: its TLS 1.2 suites, and GREASE left out where it sends none. */
+    /**
+     * The core's options for this fingerprint: its TLS 1.2 suites, its groups where it names them, and GREASE left out
+     * where it sends none.
+     */
     val arguments: List<String>
-        get() = listOf("--tls-ciphers", ciphers) + if (grease) emptyList() else listOf("--disable-grease")
+        get() = listOf("--tls-ciphers", ciphers) +
+            (groups?.let { listOf("--tls-groups", it) } ?: emptyList()) +
+            if (grease) emptyList() else listOf("--disable-grease")
 
     companion object {
         fun fromString(type: String?) = entries.find { it.type == type } ?: CHROME

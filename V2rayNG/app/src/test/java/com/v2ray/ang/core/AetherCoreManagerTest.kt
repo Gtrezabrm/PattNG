@@ -826,13 +826,16 @@ class AetherCoreManagerTest {
         for (protocol in listOf(AetherProtocol.MASQUE, AetherProtocol.MIM, AetherProtocol.WG_OVER_MASQUE)) {
             for (transport in AetherTransport.entries) {
                 // Chrome's rule is named, whatever the core's default; BoringSSL orders it by the phone's AES
-                // instructions as it does the TLS 1.3 suites. Chrome sends GREASE.
+                // instructions as it does the TLS 1.3 suites. So are Chrome's groups, the post-quantum one first. Chrome
+                // sends GREASE.
                 val chrome = AetherCoreManager.buildArguments(profile(protocol, transport), 10819)
                 assertEquals("ALL:!aPSK:!ECDSA+SHA1:!3DES", valueAfter(chrome, "--tls-ciphers"))
+                assertEquals("X25519MLKEM768:X25519:P-256:P-384", valueAfter(chrome, "--tls-groups"))
                 assertFalse("--disable-grease" in chrome)
                 for (fingerprint in listOf(AetherFingerprint.FIREFOX, AetherFingerprint.SEMI_PYTHON, AetherFingerprint.GO)) {
                     val arguments = AetherCoreManager.buildArguments(profile(protocol, transport).copy(aetherFingerprint = fingerprint.type), 10819)
                     assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"))
+                    assertFalse("--tls-groups" in arguments)
                     assertTrue("--disable-grease" in arguments)
                 }
             }
@@ -846,6 +849,7 @@ class AetherCoreManagerTest {
             val arguments = AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2).copy(aetherFingerprint = "go"), 10819)
             assertFalse("--tls-ciphers" in arguments)
             assertFalse("--disable-grease" in arguments)
+            assertFalse("--tls-groups" in AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2), 10819))
         }
         // A scan's probes send the ClientHello the tunnel will.
         assertTrue("--disable-grease" in AetherCoreManager.buildArguments(profile().copy(aetherFingerprint = "firefox"), 0, scan = true))

@@ -395,7 +395,7 @@ object AetherCoreManager {
                     addAll(listOf("--ech-domain", settingValue(profile.aetherEchDomain) ?: AppConfig.AETHER_ECH_DOMAIN))
                 }
                 // The ClientHello of the MASQUE handshakes, and of the WARP API calls and the ECH key lookup the core makes:
-                // over HTTP/3, which carries TLS 1.3 alone, only its GREASE shows.
+                // over HTTP/3, which carries TLS 1.3 alone, its groups and GREASE show, not its TLS 1.2 suites.
                 if (protocol.overMasque) addAll(AetherFingerprint.fromString(profile.aetherFingerprint).arguments)
 
                 if (protocol == AetherProtocol.WG_OVER_MASQUE) {

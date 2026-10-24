@@ -66,7 +66,6 @@ class AetherKeysTest {
         // suites: these twelve with them, ChaCha20 first without (both seen on boring 5.2.0). So Chrome names its rule,
         // as Chromium sets it, and keeps GREASE.
         assertEquals("ALL:!aPSK:!ECDSA+SHA1:!3DES", AetherFingerprint.CHROME.ciphers)
-        assertEquals(listOf("--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES"), AetherFingerprint.CHROME.arguments)
         assertEquals(tls12Of("130113031302c02bc02fcca9cca8c02cc030c013c014009c009d002f0035"), suitesOf(AetherFingerprint.FIREFOX))
         // Python's first ten, with c00a and c014 (AES-256-CBC with SHA-1) in place of c024 and c028 (with SHA-384),
         // which BoringSSL does not have; its four DHE suites after them are left out.
@@ -100,7 +99,24 @@ class AetherKeysTest {
         for (fingerprint in AetherFingerprint.entries) {
             val arguments = AetherKeys.arguments(AetherKeysSettings(fingerprint = fingerprint))
             assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"))
+            assertEquals(fingerprint.groups, valueAfter(arguments, "--tls-groups"))
             assertEquals(!fingerprint.grease, "--disable-grease" in arguments)
+        }
+    }
+
+    @Test
+    fun chromeNamesItsRuleAndItsGroupsAndKeepsGrease() {
+        // Chrome's ClientHello of October 2026: after a GREASE value, X25519MLKEM768, X25519, P-256 and P-384, with key
+        // shares for the first two. Each is named, so that the core's defaults cannot change it; GREASE is the one
+        // left to the core, which has no option that turns it on.
+        assertEquals(
+            listOf("--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES", "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384"),
+            AetherFingerprint.CHROME.arguments,
+        )
+        // The others name their suites and leave GREASE out; their groups stay the core's.
+        for (fingerprint in listOf(AetherFingerprint.FIREFOX, AetherFingerprint.SEMI_PYTHON, AetherFingerprint.GO)) {
+            assertNull(fingerprint.groups)
+            assertEquals(listOf("--tls-ciphers", fingerprint.ciphers, "--disable-grease"), fingerprint.arguments)
         }
     }
 
@@ -121,10 +137,14 @@ class AetherKeysTest {
             listOf(
                 "--register", "all",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
             ),
             AetherKeys.arguments(AetherKeysSettings())
         )
-        assertEquals("aether --register all --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES", AetherKeys.builtCommand(AetherKeysSettings()))
+        assertEquals(
+            "aether --register all --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES --tls-groups X25519MLKEM768:X25519:P-256:P-384",
+            AetherKeys.builtCommand(AetherKeysSettings())
+        )
         // A plain exit-node.
         assertEquals(AetherExit(), AetherKeysSettings().exit)
     }
@@ -219,6 +239,7 @@ class AetherKeysTest {
                 "--api-sni", "api.cloudflareclient.com",
                 "--api-host", "api.cloudflareclient.com",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
             ),
             given
         )
@@ -309,6 +330,7 @@ class AetherKeysTest {
                 "--register", "all",
                 "--fragment",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
             ),
             AetherKeys.arguments(on)
         )
