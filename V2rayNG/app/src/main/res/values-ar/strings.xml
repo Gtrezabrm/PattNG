@@ -797,4 +797,23 @@
     <string name="sub_info_open_page">فتح صفحة معلومات الاشتراك</string>
     <string name="sub_info_unlimited">غير محدود</string>
 
+    <string name="home_action_choose_server">اختر خادمًا</string>
+    <string name="home_action_retry">أعد المحاولة</string>
+    <string name="home_action_reconnect">إعادة الاتصال</string>
+    <string name="home_details_title">تفاصيل الاتصال</string>
+    <string name="home_details_ping">زمن الاستجابة</string>
+    <string name="home_details_duration">المدة</string>
+    <string name="home_details_download">تنزيل</string>
+    <string name="home_details_upload">رفع</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_details_test_ping">Test ping again</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subs</string>
+    <string name="home_quick_settings">Settings</string>
+    <string name="home_empty_title">لم يتم اختيار خادم</string>
+    <string name="home_change_server">اضغط لتغيير الخادم</string>
+    <string name="home_status_connecting">جارٍ الاتصال…</string>
+    <string name="home_status_connected">متصل</string>
+    <string name="home_status_error">فشل الاتصال</string>
+    <string name="home_status_unexpected">انقطع الاتصال</string>
 </resources>

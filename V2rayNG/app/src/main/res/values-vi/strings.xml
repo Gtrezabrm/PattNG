@@ -787,4 +787,23 @@
     <string name="sub_info_open_page">Mở trang thông tin đăng ký</string>
     <string name="sub_info_unlimited">Không giới hạn</string>
 
+    <string name="home_action_choose_server">Chọn máy chủ</string>
+    <string name="home_action_retry">Thử lại</string>
+    <string name="home_action_reconnect">Kết nối lại</string>
+    <string name="home_details_title">Chi tiết kết nối</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Thời lượng</string>
+    <string name="home_details_download">Tải xuống</string>
+    <string name="home_details_upload">Tải lên</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_details_test_ping">Test ping again</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subscriptions</string>
+    <string name="home_quick_settings">Settings</string>
+    <string name="home_empty_title">Chưa chọn máy chủ</string>
+    <string name="home_change_server">Chạm để đổi máy chủ</string>
+    <string name="home_status_connecting">Đang kết nối…</string>
+    <string name="home_status_connected">Đã kết nối</string>
+    <string name="home_status_error">Kết nối thất bại</string>
+    <string name="home_status_unexpected">Mất kết nối</string>
 </resources>

@@ -790,22 +790,22 @@
     <string name="sub_info_unlimited">نامحدود</string>
 
     <string name="home_action_choose_server">انتخاب سرور</string>
-    <string name="home_action_retry">تلاش دوباره</string>
+    <string name="home_action_retry">تلاش مجدد</string>
     <string name="home_action_reconnect">اتصال مجدد</string>
     <string name="home_details_title">جزئیات اتصال</string>
     <string name="home_details_ping">پینگ</string>
     <string name="home_details_duration">مدت اتصال</string>
-    <string name="home_details_download">دریافت</string>
-    <string name="home_details_upload">ارسال</string>
+    <string name="home_details_download">دانلود</string>
+    <string name="home_details_upload">آپلود</string>
     <string name="home_details_ip">آی‌پی خروجی</string>
     <string name="home_details_test_ping">آزمایش دوبارهٔ پینگ</string>
     <string name="home_quick_servers">سرورها</string>
     <string name="home_quick_subscriptions">اشتراک‌ها</string>
     <string name="home_quick_settings">تنظیمات</string>
-    <string name="home_empty_title">هنوز سروری انتخاب نشده</string>
-    <string name="home_change_server">انتخاب سرور</string>
-    <string name="home_status_connecting">در حال اتصال</string>
-    <string name="home_status_connected">متصل</string>
-    <string name="home_status_error">اتصال برقرار نشد</string>
-    <string name="home_status_unexpected">اتصال ناخواسته قطع شد</string>
+    <string name="home_empty_title">سروری انتخاب نشده</string>
+    <string name="home_change_server">برای تغییر سرور بزنید</string>
+    <string name="home_status_connecting">در حال اتصال…</string>
+    <string name="home_status_connected">متصل شد</string>
+    <string name="home_status_error">اتصال ناموفق بود</string>
+    <string name="home_status_unexpected">اتصال قطع شد</string>
 </resources>

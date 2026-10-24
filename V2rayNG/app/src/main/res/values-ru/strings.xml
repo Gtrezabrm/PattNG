@@ -793,4 +793,23 @@
     <string name="sub_info_open_page">Открыть страницу подписки</string>
     <string name="sub_info_unlimited">Без ограничений</string>
 
+    <string name="home_action_choose_server">Выбрать сервер</string>
+    <string name="home_action_retry">Повторить</string>
+    <string name="home_action_reconnect">Переподключить</string>
+    <string name="home_details_title">Сведения о подключении</string>
+    <string name="home_details_ping">Пинг</string>
+    <string name="home_details_duration">Длительность</string>
+    <string name="home_details_download">Загрузка</string>
+    <string name="home_details_upload">Отдача</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_details_test_ping">Test ping again</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subscriptions</string>
+    <string name="home_quick_settings">Settings</string>
+    <string name="home_empty_title">Сервер не выбран</string>
+    <string name="home_change_server">Нажмите, чтобы сменить сервер</string>
+    <string name="home_status_connecting">Подключение…</string>
+    <string name="home_status_connected">Подключено</string>
+    <string name="home_status_error">Не удалось подключиться</string>
+    <string name="home_status_unexpected">Соединение потеряно</string>
 </resources>

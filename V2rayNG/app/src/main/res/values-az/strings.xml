@@ -789,4 +789,23 @@
     <string name="sub_info_open_page">Abunəlik məlumat səhifəsini aç</string>
     <string name="sub_info_unlimited">Limitsiz</string>
 
+    <string name="home_action_choose_server">Server seçin</string>
+    <string name="home_action_retry">Yenidən cəhd edin</string>
+    <string name="home_action_reconnect">Yenidən qoşul</string>
+    <string name="home_details_title">Bağlantı təfərrüatları</string>
+    <string name="home_details_ping">Ping</string>
+    <string name="home_details_duration">Müddət</string>
+    <string name="home_details_download">Endirmə</string>
+    <string name="home_details_upload">Yükləmə</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_details_test_ping">Test ping again</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subs</string>
+    <string name="home_quick_settings">Settings</string>
+    <string name="home_empty_title">Server seçilməyib</string>
+    <string name="home_change_server">Serveri dəyişmək üçün toxunun</string>
+    <string name="home_status_connecting">Qoşulur…</string>
+    <string name="home_status_connected">Qoşuldu</string>
+    <string name="home_status_error">Qoşulma uğursuz oldu</string>
+    <string name="home_status_unexpected">Bağlantı kəsildi</string>
 </resources>

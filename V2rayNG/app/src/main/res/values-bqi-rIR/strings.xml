@@ -789,4 +789,23 @@
     <string name="sub_info_open_page">واز کردن صفحه اطلاعات اشتراک</string>
     <string name="sub_info_unlimited">بی‌حد</string>
 
+    <string name="home_action_choose_server">سرور انتخاو بکه</string>
+    <string name="home_action_retry">دوباره تلاش بکه</string>
+    <string name="home_action_reconnect">دوباره منپیز بو</string>
+    <string name="home_details_title">جزئیات منپیز</string>
+    <string name="home_details_ping">پینگ</string>
+    <string name="home_details_duration">مدت</string>
+    <string name="home_details_download">دانلود</string>
+    <string name="home_details_upload">آپلود</string>
+    <string name="home_details_ip">Exit IP</string>
+    <string name="home_details_test_ping">Test ping again</string>
+    <string name="home_quick_servers">Servers</string>
+    <string name="home_quick_subscriptions">Subscriptions</string>
+    <string name="home_quick_settings">Settings</string>
+    <string name="home_empty_title">سرور انتخاو نیئه</string>
+    <string name="home_change_server">واسه عوض کردن سرور بزن</string>
+    <string name="home_status_connecting">درحال منپیز بیئن…</string>
+    <string name="home_status_connected">منپیز</string>
+    <string name="home_status_error">منپیز بیئن نشد</string>
+    <string name="home_status_unexpected">منپیز قطع بی</string>
 </resources>
