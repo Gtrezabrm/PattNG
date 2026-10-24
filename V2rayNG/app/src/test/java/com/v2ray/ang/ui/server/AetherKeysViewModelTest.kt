@@ -128,6 +128,8 @@ class AetherKeysViewModelTest {
 
         viewModel.setKind(AetherKeyKind.MIM)
         viewModel.setEnrollAddress("188.114.97.6:443")
+        viewModel.setApiSni("api.devices.cloudflare.com")
+        viewModel.setApiHost("api.devices.cloudflare.com")
         viewModel.setEch(true)
         viewModel.setEchDns("https://1.1.1.1/dns-query")
         viewModel.setEchDomain("example.com")
@@ -138,6 +140,8 @@ class AetherKeysViewModelTest {
         val expected = AetherKeysSettings(
             kind = AetherKeyKind.MIM,
             enrollAddress = "188.114.97.6:443",
+            apiSni = "api.devices.cloudflare.com",
+            apiHost = "api.devices.cloudflare.com",
             ech = true,
             echDns = "https://1.1.1.1/dns-query",
             echDomain = "example.com",
@@ -146,12 +150,12 @@ class AetherKeysViewModelTest {
             dialMode = "ForceIP",
         )
         assertEquals(expected, viewModel.settings)
-        assertEquals(8, source.saved.size)
+        assertEquals(10, source.saved.size)
         assertEquals(expected, source.saved.last())
 
         // A change to what is already there saves nothing.
         viewModel.setKind(AetherKeyKind.MIM)
-        assertEquals(8, source.saved.size)
+        assertEquals(10, source.saved.size)
     }
 
     @Test
@@ -294,6 +298,18 @@ class AetherKeysViewModelTest {
         viewModel.onNoticeShown()
 
         viewModel.setEnrollAddress("")
+        viewModel.setApiSni("162.159.137.105")
+        viewModel.getKeys()
+        assertEquals(AetherKeysNotice.Invalid(R.string.aether_keys_invalid_api_sni), viewModel.notice.value)
+        viewModel.onNoticeShown()
+
+        viewModel.setApiSni("")
+        viewModel.setApiHost("https://api.devices.cloudflare.com")
+        viewModel.getKeys()
+        assertEquals(AetherKeysNotice.Invalid(R.string.aether_keys_invalid_api_host), viewModel.notice.value)
+        viewModel.onNoticeShown()
+
+        viewModel.setApiHost("")
         viewModel.setCommand("aether --protocol wg")
         viewModel.getKeys()
         assertEquals(AetherKeysNotice.Invalid(R.string.aether_keys_invalid_command), viewModel.notice.value)
@@ -307,6 +323,8 @@ class AetherKeysViewModelTest {
     fun eachProblemHasItsMessage() {
         val messages = AetherKeys.Problem.entries.associateWith { AetherKeysViewModel.messageOf(it) }
         assertEquals(R.string.aether_keys_invalid_enroll_address, messages[AetherKeys.Problem.INVALID_ENROLL_ADDRESS])
+        assertEquals(R.string.aether_keys_invalid_api_sni, messages[AetherKeys.Problem.INVALID_API_SNI])
+        assertEquals(R.string.aether_keys_invalid_api_host, messages[AetherKeys.Problem.INVALID_API_HOST])
         assertEquals(R.string.aether_invalid_ech_dns, messages[AetherKeys.Problem.INVALID_ECH_DNS])
         assertEquals(R.string.aether_invalid_ech_domain, messages[AetherKeys.Problem.INVALID_ECH_DOMAIN])
         assertEquals(R.string.aether_lab_exit_final_mask, messages[AetherKeys.Problem.INVALID_FINAL_MASK])
