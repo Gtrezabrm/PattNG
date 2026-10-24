@@ -28,17 +28,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 private val LightColor = lightColorScheme(
-    primary = Color(0xFF000000), // Black
+    primary = Color(0xFF007F78), // Persian turquoise
     onPrimary = Color(0xFFFFFFFF), // White
-    primaryContainer = Color(0xFFE0E0E0), // Light Gray
-    onPrimaryContainer = Color(0xFF000000), // Black
-    secondary = Color(0xFFf97910), // Orange
+    primaryContainer = Color(0xFFB8F0E8), // Pale turquoise
+    onPrimaryContainer = Color(0xFF00201D), // Deep teal
+    secondary = Color(0xFF176B87), // Persian tile blue
     onSecondary = Color(0xFFFFFFFF), // White
-    secondaryContainer = Color(0xFFFFE8D6), // Pale Orange
-    onSecondaryContainer = Color(0xFF2B1700), // Dark Brown
-    tertiary = Color(0xFF009966), // Green
+    secondaryContainer = Color(0xFFD1EAF4), // Pale tile blue
+    onSecondaryContainer = Color(0xFF001F2A), // Deep blue
+    tertiary = Color(0xFF00796B), // Turquoise
     onTertiary = Color(0xFFFFFFFF), // White
-    tertiaryContainer = Color(0xFFA0F2D0), // Light Green
+    tertiaryContainer = Color(0xFFB5EDE4), // Light turquoise
     onTertiaryContainer = Color(0xFF00201A), // Dark Teal
     error = Color(0xFFBA1A1A), // Red
     errorContainer = Color(0xFFFFDAD6), // Light Red
@@ -65,17 +65,17 @@ private val LightColor = lightColorScheme(
 )
 
 private val DarkColor = darkColorScheme(
-    primary = Color(0xFFC0C0C0), // Silver Gray
-    onPrimary = Color(0xFF303030), // Dark Gray
-    primaryContainer = Color(0xFF474747), // Gray
-    onPrimaryContainer = Color(0xFFE0E0E0), // Light Gray
-    secondary = Color(0xFFf97910), // Orange
+    primary = Color(0xFF72DED1), // Bright turquoise
+    onPrimary = Color(0xFF003731), // Deep teal
+    primaryContainer = Color(0xFF00534D), // Deep turquoise
+    onPrimaryContainer = Color(0xFFB5F2E9), // Pale turquoise
+    secondary = Color(0xFF83CFE5), // Persian tile blue
     onSecondary = Color(0xFF4E2600), // Dark Brown
-    secondaryContainer = Color(0xFF6F3800), // Brown
-    onSecondaryContainer = Color(0xFFFFE8D6), // Pale Orange
-    tertiary = Color(0xFF83D6B5), // Mint Green
+    secondaryContainer = Color(0xFF164B5B), // Deep tile blue
+    onSecondaryContainer = Color(0xFFD1F2FA), // Pale blue
+    tertiary = Color(0xFF70D8C8), // Mint turquoise
     onTertiary = Color(0xFF00382E), // Dark Teal
-    tertiaryContainer = Color(0xFF005143), // Teal
+    tertiaryContainer = Color(0xFF004D46), // Deep teal
     onTertiaryContainer = Color(0xFFA0F2D0), // Light Green
     error = Color(0xFFFFB4AB), // Light Red
     errorContainer = Color(0xFF93000A), // Dark Red

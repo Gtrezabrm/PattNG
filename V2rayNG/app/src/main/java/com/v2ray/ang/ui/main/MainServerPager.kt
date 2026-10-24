@@ -1,5 +1,7 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -478,7 +480,7 @@ internal suspend fun PagerState.navigateToPageOptimized(
     if (target == current) return
 
     if (abs(target - current) == 1 && animateAdjacentPage) {
-        animateScrollToPage(target)
+        animateScrollToPage(target, animationSpec = tween(durationMillis = 280, easing = FastOutSlowInEasing))
     } else {
         scrollToPage(target)
     }
