@@ -73,8 +73,7 @@ object AetherKeys {
      * in pieces when fragmenting is on (--fragment, which a run that only registers keys applies to those calls alone),
      * sized and spaced as set or as the core has them by default, and whole without the flag, Encrypted Client Hello
      * on those calls with the key of the ECH domain, asked of the ECH DNS, and the TLS 1.2 cipher suites of the
-     * fingerprint, Chrome's as its rule, its groups where it names them, with GREASE left out where the fingerprint has
-     * none.
+     * fingerprint, Chrome's as its rule, and its groups, with GREASE left out where the fingerprint has none.
      */
     fun arguments(settings: AetherKeysSettings): List<String> = buildList {
         addAll(listOf(REGISTER, settings.kind.register))

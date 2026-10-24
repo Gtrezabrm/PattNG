@@ -835,7 +835,7 @@ class AetherCoreManagerTest {
                 for (fingerprint in listOf(AetherFingerprint.FIREFOX, AetherFingerprint.SEMI_PYTHON, AetherFingerprint.GO)) {
                     val arguments = AetherCoreManager.buildArguments(profile(protocol, transport).copy(aetherFingerprint = fingerprint.type), 10819)
                     assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"))
-                    assertFalse("--tls-groups" in arguments)
+                    assertEquals(fingerprint.groups, valueAfter(arguments, "--tls-groups"))
                     assertTrue("--disable-grease" in arguments)
                 }
             }
