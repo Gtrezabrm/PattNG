@@ -832,11 +832,28 @@ class AetherCoreManagerTest {
                 assertEquals("ALL:!aPSK:!ECDSA+SHA1:!3DES", valueAfter(chrome, "--tls-ciphers"))
                 assertEquals("X25519MLKEM768:X25519:P-256:P-384", valueAfter(chrome, "--tls-groups"))
                 assertFalse("--disable-grease" in chrome)
+                // BoringSSL's TLS 1.3 order and key shares are Chrome's.
+                assertFalse("--tls13-ciphers" in chrome)
+                assertFalse("--tls-key-shares" in chrome)
+                // And GREASE among the signature algorithms, which Chrome alone sends.
+                assertTrue("--enable-grease-sigalgs" in chrome)
+                // Chrome 120's: the same rule, groups without a post-quantum one, GREASE but none among the signature
+                // algorithms.
+                val chrome120 = AetherCoreManager.buildArguments(profile(protocol, transport).copy(aetherFingerprint = "chrome-120"), 10819)
+                assertEquals("ALL:!aPSK:!ECDSA+SHA1:!3DES", valueAfter(chrome120, "--tls-ciphers"))
+                assertEquals("X25519:P-256:P-384", valueAfter(chrome120, "--tls-groups"))
+                assertFalse("--disable-grease" in chrome120)
+                assertFalse("--enable-grease-sigalgs" in chrome120)
+                assertFalse("--tls13-ciphers" in chrome120)
+                assertFalse("--tls-key-shares" in chrome120)
                 for (fingerprint in listOf(AetherFingerprint.FIREFOX, AetherFingerprint.SEMI_PYTHON, AetherFingerprint.GO)) {
                     val arguments = AetherCoreManager.buildArguments(profile(protocol, transport).copy(aetherFingerprint = fingerprint.type), 10819)
                     assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"))
+                    assertEquals(fingerprint.tls13Ciphers, valueAfter(arguments, "--tls13-ciphers"))
                     assertEquals(fingerprint.groups, valueAfter(arguments, "--tls-groups"))
+                    assertEquals(fingerprint.keyShares, valueAfter(arguments, "--tls-key-shares"))
                     assertTrue("--disable-grease" in arguments)
+                    assertFalse("--enable-grease-sigalgs" in arguments)
                 }
             }
         }
@@ -850,6 +867,10 @@ class AetherCoreManagerTest {
             assertFalse("--tls-ciphers" in arguments)
             assertFalse("--disable-grease" in arguments)
             assertFalse("--tls-groups" in AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2), 10819))
+            val firefox = AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2).copy(aetherFingerprint = "firefox"), 10819)
+            assertFalse("--tls13-ciphers" in firefox)
+            assertFalse("--tls-key-shares" in firefox)
+            assertFalse("--enable-grease-sigalgs" in AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2), 10819))
         }
         // A scan's probes send the ClientHello the tunnel will.
         assertTrue("--disable-grease" in AetherCoreManager.buildArguments(profile().copy(aetherFingerprint = "firefox"), 0, scan = true))

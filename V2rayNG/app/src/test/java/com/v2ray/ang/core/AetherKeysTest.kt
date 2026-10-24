@@ -59,16 +59,27 @@ class AetherKeysTest {
 
     private fun suitesOf(fingerprint: AetherFingerprint): List<Int> = fingerprint.ciphers.split(':').map(suiteIds::getValue)
 
-    /** The number of each group by the name BoringSSL gives it, for every group it has (boring 5.2). */
+    /** The number of each group by the name BoringSSL gives it, for every group it has (boring 5.3, with its post-quantum patch). */
     private val groupIds = mapOf(
         "P-256" to 0x0017,
         "P-384" to 0x0018,
         "P-521" to 0x0019,
         "X25519" to 0x001d,
-        "X25519Kyber768Draft00" to 0x6399,
         "X25519MLKEM768" to 0x11ec,
         "MLKEM1024" to 0x0202,
+        "X25519Kyber768Draft00" to 0x6399,
+        "P256Kyber768Draft00" to 0xfe32,
     )
+
+    /** The number of each TLS 1.3 suite by its standard name. */
+    private val tls13Ids = mapOf(
+        "TLS_AES_128_GCM_SHA256" to 0x1301,
+        "TLS_AES_256_GCM_SHA384" to 0x1302,
+        "TLS_CHACHA20_POLY1305_SHA256" to 0x1303,
+    )
+
+    /** The TLS 1.3 suites of a ClientHello's cipher_suites in hex, in order. */
+    private fun tls13Of(captured: String): List<Int> = captured.chunked(4).map { it.toInt(16) }.filter { it in 0x1301..0x1305 }
 
     /** The groups of a ClientHello's supported_groups in hex that BoringSSL has, in order: GREASE and the rest left out. */
     private fun capturedGroups(captured: String): List<Int> =
@@ -83,6 +94,10 @@ class AetherKeysTest {
         // suites: these twelve with them, ChaCha20 first without (both seen on boring 5.2.0). So Chrome names its rule,
         // as Chromium sets it, and keeps GREASE.
         assertEquals("ALL:!aPSK:!ECDSA+SHA1:!3DES", AetherFingerprint.CHROME.ciphers)
+        // Chrome 120's, baba130113021303c02bc02fc02cc030cca9cca8c013c014009c009d002f0035, comes from the same rule: the same suites in
+        // the same order.
+        assertEquals(AetherFingerprint.CHROME.ciphers, AetherFingerprint.CHROME_120.ciphers)
+        assertEquals(tls12Of("eaea130113021303c02bc02fc02cc030cca9cca8c013c014009c009d002f0035"), tls12Of("baba130113021303c02bc02fc02cc030cca9cca8c013c014009c009d002f0035"))
         assertEquals(tls12Of("130113031302c02bc02fcca9cca8c02cc030c013c014009c009d002f0035"), suitesOf(AetherFingerprint.FIREFOX))
         // Python's first ten, with c00a and c014 (AES-256-CBC with SHA-1) in place of c024 and c028 (with SHA-384),
         // which BoringSSL does not have; its four DHE suites after them are left out.
@@ -97,13 +112,41 @@ class AetherKeysTest {
 
     @Test
     fun eachFingerprintOffersTheGroupsOfItsCapturedClientHelloThatBoringSslHas() {
-        // The supported_groups of the ClientHellos captured in October 2026. Chrome's leads with a GREASE value; Python's
+        // The supported_groups of the ClientHellos captured in October 2026. Chrome's and Chrome 120's lead with a GREASE
+        // value, and Chrome 120's has no post-quantum group; Python's
         // also lists X448, ffdhe2048 and ffdhe3072, and Go's SecP256r1MLKEM768 and SecP384r1MLKEM1024, none of which
         // BoringSSL has.
         assertEquals(capturedGroups("5a5a11ec001d00170018"), groupsOf(AetherFingerprint.CHROME))
+        assertEquals(capturedGroups("5a5a001d00170018"), groupsOf(AetherFingerprint.CHROME_120))
         assertEquals(capturedGroups("11ec001d001700180019"), groupsOf(AetherFingerprint.FIREFOX))
         assertEquals(capturedGroups("11ec001d0017001e0018001901000101"), groupsOf(AetherFingerprint.SEMI_PYTHON))
         assertEquals(capturedGroups("11ec11eb11ed001d001700180019"), groupsOf(AetherFingerprint.GO))
+    }
+
+    @Test
+    fun eachFingerprintOffersTheTls13OrderAndTheKeySharesOfItsCapturedClientHello() {
+        // Firefox and Python list their TLS 1.3 suites in an order of their own, which their fingerprints name.
+        fun named(list: String?) = list!!.split(':').map(tls13Ids::getValue)
+        assertEquals(tls13Of("130113031302c02bc02fcca9cca8c02cc030c013c014009c009d002f0035"), named(AetherFingerprint.FIREFOX.tls13Ciphers))
+        assertEquals(
+            tls13Of("130213031301c02cc030c02bc02fcca9cca8c024c028c023c027009f009e006b0067"),
+            named(AetherFingerprint.SEMI_PYTHON.tls13Ciphers)
+        )
+        // Chrome's and Go's are BoringSSL's own order, by the machine's AES instructions, as their captures on a PC
+        // with them show; a fixed list would keep AES-GCM first where they go ChaCha20 first.
+        assertEquals(listOf(0x1301, 0x1302, 0x1303), tls13Of("eaea130113021303c02bc02fc02cc030cca9cca8c013c014009c009d002f0035"))
+        assertEquals(listOf(0x1301, 0x1302, 0x1303), tls13Of("c02bc02fc02cc030cca9cca8c009c013c00ac014130113021303"))
+        assertEquals(listOf(0x1301, 0x1302, 0x1303), tls13Of("baba130113021303c02bc02fc02cc030cca9cca8c013c014009c009d002f0035"))
+        assertNull(AetherFingerprint.CHROME.tls13Ciphers)
+        assertNull(AetherFingerprint.CHROME_120.tls13Ciphers)
+        assertNull(AetherFingerprint.GO.tls13Ciphers)
+
+        // Firefox's key_share carries X25519MLKEM768, X25519 and P-256; the others carry the two BoringSSL sends, the
+        // first group and the first that is not post-quantum.
+        assertEquals(listOf(0x11ec, 0x001d, 0x0017), AetherFingerprint.FIREFOX.keyShares!!.split(':').map(groupIds::getValue))
+        for (fingerprint in listOf(AetherFingerprint.CHROME, AetherFingerprint.CHROME_120, AetherFingerprint.SEMI_PYTHON, AetherFingerprint.GO)) {
+            assertNull(fingerprint.keyShares, fingerprint.type)
+        }
     }
 
     @Test
@@ -120,32 +163,65 @@ class AetherKeysTest {
     @Test
     fun onlyChromeSendsGrease() {
         assertTrue(AetherFingerprint.CHROME.grease)
+        assertTrue(AetherFingerprint.CHROME_120.grease)
         assertFalse(AetherFingerprint.FIREFOX.grease)
         assertFalse(AetherFingerprint.SEMI_PYTHON.grease)
         assertFalse(AetherFingerprint.GO.grease)
+        // Chrome of today alone sends one among its signature algorithms as well; Chrome 120 did not.
+        assertEquals(listOf(AetherFingerprint.CHROME), AetherFingerprint.entries.filter { it.greaseSigalgs })
 
         for (fingerprint in AetherFingerprint.entries) {
             val arguments = AetherKeys.arguments(AetherKeysSettings(fingerprint = fingerprint))
             assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"))
+            assertEquals(fingerprint.tls13Ciphers, valueAfter(arguments, "--tls13-ciphers"))
             assertEquals(fingerprint.groups, valueAfter(arguments, "--tls-groups"))
+            assertEquals(fingerprint.keyShares, valueAfter(arguments, "--tls-key-shares"))
             assertEquals(!fingerprint.grease, "--disable-grease" in arguments)
+            assertEquals(fingerprint.greaseSigalgs, "--enable-grease-sigalgs" in arguments)
         }
     }
 
     @Test
     fun eachFingerprintNamesItsSuitesAndItsGroups() {
         // Each is named, so that the core's defaults cannot change it. GREASE is the one left to the core, which has no
-        // option that turns it on; Chrome alone keeps it.
+        // option that turns it on; Chrome alone keeps it. The TLS 1.3 order and the key shares are named where they are
+        // not BoringSSL's.
+        val groups = "X25519MLKEM768:X25519:P-256:P-384:P-521"
         assertEquals(
-            listOf("--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES", "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384"),
+            listOf(
+                "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
+                "--enable-grease-sigalgs",
+            ),
             AetherFingerprint.CHROME.arguments,
         )
-        for (fingerprint in listOf(AetherFingerprint.FIREFOX, AetherFingerprint.SEMI_PYTHON, AetherFingerprint.GO)) {
-            assertEquals(
-                listOf("--tls-ciphers", fingerprint.ciphers, "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384:P-521", "--disable-grease"),
-                fingerprint.arguments,
-            )
-        }
+        assertEquals(
+            listOf("--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES", "--tls-groups", "X25519:P-256:P-384"),
+            AetherFingerprint.CHROME_120.arguments,
+        )
+        assertEquals(
+            listOf(
+                "--tls-ciphers", AetherFingerprint.FIREFOX.ciphers,
+                "--tls13-ciphers", "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
+                "--tls-groups", groups,
+                "--tls-key-shares", "X25519MLKEM768:X25519:P-256",
+                "--disable-grease",
+            ),
+            AetherFingerprint.FIREFOX.arguments,
+        )
+        assertEquals(
+            listOf(
+                "--tls-ciphers", AetherFingerprint.SEMI_PYTHON.ciphers,
+                "--tls13-ciphers", "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256",
+                "--tls-groups", groups,
+                "--disable-grease",
+            ),
+            AetherFingerprint.SEMI_PYTHON.arguments,
+        )
+        assertEquals(
+            listOf("--tls-ciphers", AetherFingerprint.GO.ciphers, "--tls-groups", groups, "--disable-grease"),
+            AetherFingerprint.GO.arguments,
+        )
     }
 
     @Test
@@ -153,7 +229,7 @@ class AetherKeysTest {
         // The dropdowns of the Aether editor and of the WARP keys page, read from the app's resources as the unit tests
         // run in the module's folder.
         assertEquals(AetherFingerprint.entries.map { it.type }, AppResources.stringArray("aether_fingerprint_values"))
-        assertEquals(listOf("Chrome", "Firefox", "Semi-Python", "Go"), AppResources.stringArray("aether_fingerprint_entries"))
+        assertEquals(listOf("Chrome", "Chrome 120", "Firefox", "Semi-Python", "Go"), AppResources.stringArray("aether_fingerprint_entries"))
         assertEquals(AetherFingerprint.SEMI_PYTHON, AetherFingerprint.fromString("semi-python"))
     }
 
@@ -166,11 +242,13 @@ class AetherKeysTest {
                 "--register", "all",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
                 "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
+                "--enable-grease-sigalgs",
             ),
             AetherKeys.arguments(AetherKeysSettings())
         )
         assertEquals(
-            "aether --register all --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES --tls-groups X25519MLKEM768:X25519:P-256:P-384",
+            "aether --register all --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES --tls-groups X25519MLKEM768:X25519:P-256:P-384 " +
+                "--enable-grease-sigalgs",
             AetherKeys.builtCommand(AetherKeysSettings())
         )
         // A plain exit-node.
@@ -268,6 +346,7 @@ class AetherKeysTest {
                 "--api-host", "api.cloudflareclient.com",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
                 "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
+                "--enable-grease-sigalgs",
             ),
             given
         )
@@ -359,6 +438,7 @@ class AetherKeysTest {
                 "--fragment",
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
                 "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
+                "--enable-grease-sigalgs",
             ),
             AetherKeys.arguments(on)
         )

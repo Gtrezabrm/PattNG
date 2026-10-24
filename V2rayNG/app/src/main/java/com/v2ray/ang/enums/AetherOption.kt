@@ -235,15 +235,26 @@ enum class AetherKeyKind(val type: String, val register: String) {
 
 /**
  * The cipher suites and groups the TLS handshakes of the core offer, after a client whose ClientHello was captured: its
- * TLS 1.2 suites as BoringSSL names them, in its order, or Chrome's own rule; its groups in its order, those BoringSSL
- * has; and whether it sends GREASE values. BoringSSL writes its TLS 1.3 suites first, in an order of its own, so only
- * the TLS 1.2 part follows the client; and it sends key shares for the first group and for the first one of the other
- * kind, post-quantum or not, two at most.
+ * TLS 1.2 suites as BoringSSL names them, in its order, or Chrome's own rule; its TLS 1.3 suites in its order, where
+ * that order is not BoringSSL's; its groups in its order, those BoringSSL has, and its key shares, where they are not
+ * BoringSSL's; whether it sends GREASE values; and whether it sends one among its signature algorithms as well. BoringSSL
+ * writes the TLS 1.3 suites before the TLS 1.2 ones, whatever the client does. Unless they are named, it orders the TLS
+ * 1.3 suites by the phone's AES instructions, as Chrome does, AES-GCM first with them and ChaCha20 first without, and it
+ * sends key shares for the first group and for the first one of the other kind, post-quantum or not.
  *
  * Each names its suites and its groups, so that it stays the client's whatever the core's defaults become; GREASE is
- * left on by giving no --disable-grease, as the core has no option that turns it on.
+ * left on by giving no --disable-grease, as the core has no option that turns it on. The core takes --tls13-ciphers,
+ * --tls-key-shares and --enable-grease-sigalgs from Aether 2.3.8 on.
  */
-enum class AetherFingerprint(val type: String, val ciphers: String, val grease: Boolean, val groups: String) {
+enum class AetherFingerprint(
+    val type: String,
+    val ciphers: String,
+    val grease: Boolean,
+    val groups: String,
+    val tls13Ciphers: String? = null,
+    val keyShares: String? = null,
+    val greaseSigalgs: Boolean = false,
+) {
     /**
      * Chrome's own rule rather than a list, which BoringSSL orders as it does for Chrome, by the phone's AES
      * instructions as the TLS 1.3 suites: c02b c02f c02c c030 cca9 cca8 c013 c014 009c 009d 002f 0035 with them,
@@ -253,19 +264,36 @@ enum class AetherFingerprint(val type: String, val ciphers: String, val grease: 
      * Chrome's groups, as its ClientHello of October 2026 lists them after a GREASE value: X25519MLKEM768, X25519,
      * P-256, P-384. BoringSSL gives the first a key share, and X25519, the first that is not post-quantum, another, as
      * Chrome does.
+     *
+     * A GREASE value leads its signature algorithms too, which BoringSSL sends only when told to.
      */
     CHROME(
         "chrome",
         "ALL:!aPSK:!ECDSA+SHA1:!3DES",
         true,
         "X25519MLKEM768:X25519:P-256:P-384",
+        greaseSigalgs = true,
     ),
 
     /**
-     * c02b c02f cca9 cca8 c02c c030 c013 c014 009c 009d 002f 0035, without GREASE.
+     * Chrome 120's, as its ClientHello was captured: Chrome's own rule, which gives the TLS 1.2 suites of Chrome's of
+     * today in the same order, after a GREASE value and BoringSSL's TLS 1.3 order. Its groups, after a GREASE value,
+     * are X25519, P-256 and P-384, none of them post-quantum, with a key share for X25519, which BoringSSL sends of
+     * itself. GREASE as Chrome's, but none among its signature algorithms.
+     */
+    CHROME_120(
+        "chrome-120",
+        "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+        true,
+        "X25519:P-256:P-384",
+    ),
+
+    /**
+     * c02b c02f cca9 cca8 c02c c030 c013 c014 009c 009d 002f 0035, without GREASE, after Firefox's TLS 1.3 suites in
+     * its own order: 1301 1303 1302.
      *
-     * Firefox's groups, as its ClientHello of October 2026 lists them: X25519MLKEM768, X25519, P-256, P-384, P-521.
-     * Firefox sends key shares for the first three, BoringSSL for the first two.
+     * Firefox's groups, as its ClientHello of October 2026 lists them: X25519MLKEM768, X25519, P-256, P-384, P-521,
+     * with key shares for the first three, where BoringSSL would send two.
      */
     FIREFOX(
         "firefox",
@@ -274,13 +302,16 @@ enum class AetherFingerprint(val type: String, val ciphers: String, val grease: 
             "AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA:AES256-SHA",
         false,
         "X25519MLKEM768:X25519:P-256:P-384:P-521",
+        tls13Ciphers = "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
+        keyShares = "X25519MLKEM768:X25519:P-256",
     ),
 
     /**
      * c02c c030 c02b c02f cca9 cca8 c00a c014 c023 c027: Python's first ten TLS 1.2 suites, with c00a and c014
      * (AES-256-CBC with SHA-1) in place of c024 and c028 (with SHA-384), the nearest ones BoringSSL has; Python's
      * four DHE suites after them are left out, as BoringSSL has none. Hence semi-python: not Python's list as it is,
-     * but every suite of it a core on boring 5.2 or newer takes; an older one refuses c023. Without GREASE.
+     * but every suite of it a core on boring 5.2 or newer takes; an older one refuses c023. Without GREASE, after
+     * Python's TLS 1.3 suites in its own order: 1302 1303 1301.
      *
      * Python's groups, as its ClientHello of October 2026 lists them, without X448, ffdhe2048 and ffdhe3072, which
      * BoringSSL does not have: X25519MLKEM768, X25519, P-256, P-384, P-521. Key shares for the first two, as Python
@@ -293,10 +324,12 @@ enum class AetherFingerprint(val type: String, val ciphers: String, val grease: 
             "ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA256",
         false,
         "X25519MLKEM768:X25519:P-256:P-384:P-521",
+        tls13Ciphers = "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256",
     ),
 
     /**
-     * c02b c02f c02c c030 cca9 cca8 c009 c013 c00a c014; Go lists its TLS 1.3 suites after them. Without GREASE.
+     * c02b c02f c02c c030 cca9 cca8 c009 c013 c00a c014; Go lists its TLS 1.3 suites after them, which BoringSSL cannot
+     * do, in BoringSSL's order among themselves. Without GREASE.
      *
      * Go's groups, as its ClientHello of October 2026 lists them, without SecP256r1MLKEM768 and SecP384r1MLKEM1024,
      * which BoringSSL does not have: X25519MLKEM768, X25519, P-256, P-384, P-521. Key shares for the first two, as Go
@@ -311,10 +344,20 @@ enum class AetherFingerprint(val type: String, val ciphers: String, val grease: 
         "X25519MLKEM768:X25519:P-256:P-384:P-521",
     );
 
-    /** The core's options for this fingerprint: its TLS 1.2 suites, its groups, and GREASE left out where it sends none. */
+    /**
+     * The core's options for this fingerprint: its TLS 1.2 suites, its TLS 1.3 order where it has one, its groups, its
+     * key shares where it names them, GREASE left out where it sends none, and GREASE among the signature algorithms
+     * where it sends one there.
+     */
     val arguments: List<String>
-        get() = listOf("--tls-ciphers", ciphers, "--tls-groups", groups) +
-            if (grease) emptyList() else listOf("--disable-grease")
+        get() = buildList {
+            addAll(listOf("--tls-ciphers", ciphers))
+            tls13Ciphers?.let { addAll(listOf("--tls13-ciphers", it)) }
+            addAll(listOf("--tls-groups", groups))
+            keyShares?.let { addAll(listOf("--tls-key-shares", it)) }
+            if (!grease) add("--disable-grease")
+            if (greaseSigalgs) add("--enable-grease-sigalgs")
+        }
 
     companion object {
         fun fromString(type: String?) = entries.find { it.type == type } ?: CHROME
