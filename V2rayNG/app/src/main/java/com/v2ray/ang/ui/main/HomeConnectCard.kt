@@ -156,7 +156,7 @@ fun HomeConnectCard(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.Stiffness.MediumLow))
+                        .animateContentSize(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -219,7 +219,7 @@ private fun HomeConnectButton(
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.92f else 1f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.Stiffness.MediumLow),
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
         label = "home-button-scale",
     )
     Surface(
@@ -288,7 +288,7 @@ private fun HomeCardDetailsSection(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = stringResource(R.string.home_details_title), style = MaterialTheme.typography.titleMedium)
-        AnimatedVisibility(visible = true, enter = expandVertically(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.Stiffness.MediumLow)) + fadeIn(tween(180))) {
+        AnimatedVisibility(visible = true, enter = expandVertically(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(180))) {
             HomeCardDetailsBlock(details, onRefreshPingClick)
         }
     }

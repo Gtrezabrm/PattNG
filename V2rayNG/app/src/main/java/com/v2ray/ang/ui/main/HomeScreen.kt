@@ -43,7 +43,9 @@ fun HomeScreen(
     onOpenServerList: () -> Unit,
     onNavigate: (MainDestination) -> Unit,
 ) {
-    val serverName by mainViewModel.selectedServerName.collectAsStateWithLifecycle()
+    val selectedServers by mainViewModel.serversForGroup(uiState.selectedGroupId).collectAsStateWithLifecycle()
+    val serverName = selectedServers.firstOrNull { it.guid == uiState.selectedGuid }?.profile?.remarks
+        ?.takeIf { it.isNotBlank() }
     val status = HomeConnection.cardStatus(uiState)
 
     // Test the active route once when it reaches Connected; never poll in a loop.
