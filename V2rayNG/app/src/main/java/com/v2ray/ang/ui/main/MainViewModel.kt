@@ -141,6 +141,8 @@ class MainViewModel(
 
     private val testRequests = MainTestRequests()
     private var bulkTestJob: Job? = null
+    private var userRequestedChange = false
+    private var startTimeoutJob: Job? = null
 
     private val initialPageReady = CompletableDeferred<Unit>()
 
@@ -172,7 +174,7 @@ class MainViewModel(
     private fun handleServiceEvent(event: MainServiceEvent) {
         when (event) {
             MainServiceEvent.StateRunning -> updateRunningState(true, clearTestingText = false)
-            MainServiceEvent.StateNotRunning -> updateRunningState(false, clearTestingText = false)
+            MainServiceEvent.StateNotRunning -> updateRunningState(false, clearTestingText = false, signal = RunningSignal.NOT_RUNNING)
             MainServiceEvent.StateStartSuccess -> {
                 toastSuccess(R.string.toast_services_success)
                 updateRunningState(true)
@@ -186,7 +188,7 @@ class MainViewModel(
                 } else {
                     toastError(R.string.toast_services_failure)
                 }
-                updateRunningState(false)
+                updateRunningState(false, signal = RunningSignal.START_FAILED)
             }
 
             is MainServiceEvent.StateConnecting -> {
@@ -195,10 +197,21 @@ class MainViewModel(
                 }
             }
 
-            MainServiceEvent.StateStopSuccess -> updateRunningState(false)
+            MainServiceEvent.StateStopSuccess -> updateRunningState(false, signal = RunningSignal.STOPPED)
             is MainServiceEvent.MeasureDelayResult -> {
                 if (!uiState.value.isRunning || !testRequests.completeCurrent(event.requestId)) return
-                _uiState.update { it.copy(isTesting = testRequests.isTesting, status = MainStatus.ConnectionTest(event.result)) }
+                _uiState.update {
+                    it.copy(
+                        isTesting = testRequests.isTesting,
+                        status = MainStatus.ConnectionTest(event.result),
+                        connectionPingMillis = event.result.delayMillis.takeIf { millis -> millis >= 0 }
+                            ?: it.connectionPingMillis,
+                        connectionIpAddress = event.result.ipAddress?.takeIf { ip -> ip.isNotBlank() }
+                            ?: it.connectionIpAddress,
+                        connectionCountryCode = normalizeCountryCode(event.result.country)
+                            ?: it.connectionCountryCode,
+                    )
+                }
             }
 
             is MainServiceEvent.MeasureConfigSuccess -> {
@@ -1096,23 +1109,60 @@ class MainViewModel(
     }
 
     // ---------- Running state ----------
-    private fun updateRunningState(running: Boolean, clearTestingText: Boolean = true) {
+    private fun updateRunningState(
+        running: Boolean,
+        clearTestingText: Boolean = true,
+        signal: RunningSignal = if (running) RunningSignal.RUNNING else RunningSignal.NOT_RUNNING,
+    ) {
         if (!running || clearTestingText) testRequests.invalidateCurrent()
+        val userRequested = userRequestedChange
+        val now = System.nanoTime()
         _uiState.update { state ->
             state.copy(
                 isRunning = running,
                 isTesting = testRequests.isTesting,
-                status = runningStatus(state.status, state.isRunning, running, clearTestingText)
+                status = runningStatus(state.status, state.isRunning, running, clearTestingText),
+                pendingStart = HomeConnection.pendingStartAfter(state.pendingStart, signal),
+                connectionIssue = HomeConnection.issueAfter(state.connectionIssue, state.isRunning, signal, userRequested),
+                connectionPingMillis = if (running) state.connectionPingMillis else null,
+                connectionIpAddress = if (running) state.connectionIpAddress else null,
+                connectionCountryCode = if (running) state.connectionCountryCode else null,
+                connectedSinceNanos = if (running) state.connectedSinceNanos ?: now else null,
             )
+        }
+        if (signal == RunningSignal.RUNNING || signal == RunningSignal.START_FAILED) {
+            userRequestedChange = false
+            startTimeoutJob?.cancel()
+            startTimeoutJob = null
         }
     }
 
+    /**
+     * The user asked the service to start ([starting]) or to stop, or the app restarts it for the user: what follows is
+     * not a dropped connection, and a start not answered within [HomeConnection.START_TIMEOUT_MILLIS] is shown as
+     * failed. The user is never connected again by this; only the user starts the service.
+     */
+    fun onUserServiceRequest(starting: Boolean) {
+        userRequestedChange = true
+        startTimeoutJob?.cancel()
+        startTimeoutJob = null
+        _uiState.update { it.copy(pendingStart = starting, connectionIssue = null) }
+        if (starting) {
+            startTimeoutJob = viewModelScope.launch {
+                kotlinx.coroutines.delay(HomeConnection.START_TIMEOUT_MILLIS)
+                if (uiState.value.pendingStart && !uiState.value.isRunning) {
+                    updateRunningState(false, signal = RunningSignal.START_FAILED)
+                }
+            }
+        }
+    }
     override fun onCleared() {
         setupGroupJob?.cancel()
         preloadJob?.cancel()
         selectedGroupLoadJob?.cancel()
         reloadJob?.cancel()
         filterJob?.cancel()
+        startTimeoutJob?.cancel()
         cancelAllPing()
         dataSource.close()
         super.onCleared()

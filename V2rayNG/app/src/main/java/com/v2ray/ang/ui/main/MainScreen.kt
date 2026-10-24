@@ -70,6 +70,7 @@ fun MainScreen(
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var showSearch by remember { mutableStateOf(false) }
+    var showServerList by rememberSaveable { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var showDelAllConfirm by remember { mutableStateOf(false) }
     var showDelDuplicateConfirm by remember { mutableStateOf(false) }
@@ -165,6 +166,20 @@ fun MainScreen(
             )
         }
     ) {
+        if (!showServerList) {
+            HomeScreen(
+                mainViewModel = mainViewModel,
+                uiState = uiState,
+                onAction = onAction,
+                onMenuClick = { scope.launch { drawerState.open() } },
+                onOpenServerList = { showServerList = true },
+                onNavigate = { route ->
+                    scope.launch { drawerState.close() }
+                    onNavigate(route)
+                },
+            )
+            return@ModalNavigationDrawer
+        }
         Scaffold(
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {

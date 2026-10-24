@@ -118,7 +118,10 @@ class MainActivity : HelperBaseComponentActivity() {
                     MainAction.ImportClipboard -> importClipboard()
                     MainAction.ImportConfigLocal -> importConfigLocal()
                     is MainAction.ImportManually -> importManually(action.type)
-                    MainAction.RestartService -> LauncherManager.restartServiceOrStart(this, ::requestServiceStart)
+                     MainAction.RestartService -> {
+                         noteUserRestart()
+                         LauncherManager.restartServiceOrStart(this, ::requestServiceStart)
+                     }
                     MainAction.LocateSelectedServer -> mainViewModel.triggerLocateSelectedServer()
                     is MainAction.SelectServer -> setSelectServer(action.guid)
                     is MainAction.EditServer -> editServer(action.guid, action.profile)
@@ -175,6 +178,7 @@ class MainActivity : HelperBaseComponentActivity() {
 
     private fun handleFabAction() {
         if (mainViewModel.uiState.value.isRunning) {
+            mainViewModel.onUserServiceRequest(starting = false)
             LauncherManager.stopService(this)
             // A service whose process died takes no stop and answers nothing; asking for its state right
             // after lets that silence show the screen as stopped instead of leaving it connected.
@@ -208,7 +212,14 @@ class MainActivity : HelperBaseComponentActivity() {
         ) {
             checkAndRequestPermission(PermissionType.ACCESS_LOCAL_NETWORK) {}
         }
+        mainViewModel.onUserServiceRequest(starting = true)
         LauncherManager.startService(this)
+    }
+
+
+    /** A restart initiated by the app is not an unexpected disconnection. */
+    private fun noteUserRestart() {
+        mainViewModel.onUserServiceRequest(starting = mainViewModel.uiState.value.isRunning)
     }
 
     private fun importManually(createConfigType: Int) {
