@@ -783,5 +783,8 @@
         <item>GFW</item>
         <item>Mạnh</item>
     </string-array>
+    <string name="sub_info_open_support">Mở liên kết hỗ trợ</string>
+    <string name="sub_info_open_page">Mở trang thông tin đăng ký</string>
+    <string name="sub_info_unlimited">Không giới hạn</string>
 
 </resources>

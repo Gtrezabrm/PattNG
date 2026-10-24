@@ -785,5 +785,8 @@
         <item>GFW</item>
         <item>شدید</item>
     </string-array>
+    <string name="sub_info_open_support">واز کردن لینگ پشتیوانی</string>
+    <string name="sub_info_open_page">واز کردن صفحه اطلاعات اشتراک</string>
+    <string name="sub_info_unlimited">بی‌حد</string>
 
 </resources>

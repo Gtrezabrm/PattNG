@@ -783,5 +783,8 @@
         <item>GFW</item>
         <item>激进</item>
     </string-array>
+    <string name="sub_info_open_support">打开支持链接</string>
+    <string name="sub_info_open_page">打开订阅信息页面</string>
+    <string name="sub_info_unlimited">无限制</string>
 
 </resources>
