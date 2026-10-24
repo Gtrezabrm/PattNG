@@ -854,6 +854,17 @@ class AetherCoreManagerTest {
                     assertEquals(fingerprint.keyShares, valueAfter(arguments, "--tls-key-shares"))
                     assertTrue("--disable-grease" in arguments)
                     assertFalse("--enable-grease-sigalgs" in arguments)
+                    // One order of the extensions, as these clients keep.
+                    assertTrue("--disable-extension-permutation" in arguments)
+                }
+                // Every option of every fingerprint goes to the core, in the fingerprint's order: the signature
+                // algorithms, the extensions and the rest.
+                for (fingerprint in AetherFingerprint.entries) {
+                    val arguments = AetherCoreManager.buildArguments(profile(protocol, transport).copy(aetherFingerprint = fingerprint.type), 10819)
+                    assertTrue(
+                        java.util.Collections.indexOfSubList(arguments, fingerprint.arguments) >= 0,
+                        "${fingerprint.type}, $protocol over $transport"
+                    )
                 }
             }
         }
@@ -871,6 +882,11 @@ class AetherCoreManagerTest {
             assertFalse("--tls13-ciphers" in firefox)
             assertFalse("--tls-key-shares" in firefox)
             assertFalse("--enable-grease-sigalgs" in AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2), 10819))
+            for (fingerprint in AetherFingerprint.entries) {
+                val arguments = AetherCoreManager.buildArguments(profile(protocol, AetherTransport.HTTP2).copy(aetherFingerprint = fingerprint.type), 10819)
+                val flags = fingerprint.arguments.filter { it.startsWith("--") }
+                assertTrue(flags.none { it in arguments }, "${fingerprint.type}, $protocol")
+            }
         }
         // A scan's probes send the ClientHello the tunnel will.
         assertTrue("--disable-grease" in AetherCoreManager.buildArguments(profile().copy(aetherFingerprint = "firefox"), 0, scan = true))

@@ -87,6 +87,58 @@ class AetherKeysTest {
 
     private fun groupsOf(fingerprint: AetherFingerprint): List<Int> = fingerprint.groups.split(':').map(groupIds::getValue)
 
+    /** Whether `value` is a GREASE value (RFC 8701). */
+    private fun grease(value: Int): Boolean = value and 0x0f0f == 0x0a0a && value shr 8 == value and 0xff
+
+    /** The number of each signature algorithm by the name BoringSSL gives it, for every one it has (boring 5.3). */
+    private val sigalgIds = mapOf(
+        "rsa_pkcs1_sha1" to 0x0201,
+        "rsa_pkcs1_sha256" to 0x0401,
+        "rsa_pkcs1_sha384" to 0x0501,
+        "rsa_pkcs1_sha512" to 0x0601,
+        "ecdsa_sha1" to 0x0203,
+        "ecdsa_secp256r1_sha256" to 0x0403,
+        "ecdsa_secp384r1_sha384" to 0x0503,
+        "ecdsa_secp521r1_sha512" to 0x0603,
+        "rsa_pss_rsae_sha256" to 0x0804,
+        "rsa_pss_rsae_sha384" to 0x0805,
+        "rsa_pss_rsae_sha512" to 0x0806,
+        "ed25519" to 0x0807,
+        "mldsa44" to 0x0904,
+        "mldsa65" to 0x0905,
+        "mldsa87" to 0x0906,
+    )
+
+    /** The signature algorithms of a ClientHello's signature_algorithms in hex that BoringSSL has, in order: GREASE and the rest left out. */
+    private fun capturedSigalgs(captured: String): List<Int> =
+        captured.chunked(4).map { it.toInt(16) }.filter { it in sigalgIds.values }
+
+    private fun sigalgsOf(fingerprint: AetherFingerprint): List<Int> = fingerprint.sigalgs.split(':').map(sigalgIds::getValue)
+
+    /** The number of each certificate compression algorithm (RFC 8879) by its name. */
+    private val certCompressionIds = mapOf("zlib" to 1, "brotli" to 2, "zstd" to 3)
+
+    /** The algorithms of a ClientHello's compress_certificate in hex, after the byte of their length. */
+    private fun capturedCompression(captured: String): List<Int> = captured.drop(2).chunked(4).map { it.toInt(16) }
+
+    private fun compressionOf(fingerprint: AetherFingerprint): List<Int> =
+        fingerprint.certCompression!!.split(':').map(certCompressionIds::getValue)
+
+    /** Trust anchor IDs in dotted decimal as trust_anchors carries them, in hex: each ID's arcs in base 128, after its length. */
+    private fun trustAnchorsHex(ids: String): String = ids.split(':').joinToString("") { id ->
+        val bytes = id.split('.').flatMap { arc ->
+            var value = arc.toLong()
+            val base128 = mutableListOf((value and 0x7f).toInt())
+            value = value shr 7
+            while (value > 0) {
+                base128.add(0x80 or (value and 0x7f).toInt())
+                value = value shr 7
+            }
+            base128.reversed()
+        }
+        "%02x".format(bytes.size) + bytes.joinToString("") { "%02x".format(it) }
+    }
+
     @Test
     fun eachFingerprintOffersTheTls12SuitesOfItsCapturedClientHello() {
         // The ClientHellos captured with Wireshark. Chrome's, eaea130113021303c02bc02fc02cc030cca9cca8c013c014009c009d002f0035,
@@ -150,6 +202,108 @@ class AetherKeysTest {
     }
 
     @Test
+    fun eachFingerprintOffersTheSignatureAlgorithmsOfItsCapturedClientHelloThatBoringSslHas() {
+        // The signature_algorithms of the ClientHellos captured in October 2026. Chrome's leads with a GREASE value,
+        // which greaseSigalgs gives, then ML-DSA; Python's also lists Ed448, the brainpool curves, RSA-PSS with PSS keys,
+        // SHA-224 and DSA, none of which BoringSSL has.
+        val captured = mapOf(
+            AetherFingerprint.CHROME to "2a2a09040905090604030804040105030805050108060601",
+            AetherFingerprint.CHROME_120 to "04030804040105030805050108060601",
+            AetherFingerprint.FIREFOX to "04030503060308040805080604010501060102030201",
+            AetherFingerprint.SEMI_PYTHON to
+                "09050906090404030503060308070808081a081b081c0809080a080b080408050806040105010601030303010302040205020602",
+            AetherFingerprint.GO to "0904090509060804040308070805080604010501060105030603",
+        )
+        assertEquals(AetherFingerprint.entries.toSet(), captured.keys)
+        for ((fingerprint, hex) in captured) {
+            assertEquals(capturedSigalgs(hex), sigalgsOf(fingerprint), fingerprint.type)
+            assertEquals(grease(hex.take(4).toInt(16)), fingerprint.greaseSigalgs, fingerprint.type)
+        }
+        // Only Python's list loses algorithms to BoringSSL: the others keep every one of theirs, GREASE aside.
+        for (fingerprint in AetherFingerprint.entries - AetherFingerprint.SEMI_PYTHON) {
+            val all = captured.getValue(fingerprint).chunked(4).map { it.toInt(16) }.filterNot(::grease)
+            assertEquals(all, sigalgsOf(fingerprint), fingerprint.type)
+        }
+    }
+
+    @Test
+    fun eachFingerprintSendsTheExtensionsOfItsCapturedClientHelloThatBoringSslCanSend() {
+        // The types of the extensions of the ClientHellos captured in October 2026, in their order.
+        val captured = mapOf(
+            AetherFingerprint.CHROME to "aaaa0000000aca34002d001700330005000b0012000dfe0d12e0002bff0144cd00230010001bcaca",
+            AetherFingerprint.CHROME_120 to "eaea00230010002b0000000b000a000dfe0d001b00124469ff010017002d003300053a3a",
+            AetherFingerprint.FIREFOX to "00000017ff01000a000b00100005002200120033002b000d001c001bfe0d",
+            AetherFingerprint.SEMI_PYTHON to "ff010000000b000a0023001000160017000d002b002d0033",
+            AetherFingerprint.GO to "0000000bff01001700120005000a000d00320010002b0033",
+        )
+        assertEquals(AetherFingerprint.entries.toSet(), captured.keys)
+        for ((fingerprint, types) in captured) {
+            val all = types.chunked(4).map { it.toInt(16) }
+            val sent = all.filterNot(::grease).toSet()
+            val name = fingerprint.type
+            assertEquals(all.any(::grease), fingerprint.grease, name)
+            assertEquals(0x0005 in sent, fingerprint.ocspStapling, name)
+            assertEquals(0x0012 in sent, fingerprint.sct, name)
+            assertEquals(0x0023 in sent, fingerprint.sessionTicket, name)
+            assertEquals(0x001b in sent, fingerprint.certCompression != null, name)
+            // An ECH where there is no key to offer is a GREASE one; Chrome's and Firefox's captures went with
+            // Cloudflare's key, Chrome 120's with a GREASE one.
+            assertEquals(0xfe0d in sent, fingerprint.echGrease, name)
+            assertEquals(0xca34 in sent, fingerprint.trustAnchors != null, name)
+            assertEquals(0x12e0 in sent, fingerprint.serverPadding != null, name)
+            val alps = when {
+                0x44cd in sent -> "new"
+                0x4469 in sent -> "old"
+                else -> null
+            }
+            assertEquals(alps, fingerprint.alps, name)
+        }
+
+        // What they carry: compress_certificate, trust_anchors after the two bytes of its length, server_padding.
+        assertEquals(capturedCompression("020002"), compressionOf(AetherFingerprint.CHROME))
+        assertEquals(capturedCompression("020002"), compressionOf(AetherFingerprint.CHROME_120))
+        assertEquals(capturedCompression("06000100020003"), compressionOf(AetherFingerprint.FIREFOX))
+        val trustAnchors = "00b80582df1302010582df1302060582df13020d0582df13020e0582df13020f0582df1302120582df1302130582df130214" +
+            "08839a648c9b2d010708839a648c9b2d010808839a648c9b2d010908839a648c9b2d010a08839a648c9b2d010b08839a648c9b2d010c" +
+            "08839a648c9b2d010d08839a648c9b2d011208839a648c9b2d011304d679090104d679090404d679090504d679090604d679090704d6" +
+            "79090804d679090a04d679090b04d679090c04d679090d04d679090f"
+        assertEquals(trustAnchors.drop(4), trustAnchorsHex(AetherFingerprint.CHROME.trustAnchors!!))
+        assertEquals(trustAnchors.take(4).toInt(16) * 2, trustAnchors.drop(4).length)
+        assertEquals("1770".toInt(16), AetherFingerprint.CHROME.serverPadding)
+
+        // Chrome has sent its extensions in a new order on each handshake since its version 110, Chrome 120 too;
+        // Firefox, Python and Go keep one order, which no capture shows alone.
+        assertEquals(
+            listOf(AetherFingerprint.CHROME, AetherFingerprint.CHROME_120),
+            AetherFingerprint.entries.filter { it.permuteExtensions }
+        )
+    }
+
+    @Test
+    fun theKeysPageGivesTheCoreEveryOptionOfTheFingerprint() {
+        for (fingerprint in AetherFingerprint.entries) {
+            val arguments = AetherKeys.arguments(AetherKeysSettings(fingerprint = fingerprint))
+            val name = fingerprint.type
+            assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"), name)
+            assertEquals(fingerprint.tls13Ciphers, valueAfter(arguments, "--tls13-ciphers"), name)
+            assertEquals(fingerprint.groups, valueAfter(arguments, "--tls-groups"), name)
+            assertEquals(fingerprint.keyShares, valueAfter(arguments, "--tls-key-shares"), name)
+            assertEquals(fingerprint.sigalgs, valueAfter(arguments, "--tls-sigalgs"), name)
+            assertEquals(fingerprint.certCompression, valueAfter(arguments, "--tls-cert-compression"), name)
+            assertEquals(fingerprint.alps, valueAfter(arguments, "--tls-alps"), name)
+            assertEquals(fingerprint.trustAnchors, valueAfter(arguments, "--tls-trust-anchors"), name)
+            assertEquals(fingerprint.serverPadding?.toString(), valueAfter(arguments, "--tls-server-padding"), name)
+            assertEquals(!fingerprint.grease, "--disable-grease" in arguments, name)
+            assertEquals(fingerprint.greaseSigalgs, "--enable-grease-sigalgs" in arguments, name)
+            assertEquals(fingerprint.echGrease, "--enable-ech-grease" in arguments, name)
+            assertEquals(!fingerprint.ocspStapling, "--disable-ocsp-stapling" in arguments, name)
+            assertEquals(!fingerprint.sct, "--disable-sct" in arguments, name)
+            assertEquals(!fingerprint.sessionTicket, "--disable-session-ticket" in arguments, name)
+            assertEquals(!fingerprint.permuteExtensions, "--disable-extension-permutation" in arguments, name)
+        }
+    }
+
+    @Test
     fun eachCipherSuitesPresetOffersTheTls12SuitesOfTheAetherFingerprintOfTheSameClient() {
         // The lists the cipherSuites field of the other protocols offers, as the app's resources give them.
         val presets = AppResources.stringArray("cipher_suites_preset_names")
@@ -169,34 +323,40 @@ class AetherKeysTest {
         assertFalse(AetherFingerprint.GO.grease)
         // Chrome of today alone sends one among its signature algorithms as well; Chrome 120 did not.
         assertEquals(listOf(AetherFingerprint.CHROME), AetherFingerprint.entries.filter { it.greaseSigalgs })
-
-        for (fingerprint in AetherFingerprint.entries) {
-            val arguments = AetherKeys.arguments(AetherKeysSettings(fingerprint = fingerprint))
-            assertEquals(fingerprint.ciphers, valueAfter(arguments, "--tls-ciphers"))
-            assertEquals(fingerprint.tls13Ciphers, valueAfter(arguments, "--tls13-ciphers"))
-            assertEquals(fingerprint.groups, valueAfter(arguments, "--tls-groups"))
-            assertEquals(fingerprint.keyShares, valueAfter(arguments, "--tls-key-shares"))
-            assertEquals(!fingerprint.grease, "--disable-grease" in arguments)
-            assertEquals(fingerprint.greaseSigalgs, "--enable-grease-sigalgs" in arguments)
-        }
     }
 
     @Test
-    fun eachFingerprintNamesItsSuitesAndItsGroups() {
-        // Each is named, so that the core's defaults cannot change it. GREASE is the one left to the core, which has no
-        // option that turns it on; Chrome alone keeps it. The TLS 1.3 order and the key shares are named where they are
-        // not BoringSSL's.
+    fun eachFingerprintNamesItsSuitesItsGroupsAndItsSignatureAlgorithms() {
+        // Each is named, so that the core's defaults cannot change it. What the core sends unless told otherwise (GREASE,
+        // OCSP, signed certificate timestamps, the session ticket, a new order of the extensions on each handshake) a
+        // fingerprint without it turns off; what the core leaves out unless told otherwise, a fingerprint with it turns
+        // on. The TLS 1.3 order and the key shares are named where they are not BoringSSL's.
         val groups = "X25519MLKEM768:X25519:P-256:P-384:P-521"
+        val chromeEight = "ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256:rsa_pkcs1_sha256:ecdsa_secp384r1_sha384:" +
+            "rsa_pss_rsae_sha384:rsa_pkcs1_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha512"
         assertEquals(
             listOf(
                 "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
                 "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
+                "--tls-sigalgs", "mldsa44:mldsa65:mldsa87:$chromeEight",
+                "--tls-cert-compression", "brotli",
+                "--tls-alps", "new",
+                "--tls-trust-anchors", AetherFingerprint.CHROME.trustAnchors,
+                "--tls-server-padding", "6000",
                 "--enable-grease-sigalgs",
+                "--enable-ech-grease",
             ),
             AetherFingerprint.CHROME.arguments,
         )
         assertEquals(
-            listOf("--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES", "--tls-groups", "X25519:P-256:P-384"),
+            listOf(
+                "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
+                "--tls-groups", "X25519:P-256:P-384",
+                "--tls-sigalgs", chromeEight,
+                "--tls-cert-compression", "brotli",
+                "--tls-alps", "old",
+                "--enable-ech-grease",
+            ),
             AetherFingerprint.CHROME_120.arguments,
         )
         assertEquals(
@@ -205,7 +365,14 @@ class AetherKeysTest {
                 "--tls13-ciphers", "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
                 "--tls-groups", groups,
                 "--tls-key-shares", "X25519MLKEM768:X25519:P-256",
+                "--tls-sigalgs", "ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512:rsa_pss_rsae_sha256:" +
+                    "rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:ecdsa_sha1:" +
+                    "rsa_pkcs1_sha1",
+                "--tls-cert-compression", "zlib:brotli:zstd",
                 "--disable-grease",
+                "--enable-ech-grease",
+                "--disable-session-ticket",
+                "--disable-extension-permutation",
             ),
             AetherFingerprint.FIREFOX.arguments,
         )
@@ -214,12 +381,27 @@ class AetherKeysTest {
                 "--tls-ciphers", AetherFingerprint.SEMI_PYTHON.ciphers,
                 "--tls13-ciphers", "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256",
                 "--tls-groups", groups,
+                "--tls-sigalgs", "mldsa65:mldsa87:mldsa44:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:" +
+                    "ecdsa_secp521r1_sha512:ed25519:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:" +
+                    "rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512",
                 "--disable-grease",
+                "--disable-ocsp-stapling",
+                "--disable-sct",
+                "--disable-extension-permutation",
             ),
             AetherFingerprint.SEMI_PYTHON.arguments,
         )
         assertEquals(
-            listOf("--tls-ciphers", AetherFingerprint.GO.ciphers, "--tls-groups", groups, "--disable-grease"),
+            listOf(
+                "--tls-ciphers", AetherFingerprint.GO.ciphers,
+                "--tls-groups", groups,
+                "--tls-sigalgs", "mldsa44:mldsa65:mldsa87:rsa_pss_rsae_sha256:ecdsa_secp256r1_sha256:ed25519:" +
+                    "rsa_pss_rsae_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha512:" +
+                    "ecdsa_secp384r1_sha384:ecdsa_secp521r1_sha512",
+                "--disable-grease",
+                "--disable-session-ticket",
+                "--disable-extension-permutation",
+            ),
             AetherFingerprint.GO.arguments,
         )
     }
@@ -238,17 +420,14 @@ class AetherKeysTest {
         // No address, server name or host: the core's own, api.devices.cloudflare.com, then api.cloudflareclient.com
         // when that one does not serve the call.
         assertEquals(
-            listOf(
-                "--register", "all",
-                "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
-                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
-                "--enable-grease-sigalgs",
-            ),
+            listOf("--register", "all") + AetherFingerprint.CHROME.arguments,
             AetherKeys.arguments(AetherKeysSettings())
         )
         assertEquals(
             "aether --register all --tls-ciphers ALL:!aPSK:!ECDSA+SHA1:!3DES --tls-groups X25519MLKEM768:X25519:P-256:P-384 " +
-                "--enable-grease-sigalgs",
+                "--tls-sigalgs ${AetherFingerprint.CHROME.sigalgs} --tls-cert-compression brotli --tls-alps new " +
+                "--tls-trust-anchors ${AetherFingerprint.CHROME.trustAnchors} --tls-server-padding 6000 " +
+                "--enable-grease-sigalgs --enable-ech-grease",
             AetherKeys.builtCommand(AetherKeysSettings())
         )
         // A plain exit-node.
@@ -344,10 +523,7 @@ class AetherKeysTest {
                 "--api-address", "162.159.137.105",
                 "--api-sni", "api.cloudflareclient.com",
                 "--api-host", "api.cloudflareclient.com",
-                "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
-                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
-                "--enable-grease-sigalgs",
-            ),
+            ) + AetherFingerprint.CHROME.arguments,
             given
         )
         // One alone leaves the others to the core.
@@ -433,13 +609,7 @@ class AetherKeysTest {
     fun theFragmentSendsTheClientHelloOfTheApiInPiecesShapedAsSet() {
         val on = AetherKeysSettings(fragment = true)
         assertEquals(
-            listOf(
-                "--register", "all",
-                "--fragment",
-                "--tls-ciphers", "ALL:!aPSK:!ECDSA+SHA1:!3DES",
-                "--tls-groups", "X25519MLKEM768:X25519:P-256:P-384",
-                "--enable-grease-sigalgs",
-            ),
+            listOf("--register", "all", "--fragment") + AetherFingerprint.CHROME.arguments,
             AetherKeys.arguments(on)
         )
         val shaped = AetherKeys.arguments(on.copy(fragmentSize = " 16 - 8 ", fragmentDelay = "5"))
