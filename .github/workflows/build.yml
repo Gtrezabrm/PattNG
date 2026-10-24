@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - master
+      - ui/upstream-polish-2026-10
 
 permissions:
   contents: write
