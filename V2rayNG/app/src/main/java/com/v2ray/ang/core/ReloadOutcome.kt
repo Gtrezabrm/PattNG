@@ -64,5 +64,14 @@ internal enum class ReloadOutcome {
          * the monitor and a new start brings its own; either way what runs next is not the reload's to start.
          */
         fun goesOn(askedBy: Any, current: Any?): Boolean = current === askedBy
+
+        /**
+         * Whether a network handover seen by [askedBy] reloads the service: only while [askedBy] is still [current], the
+         * service's network monitor now, Xray runs, and no other reload is under way. A handover a monitor began before a
+         * stop unregistered it can still arrive; a new start has brought a monitor of its own since, and the service it
+         * started is not that handover's to reload.
+         */
+        fun handoverReloads(askedBy: Any, current: Any?, coreRunning: Boolean, reloading: Boolean): Boolean =
+            !reloading && coreRunning && current === askedBy
     }
 }

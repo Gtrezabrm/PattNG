@@ -164,11 +164,38 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
                 }
             }
         }
-        FormTextField(
-            stringResource(R.string.aether_keys_lab_enroll_address),
-            settings.enrollAddress,
-            viewModel::setEnrollAddress,
+        // Where the calls to the WARP API go, the server name of their ClientHello and their HTTP host: each left blank
+        // follows the next, as the core has them, the address the server name and the server name the host. Each is
+        // written, or picked from the two names of the API.
+        val apiNames = stringArrayResource(R.array.aether_api_name_options).toList()
+        FormDropdownField(
+            label = stringResource(R.string.aether_keys_lab_enroll_address),
+            value = settings.enrollAddress,
+            options = apiNames,
+            onValueChange = viewModel::setEnrollAddress,
+            editable = true,
             enabled = enabled,
+            placeholder = stringResource(R.string.aether_keys_hint_enroll_address),
+            keyboardType = KeyboardType.Uri
+        )
+        FormDropdownField(
+            label = stringResource(R.string.aether_keys_lab_api_sni),
+            value = settings.apiSni,
+            options = apiNames,
+            onValueChange = viewModel::setApiSni,
+            editable = true,
+            enabled = enabled,
+            placeholder = stringResource(R.string.aether_keys_hint_api_sni),
+            keyboardType = KeyboardType.Uri
+        )
+        FormDropdownField(
+            label = stringResource(R.string.aether_keys_lab_api_host),
+            value = settings.apiHost,
+            options = apiNames,
+            onValueChange = viewModel::setApiHost,
+            editable = true,
+            enabled = enabled,
+            supportingText = stringResource(R.string.aether_keys_hint_api_host),
             keyboardType = KeyboardType.Uri
         )
         // --fragment, which in a run that only registers keys sends the ClientHello of the calls to the WARP API in
