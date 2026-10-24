@@ -10,6 +10,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -136,7 +137,7 @@ fun HomeConnectCard(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
+                        .animateContentSize(spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow))
                         .padding(20.dp),
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -334,8 +335,9 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
     val flag = countryFlagEmoji(countryCode)
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
         contentColor = LocalContentColor.current,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.42f)),
         modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
@@ -372,8 +374,9 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
 private fun HomeDetailTile(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.28f),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
         contentColor = LocalContentColor.current,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.42f)),
         modifier = modifier.semantics(mergeDescendants = true) {},
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
