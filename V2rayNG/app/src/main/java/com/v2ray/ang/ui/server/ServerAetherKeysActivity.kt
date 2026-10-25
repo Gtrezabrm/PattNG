@@ -167,7 +167,7 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
         // Where the calls to the WARP API go, the server name of their ClientHello and their HTTP host: each left blank
         // follows the next, as the core has them, the address the server name and the server name the host. Each is
         // written, or picked: default, which blanks it as the default of a preset field does, or one of the two names of
-        // the API.
+        // the API. Under a blank one shows default, as under a blank preset field; the host's hint follows it.
         val apiNames = stringArrayResource(R.array.aether_api_name_options).toList()
         val defaultName = stringResource(R.string.preset_default)
         FormDropdownField(
@@ -178,6 +178,7 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
             editable = true,
             enabled = enabled,
             placeholder = stringResource(R.string.aether_keys_hint_enroll_address),
+            supportingText = defaultName.takeIf { settings.enrollAddress.isBlank() },
             keyboardType = KeyboardType.Uri,
             defaultOption = defaultName
         )
@@ -189,6 +190,7 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
             editable = true,
             enabled = enabled,
             placeholder = stringResource(R.string.aether_keys_hint_api_sni),
+            supportingText = defaultName.takeIf { settings.apiSni.isBlank() },
             keyboardType = KeyboardType.Uri,
             defaultOption = defaultName
         )
@@ -199,7 +201,10 @@ class ServerAetherKeysActivity : BaseComponentActivity() {
             onValueChange = viewModel::setApiHost,
             editable = true,
             enabled = enabled,
-            supportingText = stringResource(R.string.aether_keys_hint_api_host),
+            supportingText = listOfNotNull(
+                defaultName.takeIf { settings.apiHost.isBlank() },
+                stringResource(R.string.aether_keys_hint_api_host)
+            ).joinToString("\n"),
             keyboardType = KeyboardType.Uri,
             defaultOption = defaultName
         )
