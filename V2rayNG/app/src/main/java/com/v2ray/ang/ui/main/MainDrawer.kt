@@ -85,8 +85,8 @@ fun MainDrawerContent(drawerState: DrawerState, onNavigate: (MainDestination) ->
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // PattNG: full-color circular logo, no dark-mode tint (tinting a photo logo
-                    // would flatten it into a white disc)
+                    // PattNG: full-color logo tile, no dark-mode tint (tinting a photo logo
+                    // would flatten it into a flat shape)
                     Image(
                         painter = painterResource(R.drawable.ic_pattng_logo),
                         contentDescription = null,

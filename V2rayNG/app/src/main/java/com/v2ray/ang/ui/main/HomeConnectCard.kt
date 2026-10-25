@@ -1,16 +1,26 @@
 package com.v2ray.ang.ui.main
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +34,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -39,12 +50,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
@@ -113,24 +126,33 @@ fun HomeConnectCard(
     val colorSpec = spring<Color>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
     val colors = HomeCardColors(
         container = animateColorAsState(target.container, colorSpec, label = "home-card-container").value,
+        containerEnd = animateColorAsState(target.containerEnd, colorSpec, label = "home-card-container-end").value,
         content = animateColorAsState(target.content, colorSpec, label = "home-card-content").value,
         button = animateColorAsState(target.button, colorSpec, label = "home-card-button").value,
         onButton = animateColorAsState(target.onButton, colorSpec, label = "home-card-on-button").value,
     )
     val showDetails = model.status == HomeCardStatus.Connected && model.details != null
+    // Keep the last figures while the details fold away, so that they do not blank out during the exit animation.
+    var lastDetails by remember { mutableStateOf<HomeCardDetails?>(null) }
+    LaunchedEffect(model.details) { if (model.details != null) lastDetails = model.details }
+    val shownDetails = model.details ?: lastDetails
+    val detailsEnter = expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(350))
+    val detailsExit = shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(tween(200))
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val landscape = maxWidth > maxHeight
+        val cardShape = RoundedCornerShape(40.dp)
         Card(
-            shape = RoundedCornerShape(40.dp),
+            shape = cardShape,
             colors = CardDefaults.cardColors(
-                containerColor = colors.container,
+                containerColor = Color.Transparent,
                 contentColor = colors.content,
             ),
             modifier = Modifier
                 .align(Alignment.Center)
                 .widthIn(max = if (landscape) 720.dp else 480.dp)
                 .padding(16.dp)
+                .background(Brush.verticalGradient(listOf(colors.container, colors.containerEnd)), cardShape)
                 .verticalScroll(rememberScrollState()),
         ) {
             if (landscape) {
@@ -143,12 +165,13 @@ fun HomeConnectCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     HomeCardMain(model, colors, onConnectClick, onStatusActionClick, modifier = Modifier.weight(1f))
-                    if (showDetails) {
-                        HomeCardDetailsSection(
-                            details = model.details!!,
-                            onRefreshPingClick = onRefreshPingClick,
-                            modifier = Modifier.weight(1f),
-                        )
+                    AnimatedVisibility(
+                        visible = showDetails && shownDetails != null,
+                        enter = detailsEnter,
+                        exit = detailsExit,
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        shownDetails?.let { HomeCardDetailsSection(it, onRefreshPingClick) }
                     }
                 }
             } else {
@@ -161,11 +184,12 @@ fun HomeConnectCard(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     HomeCardMain(model, colors, onConnectClick, onStatusActionClick)
-                    if (showDetails) {
-                        HomeCardDetailsSection(
-                            details = model.details!!,
-                            onRefreshPingClick = onRefreshPingClick,
-                        )
+                    AnimatedVisibility(
+                        visible = showDetails && shownDetails != null,
+                        enter = detailsEnter,
+                        exit = detailsExit,
+                    ) {
+                        shownDetails?.let { HomeCardDetailsSection(it, onRefreshPingClick) }
                     }
                 }
             }
@@ -187,11 +211,17 @@ private fun HomeCardMain(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         HomeConnectButton(model.status, model.cancellable, colors, onConnectClick)
-        Text(
-            text = homeStatusText(model.status),
-            style = MaterialTheme.typography.headlineMedium,
-            textAlign = TextAlign.Center,
-        )
+        AnimatedContent(
+            targetState = model.status,
+            transitionSpec = { fadeIn(tween(300, delayMillis = 90)) togetherWith fadeOut(tween(150)) },
+            label = "home-status-text",
+        ) { status ->
+            Text(
+                text = homeStatusText(status),
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
         if (model.serverName != null && model.status != HomeCardStatus.Empty) {
             Text(
                 text = model.serverName,
@@ -221,33 +251,91 @@ private fun HomeConnectButton(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "home-button-scale",
     )
-    Surface(
-        onClick = onClick,
-        enabled = (!busy || cancellable) && status != HomeCardStatus.Empty,
-        shape = homeConnectShape(if (running) HomeConnectShape.Active else HomeConnectShape.Idle),
-        color = colors.button,
-        contentColor = colors.onButton,
-        interactionSource = interaction,
+    // The outline morphs between the idle and the running cookie, and the whole button breathes and turns gently.
+    val morph by animateFloatAsState(
+        targetValue = if (running) 1f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow),
+        label = "home-button-morph",
+    )
+    val alive = running || busy
+    val transition = rememberInfiniteTransition(label = "home-button-motion")
+    val turn by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(if (busy) 6_000 else 24_000, easing = LinearEasing)),
+        label = "home-button-turn",
+    )
+    val pulse by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            tween(if (busy) 900 else 2_600, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse,
+        ),
+        label = "home-button-pulse",
+    )
+    val haloAlpha by animateFloatAsState(
+        targetValue = if (alive) 1f else 0f,
+        animationSpec = tween(500),
+        label = "home-button-halo",
+    )
+    val shape = remember(morph) { homeConnectMorphShape(morph) }
+    Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(168.dp)
+            .size(200.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-            }
-            .semantics { contentDescription = label },
+            },
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            if (busy) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(48.dp),
-                    color = colors.onButton,
-                )
-            } else {
-                Icon(
-                    painter = painterResource(if (running) R.drawable.ic_stop_24dp else R.drawable.ic_play_24dp),
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp),
-                )
+        // Soft halo behind the button; drawn in the layer so that the pulse does not recompose anything.
+        Box(
+            modifier = Modifier
+                .size(168.dp)
+                .graphicsLayer {
+                    val grow = 1.08f + 0.14f * pulse
+                    scaleX = grow
+                    scaleY = grow
+                    alpha = haloAlpha * (0.30f - 0.18f * pulse)
+                }
+                .background(colors.button, CircleShape),
+        )
+        Box(
+            modifier = Modifier
+                .size(168.dp)
+                .graphicsLayer {
+                    rotationZ = if (alive) turn else 0f
+                    val breathe = if (alive) 1f + 0.025f * pulse else 1f
+                    scaleX = breathe
+                    scaleY = breathe
+                }
+                .background(colors.button, shape),
+        )
+        Surface(
+            onClick = onClick,
+            enabled = (!busy || cancellable) && status != HomeCardStatus.Empty,
+            shape = shape,
+            color = Color.Transparent,
+            contentColor = colors.onButton,
+            interactionSource = interaction,
+            modifier = Modifier
+                .size(168.dp)
+                .semantics { contentDescription = label },
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                if (busy) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(48.dp),
+                        color = colors.onButton,
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(if (running) R.drawable.ic_stop_24dp else R.drawable.ic_play_24dp),
+                        contentDescription = null,
+                        modifier = Modifier.size(56.dp),
+                    )
+                }
             }
         }
     }
@@ -287,19 +375,18 @@ private fun HomeCardDetailsSection(
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = stringResource(R.string.home_details_title), style = MaterialTheme.typography.titleMedium)
-        AnimatedVisibility(visible = true, enter = expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn()) {
-            HomeCardDetailsBlock(details, onRefreshPingClick)
-        }
+        HomeCardDetailsBlock(details, onRefreshPingClick)
     }
 }
+
 @Composable
 private fun HomeCardDetailsBlock(
     details: HomeCardDetails,
     onRefreshPingClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val pingText = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) }
-        ?: "—"
+    val measuring = stringResource(R.string.connection_test_testing)
+    val pingText = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) } ?: measuring
     val tiles = buildList {
         add(stringResource(R.string.home_details_ping) to pingText)
         add(stringResource(R.string.home_details_duration) to details.duration)
@@ -319,7 +406,7 @@ private fun HomeCardDetailsBlock(
         }
         HomeIpDetailTile(
             label = stringResource(R.string.home_details_ip),
-            ipAddress = details.ipAddress?.takeIf { it.isNotBlank() } ?: "—",
+            ipAddress = details.ipAddress?.takeIf { it.isNotBlank() } ?: measuring,
             countryCode = details.countryCode,
         )
         OutlinedButton(onClick = onRefreshPingClick, modifier = Modifier.fillMaxWidth()) {
@@ -350,7 +437,7 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
                 if (normalizedCountry == "IR") {
                     Icon(
                         painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
-                        contentDescription = "Lion and Sun flag of Iran",
+                        contentDescription = null,
                         modifier = Modifier.size(width = 24.dp, height = 16.dp),
                         tint = Color.Unspecified,
                     )
@@ -400,6 +487,7 @@ private fun homeStatusText(status: HomeCardStatus): String = stringResource(
 
 private data class HomeCardColors(
     val container: Color,
+    val containerEnd: Color,
     val content: Color,
     val button: Color,
     val onButton: Color,
@@ -410,19 +498,19 @@ private fun homeCardColors(status: HomeCardStatus): HomeCardColors {
     val scheme = MaterialTheme.colorScheme
     return when (status) {
         HomeCardStatus.Connected, HomeCardStatus.Connecting -> HomeCardColors(
-            scheme.primaryContainer, scheme.onPrimaryContainer, scheme.primary, scheme.onPrimary
+            scheme.primaryContainer, scheme.tertiaryContainer, scheme.onPrimaryContainer, scheme.primary, scheme.onPrimary
         )
 
         HomeCardStatus.Error -> HomeCardColors(
-            scheme.errorContainer, scheme.onErrorContainer, scheme.error, scheme.onError
+            scheme.errorContainer, scheme.surfaceContainerHigh, scheme.onErrorContainer, scheme.error, scheme.onError
         )
 
         HomeCardStatus.DisconnectedUnexpected -> HomeCardColors(
-            scheme.tertiaryContainer, scheme.onTertiaryContainer, scheme.tertiary, scheme.onTertiary
+            scheme.tertiaryContainer, scheme.surfaceContainerHigh, scheme.onTertiaryContainer, scheme.tertiary, scheme.onTertiary
         )
 
         HomeCardStatus.Empty, HomeCardStatus.Disconnected -> HomeCardColors(
-            scheme.surfaceContainerHigh, scheme.onSurface, scheme.secondaryContainer, scheme.onSecondaryContainer
+            scheme.surfaceContainerHigh, scheme.surfaceContainerHighest, scheme.onSurface, scheme.secondaryContainer, scheme.onSecondaryContainer
         )
     }
 }

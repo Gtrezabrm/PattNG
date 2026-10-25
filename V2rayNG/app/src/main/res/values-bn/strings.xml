@@ -798,6 +798,7 @@
     <string name="home_action_choose_server">সার্ভার নির্বাচন করুন</string>
     <string name="home_action_retry">আবার চেষ্টা করুন</string>
     <string name="home_action_reconnect">পুনরায় সংযোগ করুন</string>
+    <string name="home_nav_home">হোম</string>
     <string name="home_details_ping">পিং</string>
     <string name="home_details_duration">সময়কাল</string>
     <string name="home_details_download">ডাউনলোড</string>

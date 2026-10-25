@@ -803,6 +803,7 @@
     <string name="home_quick_servers">سرورها</string>
     <string name="home_quick_subscriptions">اشتراک‌ها</string>
     <string name="home_quick_settings">تنظیمات</string>
+    <string name="home_nav_home">خانه</string>
     <string name="home_details_ping">پینگ</string>
     <string name="home_details_duration">مدت اتصال</string>
     <string name="home_details_download">دانلود</string>

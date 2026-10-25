@@ -802,6 +802,7 @@
     <string name="home_action_choose_server">Выбрать сервер</string>
     <string name="home_action_retry">Повторить</string>
     <string name="home_action_reconnect">Переподключить</string>
+    <string name="home_nav_home">Главная</string>
     <string name="home_details_ping">Пинг</string>
     <string name="home_details_duration">Длительность</string>
     <string name="home_details_download">Загрузка</string>

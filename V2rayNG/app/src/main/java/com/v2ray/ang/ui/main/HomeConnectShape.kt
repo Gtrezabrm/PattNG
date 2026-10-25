@@ -42,6 +42,30 @@ internal fun cookiePoints(spec: CookieSpec, samples: Int = COOKIE_SAMPLES): List
 
 private const val COOKIE_SAMPLES = 360
 
+/**
+ * The outline between the idle cookie ([progress] 0) and the running one (1). Their radii are blended at each angle,
+ * so that lobes of different counts flow into one another instead of jumping.
+ */
+internal fun cookieMorphRadius(angle: Double, progress: Float): Double {
+    val t = progress.coerceIn(0f, 1f).toDouble()
+    return cookieRadius(cookieSpec(HomeConnectShape.Idle), angle) * (1 - t) +
+        cookieRadius(cookieSpec(HomeConnectShape.Active), angle) * t
+}
+
+fun homeConnectMorphShape(progress: Float): Shape = GenericShape { size, _ ->
+    val radius = min(size.width, size.height) / 2f
+    val centerX = size.width / 2f
+    val centerY = size.height / 2f
+    for (i in 0 until COOKIE_SAMPLES) {
+        val angle = 2 * PI * i / COOKIE_SAMPLES
+        val r = cookieMorphRadius(angle, progress) * radius
+        val px = centerX + (r * cos(angle)).toFloat()
+        val py = centerY + (r * sin(angle)).toFloat()
+        if (i == 0) moveTo(px, py) else lineTo(px, py)
+    }
+    close()
+}
+
 private fun cookieShape(spec: CookieSpec): Shape {
     val points = cookiePoints(spec)
     return GenericShape { size, _ ->

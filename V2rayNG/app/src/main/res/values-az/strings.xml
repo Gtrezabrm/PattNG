@@ -798,6 +798,7 @@
     <string name="home_action_choose_server">Server seçin</string>
     <string name="home_action_retry">Yenidən cəhd edin</string>
     <string name="home_action_reconnect">Yenidən qoşul</string>
+    <string name="home_nav_home">Əsas</string>
     <string name="home_details_ping">Ping</string>
     <string name="home_details_duration">Müddət</string>
     <string name="home_details_download">Endirmə</string>

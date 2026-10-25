@@ -1,17 +1,23 @@
 package com.v2ray.ang.ui.main
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,9 +26,13 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
@@ -122,7 +132,7 @@ fun HomeScreen(
             HomeQuickActions(
                 onOpenServerList = onOpenServerList,
                 onNavigate = onNavigate,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
     }
@@ -161,28 +171,67 @@ private fun HomeServerSelector(serverName: String?, onClick: () -> Unit, modifie
 }
 
 
+/** ZedSecure-style pill: the places one tap away from home. Home is the current one; the others open their screens. */
 @Composable
 private fun HomeQuickActions(
     onOpenServerList: () -> Unit,
     onNavigate: (MainDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Surface(
+        shape = RoundedCornerShape(32.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(onClick = onOpenServerList) {
-            Icon(painterResource(R.drawable.ic_subscriptions_24dp), contentDescription = null)
-            Text(stringResource(R.string.home_quick_servers), modifier = Modifier.padding(start = 6.dp))
+        Row(
+            modifier = Modifier.padding(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            HomePillItem(R.drawable.ic_home_24dp, R.string.home_nav_home, selected = true, onClick = {}, Modifier.weight(1f))
+            HomePillItem(R.drawable.ic_dns_24dp, R.string.home_quick_servers, selected = false, onClick = onOpenServerList, Modifier.weight(1f))
+            HomePillItem(
+                R.drawable.ic_routing_24dp, R.string.routing_settings_title, selected = false,
+                onClick = { onNavigate(MainDestination.Routing) }, Modifier.weight(1f),
+            )
+            HomePillItem(
+                R.drawable.ic_settings_24dp, R.string.title_settings, selected = false,
+                onClick = { onNavigate(MainDestination.Settings) }, Modifier.weight(1f),
+            )
         }
-        TextButton(onClick = { onNavigate(MainDestination.Subscriptions) }) {
-            Icon(painterResource(R.drawable.ic_subscriptions_24dp), contentDescription = null)
-            Text(stringResource(R.string.home_quick_subscriptions), modifier = Modifier.padding(start = 6.dp))
-        }
-        TextButton(onClick = { onNavigate(MainDestination.Settings) }) {
-            Icon(painterResource(R.drawable.ic_settings_24dp), contentDescription = null)
-            Text(stringResource(R.string.home_quick_settings), modifier = Modifier.padding(start = 6.dp))
-        }
+    }
+}
+
+/** One tab of the pill: a single focusable node with its label; the selected one is marked by a softly fading chip. */
+@Composable
+private fun HomePillItem(
+    @DrawableRes iconRes: Int,
+    @StringRes labelRes: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val chip by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
+        label = "home-pill-chip",
+    )
+    val tint = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .clip(RoundedCornerShape(26.dp))
+            .background(chip)
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 4.dp),
+    ) {
+        Icon(painterResource(iconRes), contentDescription = null, tint = tint)
+        Text(
+            text = stringResource(labelRes),
+            style = MaterialTheme.typography.labelMedium,
+            color = tint,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

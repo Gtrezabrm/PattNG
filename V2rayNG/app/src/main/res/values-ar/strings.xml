@@ -806,6 +806,7 @@
     <string name="home_action_choose_server">اختر خادمًا</string>
     <string name="home_action_retry">أعد المحاولة</string>
     <string name="home_action_reconnect">إعادة الاتصال</string>
+    <string name="home_nav_home">الرئيسية</string>
     <string name="home_details_ping">زمن الاستجابة</string>
     <string name="home_details_duration">المدة</string>
     <string name="home_details_download">تنزيل</string>
