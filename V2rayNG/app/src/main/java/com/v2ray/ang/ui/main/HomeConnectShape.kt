@@ -52,39 +52,22 @@ internal fun cookieMorphRadius(angle: Double, progress: Float): Double {
         cookieRadius(cookieSpec(HomeConnectShape.Active), angle) * t
 }
 
+// Tables made once, so that a frame of the morph costs only a blend and no trigonometry.
+private val idleRadii = DoubleArray(COOKIE_SAMPLES) { cookieMorphRadius(2 * PI * it / COOKIE_SAMPLES, 0f) }
+private val activeRadii = DoubleArray(COOKIE_SAMPLES) { cookieMorphRadius(2 * PI * it / COOKIE_SAMPLES, 1f) }
+private val cosTable = DoubleArray(COOKIE_SAMPLES) { cos(2 * PI * it / COOKIE_SAMPLES) }
+private val sinTable = DoubleArray(COOKIE_SAMPLES) { sin(2 * PI * it / COOKIE_SAMPLES) }
+
 fun homeConnectMorphShape(progress: Float): Shape = GenericShape { size, _ ->
+    val t = progress.coerceIn(0f, 1f).toDouble()
     val radius = min(size.width, size.height) / 2f
     val centerX = size.width / 2f
     val centerY = size.height / 2f
     for (i in 0 until COOKIE_SAMPLES) {
-        val angle = 2 * PI * i / COOKIE_SAMPLES
-        val r = cookieMorphRadius(angle, progress) * radius
-        val px = centerX + (r * cos(angle)).toFloat()
-        val py = centerY + (r * sin(angle)).toFloat()
+        val r = (idleRadii[i] * (1 - t) + activeRadii[i] * t) * radius
+        val px = centerX + (r * cosTable[i]).toFloat()
+        val py = centerY + (r * sinTable[i]).toFloat()
         if (i == 0) moveTo(px, py) else lineTo(px, py)
     }
     close()
-}
-
-private fun cookieShape(spec: CookieSpec): Shape {
-    val points = cookiePoints(spec)
-    return GenericShape { size, _ ->
-        val radius = min(size.width, size.height) / 2f
-        val centerX = size.width / 2f
-        val centerY = size.height / 2f
-        points.forEachIndexed { index, (x, y) ->
-            val px = centerX + x * radius
-            val py = centerY + y * radius
-            if (index == 0) moveTo(px, py) else lineTo(px, py)
-        }
-        close()
-    }
-}
-
-private val idleShape: Shape = cookieShape(cookieSpec(HomeConnectShape.Idle))
-private val activeShape: Shape = cookieShape(cookieSpec(HomeConnectShape.Active))
-
-fun homeConnectShape(kind: HomeConnectShape): Shape = when (kind) {
-    HomeConnectShape.Idle -> idleShape
-    HomeConnectShape.Active -> activeShape
 }

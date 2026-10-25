@@ -20,6 +20,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -30,6 +31,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -51,12 +53,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -258,22 +262,8 @@ private fun HomeConnectButton(
         label = "home-button-morph",
     )
     val alive = running || busy
-    val transition = rememberInfiniteTransition(label = "home-button-motion")
-    val turn by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(if (busy) 6_000 else 24_000, easing = LinearEasing)),
-        label = "home-button-turn",
-    )
-    val pulse by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(if (busy) 900 else 2_600, easing = FastOutSlowInEasing),
-            RepeatMode.Reverse,
-        ),
-        label = "home-button-pulse",
-    )
+    // The endless motion exists only while the connection is alive; an idle screen draws no frames of its own.
+    val motion = if (alive) rememberHomeButtonMotion(busy) else null
     val haloAlpha by animateFloatAsState(
         targetValue = if (alive) 1f else 0f,
         animationSpec = tween(500),
@@ -294,6 +284,7 @@ private fun HomeConnectButton(
             modifier = Modifier
                 .size(168.dp)
                 .graphicsLayer {
+                    val pulse = motion?.pulse?.value ?: 0f
                     val grow = 1.08f + 0.14f * pulse
                     scaleX = grow
                     scaleY = grow
@@ -305,8 +296,8 @@ private fun HomeConnectButton(
             modifier = Modifier
                 .size(168.dp)
                 .graphicsLayer {
-                    rotationZ = if (alive) turn else 0f
-                    val breathe = if (alive) 1f + 0.025f * pulse else 1f
+                    rotationZ = motion?.turn?.value ?: 0f
+                    val breathe = 1f + 0.025f * (motion?.pulse?.value ?: 0f)
                     scaleX = breathe
                     scaleY = breathe
                 }
@@ -339,6 +330,29 @@ private fun HomeConnectButton(
             }
         }
     }
+}
+
+private class HomeButtonMotion(val turn: State<Float>, val pulse: State<Float>)
+
+@Composable
+private fun rememberHomeButtonMotion(busy: Boolean): HomeButtonMotion {
+    val transition = rememberInfiniteTransition(label = "home-button-motion")
+    val turn = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(if (busy) 6_000 else 24_000, easing = LinearEasing)),
+        label = "home-button-turn",
+    )
+    val pulse = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            tween(if (busy) 900 else 2_600, easing = FastOutSlowInEasing),
+            RepeatMode.Reverse,
+        ),
+        label = "home-button-pulse",
+    )
+    return HomeButtonMotion(turn, pulse)
 }
 
 @Composable
@@ -400,7 +414,7 @@ private fun HomeCardDetailsBlock(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 pair.forEach { (label, value) ->
-                    HomeDetailTile(label = label, value = value, modifier = Modifier.weight(1f))
+                    HomeDetailTile(label = label, value = value, pending = value == measuring, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -435,11 +449,10 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (normalizedCountry == "IR") {
-                    Icon(
+                    Image(
                         painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
                         contentDescription = null,
-                        modifier = Modifier.size(width = 24.dp, height = 16.dp),
-                        tint = Color.Unspecified,
+                        modifier = Modifier.size(width = 32.dp, height = 18.dp).clip(RoundedCornerShape(3.dp)),
                     )
                 } else if (flag.isNotEmpty()) {
                     Text(text = flag, style = MaterialTheme.typography.titleMedium)
@@ -458,7 +471,7 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
 }
 
 @Composable
-private fun HomeDetailTile(label: String, value: String, modifier: Modifier = Modifier) {
+private fun HomeDetailTile(label: String, value: String, pending: Boolean = false, modifier: Modifier = Modifier) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
@@ -468,7 +481,15 @@ private fun HomeDetailTile(label: String, value: String, modifier: Modifier = Mo
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
             Text(text = label, style = MaterialTheme.typography.labelMedium)
-            Text(text = value, style = MaterialTheme.typography.titleLarge)
+            // One line of a fixed height, so that the tile keeps its size when the figure replaces "Testing…".
+            Box(modifier = Modifier.height(32.dp), contentAlignment = Alignment.CenterStart) {
+                Text(
+                    text = value,
+                    style = if (pending) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

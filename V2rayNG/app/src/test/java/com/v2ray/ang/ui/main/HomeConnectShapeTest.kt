@@ -43,4 +43,19 @@ class HomeConnectShapeTest {
         assertTrue(cookieSpec(HomeConnectShape.Idle) != cookieSpec(HomeConnectShape.Active))
         assertTrue(abs(cookieSpec(HomeConnectShape.Idle).lobes - cookieSpec(HomeConnectShape.Active).lobes) > 0)
     }
+
+    @Test
+    fun morphRadiusStartsIdleEndsActiveAndStaysBetween() {
+        val idle = cookieSpec(HomeConnectShape.Idle)
+        val active = cookieSpec(HomeConnectShape.Active)
+        for (i in 0 until 40) {
+            val angle = 2 * PI * i / 40
+            assertEquals(cookieRadius(idle, angle), cookieMorphRadius(angle, 0f), 1e-9)
+            assertEquals(cookieRadius(active, angle), cookieMorphRadius(angle, 1f), 1e-9)
+            val mid = cookieMorphRadius(angle, 0.5f)
+            val lo = minOf(cookieRadius(idle, angle), cookieRadius(active, angle))
+            val hi = maxOf(cookieRadius(idle, angle), cookieRadius(active, angle))
+            assertTrue(mid in lo - 1e-9..hi + 1e-9)
+        }
+    }
 }

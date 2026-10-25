@@ -191,8 +191,8 @@ private fun HomeQuickActions(
             HomePillItem(R.drawable.ic_home_24dp, R.string.home_nav_home, selected = true, onClick = {}, Modifier.weight(1f))
             HomePillItem(R.drawable.ic_dns_24dp, R.string.home_quick_servers, selected = false, onClick = onOpenServerList, Modifier.weight(1f))
             HomePillItem(
-                R.drawable.ic_routing_24dp, R.string.routing_settings_title, selected = false,
-                onClick = { onNavigate(MainDestination.Routing) }, Modifier.weight(1f),
+                R.drawable.ic_subscriptions_24dp, R.string.home_quick_subscriptions, selected = false,
+                onClick = { onNavigate(MainDestination.Subscriptions) }, Modifier.weight(1f),
             )
             HomePillItem(
                 R.drawable.ic_settings_24dp, R.string.title_settings, selected = false,
