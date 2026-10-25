@@ -43,6 +43,7 @@ import com.v2ray.ang.handler.SettingsChangeManager
 import com.v2ray.ang.root.RootManager
 import com.v2ray.ang.ui.base.BaseComponentActivity
 import com.v2ray.ang.ui.compose.AppTopBar
+import com.v2ray.ang.ui.compose.MotionPolicy
 import com.v2ray.ang.ui.compose.CollapsiblePreferenceGroupHeader
 import com.v2ray.ang.ui.compose.NavigationBarsSpacer
 import com.v2ray.ang.ui.compose.SettingsEditItem
@@ -152,7 +153,7 @@ fun SettingsScreen(
     var speedEnabled by rememberMmkvBool(AppConfig.PREF_SPEED_ENABLED, false)
     var confirmRemove by rememberMmkvBool(AppConfig.PREF_CONFIRM_REMOVE, false)
     var doubleColumnDisplay by rememberMmkvBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)
-    var groupAllDisplay by rememberMmkvBool(AppConfig.PREF_GROUP_ALL_DISPLAY, false)
+    var groupAllDisplay by rememberMmkvBool(AppConfig.PREF_GROUP_ALL_DISPLAY, true)
     var language by remember {
         mutableStateOf(
             MmkvManager.decodeSettingsString(AppConfig.PREF_LANGUAGE, "auto") ?: "auto"
@@ -160,6 +161,8 @@ fun SettingsScreen(
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
     var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+    val settingsContext = androidx.compose.ui.platform.LocalContext.current
+    var reduceMotion by rememberMmkvBool(AppConfig.PREF_REDUCE_MOTION, MotionPolicy.defaultReduced(settingsContext))
 
     var ipv6Enabled by rememberMmkvBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)
     var preferIpv6 by rememberMmkvBool(AppConfig.PREF_PREFER_IPV6, false)
@@ -264,6 +267,12 @@ fun SettingsScreen(
                         groupAllDisplay = it
                         SettingsChangeManager.makeSetupGroupTab()
                     }
+                )
+                SettingsSwitchItem(
+                    title = stringResource(R.string.title_pref_reduce_motion),
+                    summary = stringResource(R.string.summary_pref_reduce_motion),
+                    checked = reduceMotion,
+                    onCheckedChange = { reduceMotion = it }
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.title_pref_dynamic_color),

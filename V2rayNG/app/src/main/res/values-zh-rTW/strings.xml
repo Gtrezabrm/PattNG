@@ -320,6 +320,8 @@
     <string name="title_language">語言</string>
     <string name="title_ui_settings">介面顯示設定</string>
     <string name="title_pref_ui_mode_night">深色模式</string>
+    <string name="title_pref_reduce_motion">減少動畫</string>
+    <string name="summary_pref_reduce_motion">動畫更少更輕；省電，適合舊手機。</string>
     <string name="title_pref_dynamic_color">開啟莫奈取色</string>
     <string name="summary_pref_dynamic_color">僅在 Android 12+ 裝置上工作</string>
     <string name="title_pref_use_hev_tunnel">啟用 Hev TUN 功能</string>

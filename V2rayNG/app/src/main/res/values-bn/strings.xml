@@ -320,6 +320,8 @@
     <string name="title_language">ভাষা</string>
     <string name="title_ui_settings">ইউআই সেটিংস</string>
     <string name="title_pref_ui_mode_night">ইউআই মোড সেটিংস</string>
+    <string name="title_pref_reduce_motion">অ্যানিমেশন কমান</string>
+    <string name="summary_pref_reduce_motion">কম ও হালকা অ্যানিমেশন; ব্যাটারি বাঁচায়, পুরনো ফোনে ভালো চলে।</string>
     <string name="title_pref_dynamic_color">ডায়নামিক রঙ চালু করুন</string>
     <string name="summary_pref_dynamic_color">শুধুমাত্র Android 12+ ডিভাইসে কাজ করে</string>
     <string name="title_pref_use_hev_tunnel">Hev TUN সুবিধা চালু করুন</string>

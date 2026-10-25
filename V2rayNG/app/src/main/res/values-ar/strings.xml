@@ -320,6 +320,8 @@
     <string name="title_language">اللغة</string>
     <string name="title_ui_settings">إعدادات واجهة المستخدم</string>
     <string name="title_pref_ui_mode_night">إعدادات وضع واجهة المستخدم ليلاً</string>
+    <string name="title_pref_reduce_motion">تقليل الحركات</string>
+    <string name="summary_pref_reduce_motion">حركات أقل وأخف؛ توفر البطارية وتناسب الهواتف القديمة.</string>
     <string name="title_pref_dynamic_color">تفعيل الألوان الديناميكية</string>
     <string name="summary_pref_dynamic_color">يعمل فقط على أندرويد 12+</string>
     <string name="title_pref_use_hev_tunnel">تمكين ميزة Hev TUN</string>

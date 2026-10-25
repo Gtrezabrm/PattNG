@@ -12,6 +12,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -72,6 +73,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.LocalReduceMotion
 
 /** What the home card shows; [HomeConnection.cardStatus] maps the state of the main screen to it. */
 enum class HomeCardStatus {
@@ -256,14 +258,16 @@ private fun HomeConnectButton(
         label = "home-button-scale",
     )
     // The outline morphs between the idle and the running cookie, and the whole button breathes and turns gently.
+    val reduce = LocalReduceMotion.current
     val morph by animateFloatAsState(
         targetValue = if (running) 1f else 0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow),
+        animationSpec = if (reduce) snap() else spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow),
         label = "home-button-morph",
     )
     val alive = running || busy
     // The endless motion exists only while the connection is alive; an idle screen draws no frames of its own.
-    val motion = if (alive) rememberHomeButtonMotion(busy) else null
+    // Only the wait is animated without end; a settled connection stands still, which spares the battery.
+    val motion = if (busy && !reduce) rememberHomeButtonMotion(busy) else null
     val haloAlpha by animateFloatAsState(
         targetValue = if (alive) 1f else 0f,
         animationSpec = tween(500),

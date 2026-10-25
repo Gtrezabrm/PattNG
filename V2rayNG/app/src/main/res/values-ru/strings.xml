@@ -320,6 +320,8 @@
     <string name="title_language">Язык</string>
     <string name="title_ui_settings">Настройки интерфейса</string>
     <string name="title_pref_ui_mode_night">Тема интерфейса</string>
+    <string name="title_pref_reduce_motion">Меньше анимаций</string>
+    <string name="summary_pref_reduce_motion">Меньше и легче анимации: экономит заряд и помогает старым телефонам.</string>
     <string name="title_pref_dynamic_color">Динамические цвета</string>
     <string name="summary_pref_dynamic_color">Работает только на Android 12+</string>
     <string name="title_pref_use_hev_tunnel">Использовать Hev TUN</string>

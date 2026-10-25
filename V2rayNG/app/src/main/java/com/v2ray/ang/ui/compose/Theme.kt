@@ -13,6 +13,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
@@ -214,6 +221,16 @@ fun AppTheme(
         else -> LightColor
     }
     val snackbarController = rememberAppSnackbarController()
+    // Read again whenever the screen resumes, so that the switch of the settings applies on return.
+    var reduceMotion by remember { mutableStateOf(MotionPolicy.isReduced(context)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) reduceMotion = MotionPolicy.isReduced(context)
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -229,7 +246,8 @@ fun AppTheme(
 
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme,
-        LocalAppSnackbar provides snackbarController
+        LocalAppSnackbar provides snackbarController,
+        LocalReduceMotion provides reduceMotion
     ) {
         MaterialTheme(
             colorScheme = colorScheme,

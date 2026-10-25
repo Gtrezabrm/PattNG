@@ -32,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.LocalReduceMotion
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.ui.compose.LocalDarkTheme
@@ -256,7 +257,7 @@ fun MainScreen(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
                         userScrollEnabled = true,
-                        beyondViewportPageCount = 1,
+                        beyondViewportPageCount = if (LocalReduceMotion.current) 0 else 1,
                         key = { page -> groups.getOrNull(page)?.id ?: "group-page-$page" }
                     ) { page ->
                         val group = groups.getOrNull(page) ?: return@HorizontalPager

@@ -320,6 +320,8 @@
     <string name="title_language">Dil</string>
     <string name="title_ui_settings">İstifadəçi interfeysi tənzimləmələri</string>
     <string name="title_pref_ui_mode_night">İstifadəçi interfeysi rejim tənzimləmələri</string>
+    <string name="title_pref_reduce_motion">Animasiyaları azalt</string>
+    <string name="summary_pref_reduce_motion">Daha az və yüngül animasiyalar; batareyaya qənaət edir, köhnə telefonlara uyğundur.</string>
     <string name="title_pref_dynamic_color">Dinamik rəngi aktivləşdir</string>
     <string name="summary_pref_dynamic_color">Yalnız Android 12+ cihazlarında işləyir</string>
     <string name="title_pref_use_hev_tunnel">Hev TUN istifadə et</string>
