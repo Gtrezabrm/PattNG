@@ -26,7 +26,8 @@ class RootProxyManagerTest {
 
         assertFalse(config.contains("offload:"))
         assertTrue(config.contains("  mtu: 8500\n"))
-        assertTrue(config.contains("  ipv6:"))
+        // PattNG: the IPv6 tun address is left to the setup script, never put in the hev config.
+        assertFalse(config.contains("  ipv6:"))
     }
 
     @Test

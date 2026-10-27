@@ -201,6 +201,7 @@ object RootProxyManager {
      * loopback (TCP + UDP). MTU is taken from the existing VPN MTU setting. The IPv6 tun address
      * is left to the setup script, best effort ([deviceIpv6Setup], [buildLanShareSetup]): hev exits
      * when the kernel refuses an address, which would stop the IPv4 setup too.
+     * PattNG: so [ipv6] adds no address here; with [lanSharing] it only turns TSO off.
      */
     internal fun buildHevConfig(
         socksUsername: String?,
