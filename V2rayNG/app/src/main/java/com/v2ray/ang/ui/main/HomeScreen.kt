@@ -34,7 +34,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import com.v2ray.ang.R
 import com.v2ray.ang.ui.compose.AppTopBar
 import kotlinx.coroutines.delay
@@ -64,14 +67,18 @@ fun HomeScreen(
     }
 
     val since = uiState.connectedSinceNanos
-    val duration by produceState(initialValue = HomeConnection.formatDuration(0), since) {
+    // The clock ticks only while the screen is shown; in the background nothing wakes up each second.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val duration by produceState(initialValue = HomeConnection.formatDuration(0), since, lifecycleOwner) {
         if (since == null) {
             value = HomeConnection.formatDuration(0)
             return@produceState
         }
-        while (true) {
-            value = HomeConnection.formatDuration((System.nanoTime() - since) / NANOS_PER_SECOND)
-            delay(1_000)
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                value = HomeConnection.formatDuration((System.nanoTime() - since) / NANOS_PER_SECOND)
+                delay(1_000)
+            }
         }
     }
 
