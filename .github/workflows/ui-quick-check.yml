@@ -1,0 +1,98 @@
+name: UI Quick Check
+
+on:
+  push:
+    branches:
+      - ui-quick-check
+  pull_request:
+    branches:
+      - my-releases
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ui-quick-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-build:
+    name: Unit tests and debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository and submodules
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+          cache-dependency-path: V2rayNG/**/*.gradle*
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          log-accepted-android-sdk-licenses: false
+          cmdline-tools-version: '14742923'
+          packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
+
+      - name: Resolve AndroidLibXrayLite release
+        id: xray
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -d AndroidLibXrayLite/.git || {
+            echo "::error::AndroidLibXrayLite submodule was not checked out."
+            exit 1
+          }
+          tag="$(git -C AndroidLibXrayLite describe --tags --abbrev=0)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Using AndroidLibXrayLite tag: $tag"
+
+      - name: Download libv2ray AAR
+        uses: robinraju/release-downloader@v1.13
+        with:
+          repository: patterniha/AndroidLibXrayLite
+          tag: ${{ steps.xray.outputs.tag }}
+          fileName: libv2ray.aar
+          out-file-path: V2rayNG/app/libs/
+
+      - name: Prepare Android local.properties
+        shell: bash
+        run: echo "sdk.dir=$ANDROID_HOME" > V2rayNG/local.properties
+
+      - name: Run unit tests
+        working-directory: V2rayNG
+        run: ./gradlew --no-daemon :app:testPlaystoreDebugUnitTest
+
+      - name: Assemble debug APK
+        working-directory: V2rayNG
+        run: ./gradlew --no-daemon :app:assemblePlaystoreDebug
+
+      - name: Verify APK output
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find V2rayNG/app/build/outputs/apk/playstore/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          if [[ -z "$apk" || ! -s "$apk" ]]; then
+            echo "::error::Debug APK was not produced."
+            exit 1
+          fi
+          echo "Built APK: $apk"
+          sha256sum "$apk"
+
+      - name: Upload UI quick-check APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: PattNG-ui-quick-check-debug
+          path: V2rayNG/app/build/outputs/apk/playstore/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
