@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -71,8 +72,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
+import kotlinx.coroutines.launch
+import kotlin.math.ceil
 import com.v2ray.ang.ui.compose.LocalReduceMotion
 
 /** What the home card shows; [HomeConnection.cardStatus] maps the state of the main screen to it. */
@@ -147,6 +151,8 @@ fun HomeConnectCard(
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val landscape = maxWidth > maxHeight
+        // A small screen gets a tighter card, so that the figures of the connection show without scrolling.
+        val compact = !landscape && maxHeight < 620.dp
         val cardShape = RoundedCornerShape(40.dp)
         Card(
             shape = cardShape,
@@ -157,7 +163,7 @@ fun HomeConnectCard(
             modifier = Modifier
                 .align(Alignment.Center)
                 .widthIn(max = if (landscape) 720.dp else 480.dp)
-                .padding(16.dp)
+                .padding(if (compact) 8.dp else 16.dp)
                 .background(Brush.verticalGradient(listOf(colors.container, colors.containerEnd)), cardShape)
                 .verticalScroll(rememberScrollState()),
         ) {
@@ -170,7 +176,7 @@ fun HomeConnectCard(
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    HomeCardMain(model, colors, onConnectClick, onStatusActionClick, modifier = Modifier.weight(1f))
+                    HomeCardMain(model, colors, false, onConnectClick, onStatusActionClick, modifier = Modifier.weight(1f))
                     AnimatedVisibility(
                         visible = showDetails && shownDetails != null,
                         enter = detailsEnter,
@@ -185,11 +191,11 @@ fun HomeConnectCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize(spring(stiffness = Spring.StiffnessMediumLow))
-                        .padding(24.dp),
+                        .padding(if (compact) 14.dp else 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 14.dp),
                 ) {
-                    HomeCardMain(model, colors, onConnectClick, onStatusActionClick)
+                    HomeCardMain(model, colors, compact, onConnectClick, onStatusActionClick)
                     AnimatedVisibility(
                         visible = showDetails && shownDetails != null,
                         enter = detailsEnter,
@@ -207,6 +213,7 @@ fun HomeConnectCard(
 private fun HomeCardMain(
     model: HomeCardModel,
     colors: HomeCardColors,
+    compact: Boolean,
     onConnectClick: () -> Unit,
     onStatusActionClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -214,9 +221,9 @@ private fun HomeCardMain(
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 16.dp),
     ) {
-        HomeConnectButton(model.status, model.cancellable, colors, onConnectClick)
+        HomeConnectButton(model.status, model.cancellable, colors, if (compact) 116.dp else 168.dp, onConnectClick)
         AnimatedContent(
             targetState = model.status,
             transitionSpec = { fadeIn(tween(300, delayMillis = 90)) togetherWith fadeOut(tween(150)) },
@@ -224,7 +231,7 @@ private fun HomeCardMain(
         ) { status ->
             Text(
                 text = homeStatusText(status),
-                style = MaterialTheme.typography.headlineMedium,
+                style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
             )
         }
@@ -245,6 +252,7 @@ private fun HomeConnectButton(
     status: HomeCardStatus,
     cancellable: Boolean,
     colors: HomeCardColors,
+    size: Dp,
     onClick: () -> Unit,
 ) {
     val running = status == HomeCardStatus.Connected
@@ -261,13 +269,13 @@ private fun HomeConnectButton(
     val reduce = LocalReduceMotion.current
     val morph by animateFloatAsState(
         targetValue = if (running) 1f else 0f,
-        animationSpec = if (reduce) snap() else spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessVeryLow),
+        animationSpec = if (reduce) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "home-button-morph",
     )
     val alive = running || busy
     // The endless motion exists only while the connection is alive; an idle screen draws no frames of its own.
     // Only the wait is animated without end; a settled connection stands still, which spares the battery.
-    val motion = if (busy && !reduce) rememberHomeButtonMotion(busy) else null
+    val motion = rememberHomeButtonMotion(active = busy && !reduce, fast = busy)
     val haloAlpha by animateFloatAsState(
         targetValue = if (alive) 1f else 0f,
         animationSpec = tween(500),
@@ -277,7 +285,7 @@ private fun HomeConnectButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(200.dp)
+            .size(size + 32.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -286,7 +294,7 @@ private fun HomeConnectButton(
         // Soft halo behind the button; drawn in the layer so that the pulse does not recompose anything.
         Box(
             modifier = Modifier
-                .size(168.dp)
+                .size(size)
                 .graphicsLayer {
                     val pulse = motion?.pulse?.value ?: 0f
                     val grow = 1.08f + 0.14f * pulse
@@ -298,7 +306,7 @@ private fun HomeConnectButton(
         )
         Box(
             modifier = Modifier
-                .size(168.dp)
+                .size(size)
                 .graphicsLayer {
                     rotationZ = motion?.turn?.value ?: 0f
                     val breathe = 1f + 0.025f * (motion?.pulse?.value ?: 0f)
@@ -315,20 +323,20 @@ private fun HomeConnectButton(
             contentColor = colors.onButton,
             interactionSource = interaction,
             modifier = Modifier
-                .size(168.dp)
+                .size(size)
                 .semantics { contentDescription = label },
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (busy) {
                     CircularProgressIndicator(
-                        modifier = Modifier.size(48.dp),
+                        modifier = Modifier.size(size * 0.29f),
                         color = colors.onButton,
                     )
                 } else {
                     Icon(
                         painter = painterResource(if (running) R.drawable.ic_stop_24dp else R.drawable.ic_play_24dp),
                         contentDescription = null,
-                        modifier = Modifier.size(56.dp),
+                        modifier = Modifier.size(size * 0.33f),
                     )
                 }
             }
@@ -338,25 +346,36 @@ private fun HomeConnectButton(
 
 private class HomeButtonMotion(val turn: State<Float>, val pulse: State<Float>)
 
+/**
+ * The turn and the breathing of the button. They run only while [active]; when it ends, the turn glides on to the
+ * next whole round and the breath settles, so that the button comes to rest instead of snapping back. At rest no
+ * animation runs at all.
+ */
 @Composable
-private fun rememberHomeButtonMotion(busy: Boolean): HomeButtonMotion {
-    val transition = rememberInfiniteTransition(label = "home-button-motion")
-    val turn = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(if (busy) 6_000 else 24_000, easing = LinearEasing)),
-        label = "home-button-turn",
-    )
-    val pulse = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(if (busy) 900 else 2_600, easing = FastOutSlowInEasing),
-            RepeatMode.Reverse,
-        ),
-        label = "home-button-pulse",
-    )
-    return HomeButtonMotion(turn, pulse)
+private fun rememberHomeButtonMotion(active: Boolean, fast: Boolean): HomeButtonMotion {
+    val turn = remember { Animatable(0f) }
+    val pulse = remember { Animatable(0f) }
+    LaunchedEffect(active, fast) {
+        if (active) {
+            launch {
+                while (true) {
+                    turn.animateTo(turn.value + 360f, tween(if (fast) 6_000 else 24_000, easing = LinearEasing))
+                }
+            }
+            launch {
+                while (true) {
+                    pulse.animateTo(1f, tween(if (fast) 900 else 2_600, easing = FastOutSlowInEasing))
+                    pulse.animateTo(0f, tween(if (fast) 900 else 2_600, easing = FastOutSlowInEasing))
+                }
+            }
+        } else {
+            launch { pulse.animateTo(0f, tween(400)) }
+            val rest = ceil(turn.value / 360f) * 360f
+            turn.animateTo(rest, tween(500, easing = FastOutSlowInEasing))
+            turn.snapTo(0f)
+        }
+    }
+    return remember { HomeButtonMotion(turn.asState(), pulse.asState()) }
 }
 
 @Composable

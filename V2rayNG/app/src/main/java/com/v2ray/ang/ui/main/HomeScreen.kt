@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -129,13 +130,16 @@ fun HomeScreen(
                 onRefreshPingClick = { onAction(MainAction.TestCurrentServer) },
                 modifier = Modifier.weight(1f),
             )
-            HomeServerSelector(
-                serverName = serverName,
-                onClick = onOpenServerList,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-            )
+            // The card already names the server and the pill opens the list; a short screen keeps its room for the card.
+            if (LocalConfiguration.current.screenHeightDp >= 700) {
+                HomeServerSelector(
+                    serverName = serverName,
+                    onClick = onOpenServerList,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                )
+            }
             HomeQuickActions(
                 onOpenServerList = onOpenServerList,
                 onNavigate = onNavigate,
