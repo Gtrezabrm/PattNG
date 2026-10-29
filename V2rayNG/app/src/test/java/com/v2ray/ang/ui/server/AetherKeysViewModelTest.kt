@@ -159,6 +159,27 @@ class AetherKeysViewModelTest {
     }
 
     @Test
+    fun defaultInTheListsOfTheApiFieldsBlanksThemForTheCoresOwn() {
+        val viewModel = viewModel()
+        viewModel.setEnrollAddress("188.114.97.6:443")
+        viewModel.setApiSni("api.cloudflareclient.com")
+        viewModel.setApiHost("api.cloudflareclient.com")
+        assertTrue("--api-sni" in AetherKeys.arguments(viewModel.settings!!))
+
+        // What the default entry of each field's list sets: a blank, the core's own.
+        viewModel.setEnrollAddress("")
+        viewModel.setApiSni("")
+        viewModel.setApiHost("")
+
+        val settings = viewModel.settings!!
+        assertEquals("", settings.enrollAddress)
+        assertEquals("", settings.apiSni)
+        assertEquals("", settings.apiHost)
+        assertEquals(settings, source.saved.last())
+        assertFalse(AetherKeys.arguments(settings).any { it.startsWith("--api-") }, "no API option goes to the core")
+    }
+
+    @Test
     fun aCommandWrittenBackToTheBuiltOneFollowsTheSettingsAgain() {
         val viewModel = viewModel()
         val built = AetherKeys.builtCommand(viewModel.settings!!)
