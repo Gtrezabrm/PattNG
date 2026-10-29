@@ -70,7 +70,6 @@ jobs:
         cache: false
 
     - name: Restore cached libhevtun
-      if: steps.native-artifact.outputs.reused != 'true'
       id: cache-libhevtun-restore
       uses: actions/cache/restore@v6
       with:
@@ -78,19 +77,18 @@ jobs:
         key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
     - name: Build libhevtun
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+      if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
       run: |
         bash compile-hevtun.sh
 
     - name: Save libhevtun
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+      if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/libs
         key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
     - name: Restore cached libaether
-      if: steps.native-artifact.outputs.reused != 'true'
       id: cache-libaether-restore
       uses: actions/cache/restore@v6
       with:
@@ -98,12 +96,12 @@ jobs:
         key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
 
     - name: Build libaether
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libaether-restore.outputs.cache-hit != 'true'
+      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
       run: |
         bash compile-aether.sh
 
     - name: Save libaether
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libaether-restore.outputs.cache-hit != 'true'
+      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/libs-aether
@@ -112,7 +110,6 @@ jobs:
     # The Aether core runs Psiphon as a program of its own, the psiphon-tunnel-core console client,
     # which the app ships beside the core as libpsiphon-tunnel-core.so; see compile-psiphon.sh.
     - name: Restore cached Psiphon client
-      if: steps.native-artifact.outputs.reused != 'true'
       id: cache-psiphon-restore
       uses: actions/cache/restore@v6
       with:
@@ -120,12 +117,12 @@ jobs:
         key: psiphon-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/psiphon-build.sh') }}-${{ hashFiles('compile-psiphon.sh') }}
 
     - name: Build the Psiphon client
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-psiphon-restore.outputs.cache-hit != 'true'
+      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
       run: |
         bash compile-psiphon.sh
 
     - name: Save the Psiphon client
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-psiphon-restore.outputs.cache-hit != 'true'
+      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/libs-psiphon
@@ -134,7 +131,6 @@ jobs:
     # Tor's bridges run through a pluggable transport, a program of its own: lyrebird, which aether
     # builds and the app ships beside the core as liblyrebird.so; see compile-pt.sh.
     - name: Restore cached pluggable transport
-      if: steps.native-artifact.outputs.reused != 'true'
       id: cache-pt-restore
       uses: actions/cache/restore@v6
       with:
@@ -142,12 +138,12 @@ jobs:
         key: pt-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/pt-build.sh') }}-${{ hashFiles('compile-pt.sh') }}
 
     - name: Build the pluggable transport
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-pt-restore.outputs.cache-hit != 'true'
+      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
       run: |
         bash compile-pt.sh
 
     - name: Save the pluggable transport
-      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-pt-restore.outputs.cache-hit != 'true'
+      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/libs-pt
@@ -174,8 +170,7 @@ jobs:
           echo "PSIPHON_BUILD_SCRIPT=$(sha256sum aether/psiphon-build.sh | awk '{print $1}')"
           echo "PT_SCRIPT=$(sha256sum compile-pt.sh | awk '{print $1}')"
           echo "PT_BUILD_SCRIPT=$(sha256sum aether/pt-build.sh | awk '{print $1}')"
-        }
-        > native-libs-manifest.txt
+        } > native-libs-manifest.txt
 
     - name: Upload reusable native libraries
       uses: actions/upload-artifact@v7
