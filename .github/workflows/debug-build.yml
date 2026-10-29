@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       abi_filters:
-        description: "ABIs to build the APK for, separated by semicolons (arm64-v8a fits almost every phone); empty builds a universal APK"
+        description: "ABIs to build the APK for, separated by semicolons (arm64-v8a fits almost every phone); empty builds arm64-v8a only"
         required: false
-        default: "arm64-v8a;armeabi-v7a"
+        default: "arm64-v8a"
         type: string
   push:
     branches:
@@ -51,8 +51,8 @@ jobs:
           --channel=0 \
           --install "ndk;30.0.16248370"
         echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> $GITHUB_ENV
-        sed -i '10i\
-        \
+        sed -i '10i\\
+        \\
             ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
 
     - name: Install Rust
@@ -218,12 +218,11 @@ jobs:
         cd ${{ github.workspace }}/V2rayNG
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
-        # One APK per ABI: arm64-v8a for current phones and armeabi-v7a for old 32-bit ones. A manual run can name its own.
+        # Build arm64-v8a only by default; manual input can override the ABI list.
         ABIS="${{ inputs.abi_filters }}"
-        [ -z "$ABIS" ] && ABIS="arm64-v8a;armeabi-v7a"
+        [ -z "$ABIS" ] && ABIS="arm64-v8a"
         mkdir -p "${{ github.workspace }}/apks"
         set -o pipefail
-        # The JVM unit tests first, so that a failing test or a compile error stops the build and is named in its log.
         ./gradlew :app:testPlaystoreDebugUnitTest 2>&1 | tee "${{ github.workspace }}/gradle.log"
         IFS=';' read -ra LIST <<< "$ABIS"
         for abi in "${LIST[@]}"; do
@@ -233,7 +232,6 @@ jobs:
           done
         done
 
-    # The full log can be hard to open; the compile errors and failed tests are repeated as one annotation on the run.
     - name: Report errors as an annotation
       if: failure()
       run: |
@@ -260,7 +258,6 @@ jobs:
     - name: Check the native libraries in the APK
       if: success()
       run: |
-        # Same check as build.yml: every ABI built has to carry the Aether core, its Psiphon client and its pluggable transport.
         status=0
         for apk in ${{ github.workspace }}/apks/*.apk; do
           entries=$(unzip -Z1 "$apk" | grep '^lib/' || true)
