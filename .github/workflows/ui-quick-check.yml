@@ -1,98 +1,253 @@
 name: UI Quick Check
 
+# Fast UI iteration based on Debug Build: reuse native-library caches and download upstream libv2ray. The first run on a new branch may need to populate its own cache.
+
 on:
+  workflow_dispatch:
+    inputs:
+      abi_filters:
+        description: "ABIs separated by semicolons; arm64-v8a is fastest, empty uses arm64-v8a"
+        required: false
+        default: "arm64-v8a"
+        type: string
   push:
     branches:
-      - ui-quick-check
+      - "ui-quick-check"
   pull_request:
     branches:
-      - my-releases
-  workflow_dispatch:
+      - "my-releases"
 
 permissions:
   contents: read
 
 concurrency:
-  group: ui-quick-check-${{ github.ref }}
+  group: debug-build-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  debug-build:
-    name: Unit tests and debug APK
+  debug:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    env:
+      # Same pins as build.yml; bump them together.
+      RUST_TOOLCHAIN: "stable"
+      GO_VERSION: "1.26"
 
     steps:
-      - name: Checkout repository and submodules
-        uses: actions/checkout@v7
-        with:
-          submodules: recursive
-          fetch-depth: 0
+    - name: Checkout code
+      uses: actions/checkout@v7
+      with:
+        submodules: 'recursive'
+        fetch-depth: '0'
 
-      - name: Set up Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: gradle
-          cache-dependency-path: V2rayNG/**/*.gradle*
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v4
+      with:
+        log-accepted-android-sdk-licenses: false
+        cmdline-tools-version: '14742923'
+        packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          log-accepted-android-sdk-licenses: false
-          cmdline-tools-version: '14742923'
-          packages: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
+    - name: Install NDK
+      run: |
+        echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+          --channel=0 \
+          --install "ndk;30.0.16248370"
+        echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> $GITHUB_ENV
+        sed -i '10i\
+        \
+            ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
 
-      - name: Resolve AndroidLibXrayLite release
-        id: xray
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -d AndroidLibXrayLite/.git || {
-            echo "::error::AndroidLibXrayLite submodule was not checked out."
-            exit 1
-          }
-          tag="$(git -C AndroidLibXrayLite describe --tags --abbrev=0)"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "Using AndroidLibXrayLite tag: $tag"
+    - name: Restore cached libhevtun
+      id: cache-libhevtun-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/libs
+        key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
-      - name: Download libv2ray AAR
-        uses: robinraju/release-downloader@v1.13
-        with:
-          repository: patterniha/AndroidLibXrayLite
-          tag: ${{ steps.xray.outputs.tag }}
-          fileName: libv2ray.aar
-          out-file-path: V2rayNG/app/libs/
+    - name: Build libhevtun
+      if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+      run: |
+        bash compile-hevtun.sh
 
-      - name: Prepare Android local.properties
-        shell: bash
-        run: echo "sdk.dir=$ANDROID_HOME" > V2rayNG/local.properties
+    - name: Save libhevtun
+      if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/libs
+        key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
-      - name: Run unit tests
-        working-directory: V2rayNG
-        run: ./gradlew --no-daemon :app:testPlaystoreDebugUnitTest
+    - name: Install Rust
+      id: rust-toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ env.RUST_TOOLCHAIN }}
+        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
 
-      - name: Assemble debug APK
-        working-directory: V2rayNG
-        run: ./gradlew --no-daemon :app:assemblePlaystoreDebug
+    - name: Restore cached libaether
+      id: cache-libaether-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/libs-aether
+        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
 
-      - name: Verify APK output
-        shell: bash
-        run: |
-          set -euo pipefail
-          apk="$(find V2rayNG/app/build/outputs/apk/playstore/debug -maxdepth 1 -type f -name '*.apk' -print -quit)"
-          if [[ -z "$apk" || ! -s "$apk" ]]; then
-            echo "::error::Debug APK was not produced."
-            exit 1
-          fi
-          echo "Built APK: $apk"
-          sha256sum "$apk"
+    - name: Build libaether
+      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
+      run: |
+        bash compile-aether.sh
 
-      - name: Upload UI quick-check APK
-        uses: actions/upload-artifact@v7
-        with:
-          name: PattNG-ui-quick-check-debug
-          path: V2rayNG/app/build/outputs/apk/playstore/debug/*.apk
-          if-no-files-found: error
-          retention-days: 7
+    - name: Save libaether
+      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/libs-aether
+        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
+
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        # The client is built from a checkout of its own; there is no go.sum here to cache by.
+        cache: false
+
+    # The Aether core runs Psiphon as a program of its own, the psiphon-tunnel-core console client,
+    # which the app ships beside the core as libpsiphon-tunnel-core.so; see compile-psiphon.sh.
+    - name: Restore cached Psiphon client
+      id: cache-psiphon-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/libs-psiphon
+        key: psiphon-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/psiphon-build.sh') }}-${{ hashFiles('compile-psiphon.sh') }}
+
+    - name: Build the Psiphon client
+      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
+      run: |
+        bash compile-psiphon.sh
+
+    - name: Save the Psiphon client
+      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/libs-psiphon
+        key: psiphon-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/psiphon-build.sh') }}-${{ hashFiles('compile-psiphon.sh') }}
+
+    # Tor's bridges run through a pluggable transport, a program of its own: lyrebird, which aether
+    # builds and the app ships beside the core as liblyrebird.so; see compile-pt.sh.
+    - name: Restore cached pluggable transport
+      id: cache-pt-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/libs-pt
+        key: pt-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/pt-build.sh') }}-${{ hashFiles('compile-pt.sh') }}
+
+    - name: Build the pluggable transport
+      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
+      run: |
+        bash compile-pt.sh
+
+    - name: Save the pluggable transport
+      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/libs-pt
+        key: pt-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/pt-build.sh') }}-${{ hashFiles('compile-pt.sh') }}
+
+    - name: Stage the native libraries
+      run: |
+        cp -r ${{ github.workspace }}/libs ${{ github.workspace }}/V2rayNG/app
+        cp -r ${{ github.workspace }}/libs-aether/. ${{ github.workspace }}/V2rayNG/app/libs/
+        cp -r ${{ github.workspace }}/libs-psiphon/. ${{ github.workspace }}/V2rayNG/app/libs/
+        cp -r ${{ github.workspace }}/libs-pt/. ${{ github.workspace }}/V2rayNG/app/libs/
+
+    # Psiphon's client starts with the newest server list the build could fetch, so a fresh install has
+    # servers before it can reach the list on its own; see fetch-psiphon-servers.sh.
+    - name: Fetch the Psiphon server list
+      run: |
+        bash fetch-psiphon-servers.sh
+
+    - name: Fetch AndroidLibXrayLite tag
+      run: |
+        pushd AndroidLibXrayLite
+        CURRENT_TAG=$(git describe --tags --abbrev=0)
+        echo "Current tag in this repo: $CURRENT_TAG"
+        echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_ENV
+        popd
+
+    - name: Download libv2ray
+      uses: robinraju/release-downloader@v1.13
+      with:
+        repository: 'patterniha/AndroidLibXrayLite'
+        tag: ${{ env.CURRENT_TAG }}
+        fileName: 'libv2ray.aar'
+        out-file-path: V2rayNG/app/libs/
+
+    - name: Setup Java and cache Gradle dependencies
+      uses: actions/setup-java@v6.1.0
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+        cache: gradle
+        cache-dependency-path: V2rayNG/**/*.gradle*
+
+    - name: Build and test
+      run: |
+        cd ${{ github.workspace }}/V2rayNG
+        echo "sdk.dir=${ANDROID_HOME}" > local.properties
+        chmod 755 gradlew
+        # One APK per ABI: arm64-v8a for current phones and armeabi-v7a for old 32-bit ones. A manual run can name its own.
+        ABIS="${{ inputs.abi_filters }}"
+        [ -z "$ABIS" ] && ABIS="arm64-v8a;armeabi-v7a"
+        mkdir -p "${{ github.workspace }}/apks"
+        set -o pipefail
+        # The JVM unit tests first, so that a failing test or a compile error stops the build and is named in its log.
+        ./gradlew :app:testPlaystoreDebugUnitTest 2>&1 | tee "${{ github.workspace }}/gradle.log"
+        IFS=';' read -ra LIST <<< "$ABIS"
+        for abi in "${LIST[@]}"; do
+          ./gradlew :app:assemblePlaystoreDebug "-PABI_FILTERS=$abi" 2>&1 | tee -a "${{ github.workspace }}/gradle.log"
+          for apk in app/build/outputs/apk/playstore/debug/*.apk; do
+            cp "$apk" "${{ github.workspace }}/apks/$(basename "$apk" .apk)-$abi.apk"
+          done
+        done
+
+    # The full log can be hard to open; the compile errors and failed tests are repeated as one annotation on the run.
+    - name: Report errors as an annotation
+      if: failure()
+      run: |
+        msg=$(grep -E '^e: |FAILED|What went wrong|^> ' "${{ github.workspace }}/gradle.log" | head -60 \
+          | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+        echo "::error title=Gradle errors::${msg}"
+
+    - name: Upload test reports
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: test-reports
+        path: ${{ github.workspace }}/V2rayNG/app/build/reports/tests
+        if-no-files-found: ignore
+
+    - name: Upload debug APK
+      if: success()
+      uses: actions/upload-artifact@v7
+      with:
+        name: PattNG-ui-quick-check-debug
+        path: ${{ github.workspace }}/apks/*.apk
+        if-no-files-found: error
+
+    - name: Check the native libraries in the APK
+      if: success()
+      run: |
+        # Same check as build.yml: every ABI built has to carry the Aether core, its Psiphon client and its pluggable transport.
+        status=0
+        for apk in ${{ github.workspace }}/apks/*.apk; do
+          entries=$(unzip -Z1 "$apk" | grep '^lib/' || true)
+          echo "$(basename "$apk"):"
+          echo "$entries" | sed 's/^/  /'
+          for abi in arm64-v8a armeabi-v7a x86_64; do
+            echo "$entries" | grep -q "^lib/$abi/" || continue
+            for lib in libaether.so libpsiphon-tunnel-core.so liblyrebird.so; do
+              if ! echo "$entries" | grep -qx "lib/$abi/$lib"; then
+                echo "::error::$(basename "$apk") lacks lib/$abi/$lib"
+                status=1
+              fi
+            done
+          done
+        done
+        exit $status
