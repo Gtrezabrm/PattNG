@@ -1,6 +1,6 @@
 name: UI Quick Check
 
-# Fast UI iteration based on Debug Build: reuse native-library caches and download upstream libv2ray. The first run on a new branch may need to populate its own cache.
+# Fast UI iteration: reuse compatible native libraries from the latest successful Debug Build artifact; fall back to caches/build when unavailable.
 
 on:
   workflow_dispatch:
@@ -19,9 +19,10 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
-  group: debug-build-${{ github.ref }}
+  group: ui-quick-check-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -56,50 +57,12 @@ jobs:
         \
             ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
 
-    - name: Restore cached libhevtun
-      id: cache-libhevtun-restore
-      uses: actions/cache/restore@v6
-      with:
-        path: ${{ github.workspace }}/libs
-        key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
-
-    - name: Build libhevtun
-      if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
-      run: |
-        bash compile-hevtun.sh
-
-    - name: Save libhevtun
-      if: steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v6
-      with:
-        path: ${{ github.workspace }}/libs
-        key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
-
     - name: Install Rust
       id: rust-toolchain
       uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{ env.RUST_TOOLCHAIN }}
         targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
-
-    - name: Restore cached libaether
-      id: cache-libaether-restore
-      uses: actions/cache/restore@v6
-      with:
-        path: ${{ github.workspace }}/libs-aether
-        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
-
-    - name: Build libaether
-      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
-      run: |
-        bash compile-aether.sh
-
-    - name: Save libaether
-      if: steps.cache-libaether-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v6
-      with:
-        path: ${{ github.workspace }}/libs-aether
-        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
 
     - name: Install Go
       uses: actions/setup-go@v5
@@ -108,9 +71,102 @@ jobs:
         # The client is built from a checkout of its own; there is no go.sum here to cache by.
         cache: false
 
+    - name: Reuse native libraries from Debug Build
+      id: native-artifact
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        ARTIFACT_DIR="$RUNNER_TEMP/native-artifacts"
+        mkdir -p "$ARTIFACT_DIR"
+
+        if ! RUN_ID=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/debug-build.yml/runs?branch=ui/home-connection-details&status=completed&per_page=20" --jq '[.workflow_runs[] | select(.conclusion == "success" and .head_branch == "ui/home-connection-details")][0].id // empty'); then
+          echo "Could not query Debug Build runs; falling back to caches/build."
+          exit 0
+        fi
+        if [ -z "$RUN_ID" ]; then
+          echo "No successful Debug Build run found; falling back to caches/build."
+          exit 0
+        fi
+        if ! gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --name PattNG-native-libs --dir "$ARTIFACT_DIR"; then
+          echo "No native-library artifact in run $RUN_ID; falling back to caches/build."
+          exit 0
+        fi
+
+        {
+          echo "NDK=30.0.16248370"
+          echo "RUST_VERSION=$(rustc --version)"
+          echo "GO_VERSION=$(go version)"
+          echo "HEV_REV=$(git -C hev-socks5-tunnel rev-parse HEAD)"
+          echo "AETHER_REV=$(git -C aether rev-parse HEAD)"
+          echo "HEV_SCRIPT=$(sha256sum compile-hevtun.sh | awk '{print $1}')"
+          echo "AETHER_SCRIPT=$(sha256sum compile-aether.sh | awk '{print $1}')"
+          echo "PSIPHON_SCRIPT=$(sha256sum compile-psiphon.sh | awk '{print $1}')"
+          echo "PSIPHON_BUILD_SCRIPT=$(sha256sum aether/psiphon-build.sh | awk '{print $1}')"
+          echo "PT_SCRIPT=$(sha256sum compile-pt.sh | awk '{print $1}')"
+          echo "PT_BUILD_SCRIPT=$(sha256sum aether/pt-build.sh | awk '{print $1}')"
+        }
+        > "$RUNNER_TEMP/expected-native-libs-manifest.txt"
+        if ! diff -u "$RUNNER_TEMP/expected-native-libs-manifest.txt" "$ARTIFACT_DIR/native-libs-manifest.txt"; then
+          echo "Native artifact is stale or incompatible; falling back to caches/build."
+          exit 0
+        fi
+        for dir in libs libs-aether libs-psiphon libs-pt; do
+          if [ ! -d "$ARTIFACT_DIR/$dir" ]; then
+            echo "Artifact is missing $dir; falling back to caches/build."
+            exit 0
+          fi
+        done
+        for dir in libs libs-aether libs-psiphon libs-pt; do
+          cp -a "$ARTIFACT_DIR/$dir" "$GITHUB_WORKSPACE/"
+        done
+        echo "reused=true" >> "$GITHUB_OUTPUT"
+        echo "Reused compatible native libraries from Debug Build run $RUN_ID."
+
+    - name: Restore cached libhevtun
+      if: steps.native-artifact.outputs.reused != 'true'
+      id: cache-libhevtun-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/libs
+        key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
+
+    - name: Build libhevtun
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+      run: |
+        bash compile-hevtun.sh
+
+    - name: Save libhevtun
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libhevtun-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/libs
+        key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
+
+    - name: Restore cached libaether
+      if: steps.native-artifact.outputs.reused != 'true'
+      id: cache-libaether-restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ github.workspace }}/libs-aether
+        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
+
+    - name: Build libaether
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libaether-restore.outputs.cache-hit != 'true'
+      run: |
+        bash compile-aether.sh
+
+    - name: Save libaether
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-libaether-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ github.workspace }}/libs-aether
+        key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
+
     # The Aether core runs Psiphon as a program of its own, the psiphon-tunnel-core console client,
     # which the app ships beside the core as libpsiphon-tunnel-core.so; see compile-psiphon.sh.
     - name: Restore cached Psiphon client
+      if: steps.native-artifact.outputs.reused != 'true'
       id: cache-psiphon-restore
       uses: actions/cache/restore@v6
       with:
@@ -118,12 +174,12 @@ jobs:
         key: psiphon-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/psiphon-build.sh') }}-${{ hashFiles('compile-psiphon.sh') }}
 
     - name: Build the Psiphon client
-      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-psiphon-restore.outputs.cache-hit != 'true'
       run: |
         bash compile-psiphon.sh
 
     - name: Save the Psiphon client
-      if: steps.cache-psiphon-restore.outputs.cache-hit != 'true'
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-psiphon-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/libs-psiphon
@@ -132,6 +188,7 @@ jobs:
     # Tor's bridges run through a pluggable transport, a program of its own: lyrebird, which aether
     # builds and the app ships beside the core as liblyrebird.so; see compile-pt.sh.
     - name: Restore cached pluggable transport
+      if: steps.native-artifact.outputs.reused != 'true'
       id: cache-pt-restore
       uses: actions/cache/restore@v6
       with:
@@ -139,12 +196,12 @@ jobs:
         key: pt-${{ runner.os }}-${{ env.GO_VERSION }}-${{ hashFiles('aether/pt-build.sh') }}-${{ hashFiles('compile-pt.sh') }}
 
     - name: Build the pluggable transport
-      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-pt-restore.outputs.cache-hit != 'true'
       run: |
         bash compile-pt.sh
 
     - name: Save the pluggable transport
-      if: steps.cache-pt-restore.outputs.cache-hit != 'true'
+      if: steps.native-artifact.outputs.reused != 'true' && steps.cache-pt-restore.outputs.cache-hit != 'true'
       uses: actions/cache/save@v6
       with:
         path: ${{ github.workspace }}/libs-pt
