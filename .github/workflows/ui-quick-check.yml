@@ -105,8 +105,7 @@ jobs:
           echo "PSIPHON_BUILD_SCRIPT=$(sha256sum aether/psiphon-build.sh | awk '{print $1}')"
           echo "PT_SCRIPT=$(sha256sum compile-pt.sh | awk '{print $1}')"
           echo "PT_BUILD_SCRIPT=$(sha256sum aether/pt-build.sh | awk '{print $1}')"
-        }
-        > "$RUNNER_TEMP/expected-native-libs-manifest.txt"
+        } > "$RUNNER_TEMP/expected-native-libs-manifest.txt"
         if ! diff -u "$RUNNER_TEMP/expected-native-libs-manifest.txt" "$ARTIFACT_DIR/native-libs-manifest.txt"; then
           echo "Native artifact is stale or incompatible; falling back to caches/build."
           exit 0
