@@ -152,7 +152,9 @@ fun HomeConnectCard(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val landscape = maxWidth > maxHeight
         // A small screen gets a tighter card, so that the figures of the connection show without scrolling.
-        val compact = !landscape && maxHeight < 620.dp
+        val compact = !landscape && maxHeight < 560.dp
+        // The button follows the room there is: full size on an ordinary phone, smaller only on a really short screen.
+        val buttonSize = (maxHeight * 0.27f).coerceIn(112.dp, 168.dp)
         val cardShape = RoundedCornerShape(40.dp)
         Card(
             shape = cardShape,
@@ -164,7 +166,7 @@ fun HomeConnectCard(
                 .align(Alignment.Center)
                 .widthIn(max = if (landscape) 720.dp else 480.dp)
                 .padding(if (compact) 8.dp else 16.dp)
-                .background(Brush.verticalGradient(listOf(colors.container, colors.containerEnd)), cardShape)
+                .background(remember(colors.container, colors.containerEnd) { Brush.verticalGradient(listOf(colors.container, colors.containerEnd)) }, cardShape)
                 .verticalScroll(rememberScrollState()),
         ) {
             if (landscape) {
@@ -176,7 +178,7 @@ fun HomeConnectCard(
                     horizontalArrangement = Arrangement.spacedBy(24.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    HomeCardMain(model, colors, false, onConnectClick, onStatusActionClick, modifier = Modifier.weight(1f))
+                    HomeCardMain(model, colors, false, buttonSize, onConnectClick, onStatusActionClick, modifier = Modifier.weight(1f))
                     AnimatedVisibility(
                         visible = showDetails && shownDetails != null,
                         enter = detailsEnter,
@@ -195,13 +197,13 @@ fun HomeConnectCard(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 14.dp),
                 ) {
-                    HomeCardMain(model, colors, compact, onConnectClick, onStatusActionClick)
+                    HomeCardMain(model, colors, compact, buttonSize, onConnectClick, onStatusActionClick)
                     AnimatedVisibility(
                         visible = showDetails && shownDetails != null,
                         enter = detailsEnter,
                         exit = detailsExit,
                     ) {
-                        shownDetails?.let { HomeCardDetailsSection(it, onRefreshPingClick) }
+                        shownDetails?.let { HomeCardDetailsSection(it, onRefreshPingClick, showTitle = !compact) }
                     }
                 }
             }
@@ -214,6 +216,7 @@ private fun HomeCardMain(
     model: HomeCardModel,
     colors: HomeCardColors,
     compact: Boolean,
+    buttonSize: Dp,
     onConnectClick: () -> Unit,
     onStatusActionClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -223,7 +226,7 @@ private fun HomeCardMain(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 16.dp),
     ) {
-        HomeConnectButton(model.status, model.cancellable, colors, if (compact) 116.dp else 168.dp, onConnectClick)
+        HomeConnectButton(model.status, model.cancellable, colors, buttonSize, onConnectClick)
         AnimatedContent(
             targetState = model.status,
             transitionSpec = { fadeIn(tween(300, delayMillis = 90)) togetherWith fadeOut(tween(150)) },
@@ -409,9 +412,10 @@ private fun HomeCardDetailsSection(
     details: HomeCardDetails,
     onRefreshPingClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showTitle: Boolean = true,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(text = stringResource(R.string.home_details_title), style = MaterialTheme.typography.titleMedium)
+        if (showTitle) Text(text = stringResource(R.string.home_details_title), style = MaterialTheme.typography.titleMedium)
         HomeCardDetailsBlock(details, onRefreshPingClick)
     }
 }

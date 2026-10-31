@@ -230,6 +230,11 @@ class MainViewModel(
                             ?: it.connectionCountryCode,
                     )
                 }
+                uiState.value.let {
+                    ConnectionSession.saveFigures(
+                        ConnectionFigures(it.connectionPingMillis, it.connectionIpAddress, it.connectionCountryCode),
+                    )
+                }
             }
 
             is MainServiceEvent.MeasureConfigSuccess -> {
@@ -1135,6 +1140,10 @@ class MainViewModel(
         if (!running || clearTestingText) testRequests.invalidateCurrent()
         val userRequested = userRequestedChange
         val now = System.nanoTime()
+        // The duration and the figures outlive this ViewModel: a screen that comes back finds them where they were.
+        if (!running) ConnectionSession.clear()
+        val since = if (running) ConnectionSession.startedAtNanos(now) else null
+        val restored = if (running) ConnectionSession.restoreFigures() else null
         _uiState.update { state ->
             state.copy(
                 isRunning = running,
@@ -1142,10 +1151,10 @@ class MainViewModel(
                 status = runningStatus(state.status, state.isRunning, running, clearTestingText),
                 pendingStart = HomeConnection.pendingStartAfter(state.pendingStart, signal),
                 connectionIssue = HomeConnection.issueAfter(state.connectionIssue, state.isRunning, signal, userRequested),
-                connectionPingMillis = if (running) state.connectionPingMillis else null,
-                connectionIpAddress = if (running) state.connectionIpAddress else null,
-                connectionCountryCode = if (running) state.connectionCountryCode else null,
-                connectedSinceNanos = if (running) state.connectedSinceNanos ?: now else null,
+                connectionPingMillis = if (running) state.connectionPingMillis ?: restored?.pingMillis else null,
+                connectionIpAddress = if (running) state.connectionIpAddress ?: restored?.ipAddress else null,
+                connectionCountryCode = if (running) state.connectionCountryCode ?: restored?.countryCode else null,
+                connectedSinceNanos = if (running) state.connectedSinceNanos ?: since else null,
             )
         }
         if (signal == RunningSignal.RUNNING || signal == RunningSignal.START_FAILED) {
@@ -1162,6 +1171,7 @@ class MainViewModel(
      */
     fun onUserServiceRequest(starting: Boolean) {
         userRequestedChange = true
+        if (starting) ConnectionSession.clear()
         startTimeoutJob?.cancel()
         startTimeoutJob = null
         _uiState.update { it.copy(pendingStart = starting, connectionIssue = null) }

@@ -194,26 +194,26 @@ fun SettingsScreen(
         }
     }
 
-    val languageEntries = stringArrayResource(R.array.language_select).toList()
-    val languageValues = stringArrayResource(R.array.language_select_value).toList()
-    val uiModeNightEntries = stringArrayResource(R.array.ui_mode_night).toList()
-    val uiModeNightValues = stringArrayResource(R.array.ui_mode_night_value).toList()
-    val bypassLanEntries = stringArrayResource(R.array.vpn_bypass_lan).toList()
-    val bypassLanValues = stringArrayResource(R.array.vpn_bypass_lan_value).toList()
-    val interfaceAddrEntries = stringArrayResource(R.array.vpn_interface_address).toList()
-    val interfaceAddrValues = stringArrayResource(R.array.vpn_interface_address_value).toList()
-    val hevLogEntries = stringArrayResource(R.array.hev_tunnel_loglevel).toList()
-    val hevLogValues = stringArrayResource(R.array.hev_tunnel_loglevel).toList()
-    val coreLogLevelEntries = stringArrayResource(R.array.core_loglevel).toList()
-    val coreLogLevelValues = stringArrayResource(R.array.core_loglevel).toList()
-    val outboundResolveEntries = stringArrayResource(R.array.outbound_domain_resolve_method).toList()
-    val outboundResolveValues = stringArrayResource(R.array.outbound_domain_resolve_method_value).toList()
-    val xudpQuicEntries = stringArrayResource(R.array.mux_xudp_quic_entries).toList()
-    val xudpQuicValues = stringArrayResource(R.array.mux_xudp_quic_value).toList()
-    val observatoryLeastLoadMethodEntries = stringArrayResource(R.array.observatory_least_load_method).toList()
-    val observatoryLeastLoadMethodValues = stringArrayResource(R.array.observatory_least_load_method).toList()
-    val modeEntries = stringArrayResource(R.array.mode_entries).toList()
-    val modeValues = stringArrayResource(R.array.mode_value).toList()
+    val languageEntries = remember { settingsContext.resources.getStringArray(R.array.language_select).toList() }
+    val languageValues = remember { settingsContext.resources.getStringArray(R.array.language_select_value).toList() }
+    val uiModeNightEntries = remember { settingsContext.resources.getStringArray(R.array.ui_mode_night).toList() }
+    val uiModeNightValues = remember { settingsContext.resources.getStringArray(R.array.ui_mode_night_value).toList() }
+    val bypassLanEntries = remember { settingsContext.resources.getStringArray(R.array.vpn_bypass_lan).toList() }
+    val bypassLanValues = remember { settingsContext.resources.getStringArray(R.array.vpn_bypass_lan_value).toList() }
+    val interfaceAddrEntries = remember { settingsContext.resources.getStringArray(R.array.vpn_interface_address).toList() }
+    val interfaceAddrValues = remember { settingsContext.resources.getStringArray(R.array.vpn_interface_address_value).toList() }
+    val hevLogEntries = remember { settingsContext.resources.getStringArray(R.array.hev_tunnel_loglevel).toList() }
+    val hevLogValues = remember { settingsContext.resources.getStringArray(R.array.hev_tunnel_loglevel).toList() }
+    val coreLogLevelEntries = remember { settingsContext.resources.getStringArray(R.array.core_loglevel).toList() }
+    val coreLogLevelValues = remember { settingsContext.resources.getStringArray(R.array.core_loglevel).toList() }
+    val outboundResolveEntries = remember { settingsContext.resources.getStringArray(R.array.outbound_domain_resolve_method).toList() }
+    val outboundResolveValues = remember { settingsContext.resources.getStringArray(R.array.outbound_domain_resolve_method_value).toList() }
+    val xudpQuicEntries = remember { settingsContext.resources.getStringArray(R.array.mux_xudp_quic_entries).toList() }
+    val xudpQuicValues = remember { settingsContext.resources.getStringArray(R.array.mux_xudp_quic_value).toList() }
+    val observatoryLeastLoadMethodEntries = remember { settingsContext.resources.getStringArray(R.array.observatory_least_load_method).toList() }
+    val observatoryLeastLoadMethodValues = remember { settingsContext.resources.getStringArray(R.array.observatory_least_load_method).toList() }
+    val modeEntries = remember { settingsContext.resources.getStringArray(R.array.mode_entries).toList() }
+    val modeValues = remember { settingsContext.resources.getStringArray(R.array.mode_value).toList() }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
