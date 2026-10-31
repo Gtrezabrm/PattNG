@@ -6,7 +6,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -81,7 +80,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import com.v2ray.ang.R
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -292,11 +290,14 @@ private fun HomeConnectButton(
         label = "home-button-bloom",
     )
     val wave = remember { Animatable(1f) }
+    // Only a connection that comes up while the card is on screen waves; coming back to a running one does not.
+    val wasRunning = remember { booleanArrayOf(running) }
     LaunchedEffect(running, reduce) {
-        if (running && !reduce) {
+        if (running && !wasRunning[0] && !reduce) {
             wave.snapTo(0f)
             wave.animateTo(1f, tween(1_100, easing = FastOutSlowInEasing))
         }
+        wasRunning[0] = running
     }
     val shape = remember(morph) { homeConnectMorphShape(morph) }
     val petalColor = colors.button
@@ -333,7 +334,7 @@ private fun HomeConnectButton(
                     if (p > 0f && p < 1f) {
                         drawCircle(
                             color = petalColor.copy(alpha = 0.45f * (1f - p)),
-                            radius = this.size.minDimension / 2f * (1f + 0.5f * p),
+                            radius = this.size.minDimension / 2f * (1f + 0.3f * p),
                             style = Stroke(width = 3.dp.toPx()),
                         )
                     }

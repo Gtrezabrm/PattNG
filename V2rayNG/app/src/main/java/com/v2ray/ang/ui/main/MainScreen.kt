@@ -7,7 +7,6 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -186,7 +185,7 @@ fun MainScreen(
                 if (reduceMotion) {
                     EnterTransition.None togetherWith ExitTransition.None
                 } else {
-                    (fadeIn(tween(220, delayMillis = 90)) + scaleIn(tween(220, delayMillis = 90), initialScale = 0.94f)) togetherWith
+                    fadeIn(tween(220, delayMillis = 90)) togetherWith
                         fadeOut(tween(90))
                 }
             },
