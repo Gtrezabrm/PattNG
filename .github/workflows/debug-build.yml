@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       abi_filters:
-        description: "ABIs to build the APK for, separated by semicolons (arm64-v8a fits almost every phone); empty builds a universal APK"
+        description: "ABIs to build the APK for, separated by semicolons (arm64-v8a fits almost every phone); empty builds arm64-v8a only"
         required: false
-        default: "arm64-v8a;armeabi-v7a"
+        default: "arm64-v8a"
         type: string
   push:
     branches:
@@ -51,9 +51,23 @@ jobs:
           --channel=0 \
           --install "ndk;30.0.16248370"
         echo "NDK_HOME=$ANDROID_HOME/ndk/30.0.16248370" >> $GITHUB_ENV
-        sed -i '10i\
-        \
+        sed -i '10i\\
+        \\
             ndkVersion = "30.0.16248370"' ${{ github.workspace }}/V2rayNG/app/build.gradle.kts
+
+    - name: Install Rust
+      id: rust-toolchain
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ env.RUST_TOOLCHAIN }}
+        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
+
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+        # The client is built from a checkout of its own; there is no go.sum here to cache by.
+        cache: false
 
     - name: Restore cached libhevtun
       id: cache-libhevtun-restore
@@ -74,13 +88,6 @@ jobs:
         path: ${{ github.workspace }}/libs
         key: libhevtun-${{ runner.os }}-${{ env.NDK_HOME }}-${{ hashFiles('.git/modules/hev-socks5-tunnel/HEAD') }}-${{ hashFiles('compile-hevtun.sh') }}
 
-    - name: Install Rust
-      id: rust-toolchain
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ env.RUST_TOOLCHAIN }}
-        targets: aarch64-linux-android,armv7-linux-androideabi,x86_64-linux-android
-
     - name: Restore cached libaether
       id: cache-libaether-restore
       uses: actions/cache/restore@v6
@@ -99,13 +106,6 @@ jobs:
       with:
         path: ${{ github.workspace }}/libs-aether
         key: libaether-${{ runner.os }}-${{ env.NDK_HOME }}-${{ steps.rust-toolchain.outputs.cachekey }}-${{ hashFiles('.git/modules/aether/HEAD') }}-${{ hashFiles('compile-aether.sh') }}
-
-    - name: Install Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: ${{ env.GO_VERSION }}
-        # The client is built from a checkout of its own; there is no go.sum here to cache by.
-        cache: false
 
     # The Aether core runs Psiphon as a program of its own, the psiphon-tunnel-core console client,
     # which the app ships beside the core as libpsiphon-tunnel-core.so; see compile-psiphon.sh.
@@ -156,6 +156,35 @@ jobs:
         cp -r ${{ github.workspace }}/libs-psiphon/. ${{ github.workspace }}/V2rayNG/app/libs/
         cp -r ${{ github.workspace }}/libs-pt/. ${{ github.workspace }}/V2rayNG/app/libs/
 
+    - name: Create native library manifest
+      run: |
+        {
+          echo "NDK=30.0.16248370"
+          echo "RUST_VERSION=$(rustc --version)"
+          echo "GO_VERSION=$(go version)"
+          echo "HEV_REV=$(git -C hev-socks5-tunnel rev-parse HEAD)"
+          echo "AETHER_REV=$(git -C aether rev-parse HEAD)"
+          echo "HEV_SCRIPT=$(sha256sum compile-hevtun.sh | awk '{print $1}')"
+          echo "AETHER_SCRIPT=$(sha256sum compile-aether.sh | awk '{print $1}')"
+          echo "PSIPHON_SCRIPT=$(sha256sum compile-psiphon.sh | awk '{print $1}')"
+          echo "PSIPHON_BUILD_SCRIPT=$(sha256sum aether/psiphon-build.sh | awk '{print $1}')"
+          echo "PT_SCRIPT=$(sha256sum compile-pt.sh | awk '{print $1}')"
+          echo "PT_BUILD_SCRIPT=$(sha256sum aether/pt-build.sh | awk '{print $1}')"
+        } > native-libs-manifest.txt
+
+    - name: Upload reusable native libraries
+      uses: actions/upload-artifact@v7
+      with:
+        name: PattNG-native-libs
+        path: |
+          ${{ github.workspace }}/libs
+          ${{ github.workspace }}/libs-aether
+          ${{ github.workspace }}/libs-psiphon
+          ${{ github.workspace }}/libs-pt
+          ${{ github.workspace }}/native-libs-manifest.txt
+        if-no-files-found: error
+        retention-days: 14
+
     # Psiphon's client starts with the newest server list the build could fetch, so a fresh install has
     # servers before it can reach the list on its own; see fetch-psiphon-servers.sh.
     - name: Fetch the Psiphon server list
@@ -189,12 +218,11 @@ jobs:
         cd ${{ github.workspace }}/V2rayNG
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
-        # One APK per ABI: arm64-v8a for current phones and armeabi-v7a for old 32-bit ones. A manual run can name its own.
+        # Build arm64-v8a only by default; manual input can override the ABI list.
         ABIS="${{ inputs.abi_filters }}"
-        [ -z "$ABIS" ] && ABIS="arm64-v8a;armeabi-v7a"
+        [ -z "$ABIS" ] && ABIS="arm64-v8a"
         mkdir -p "${{ github.workspace }}/apks"
         set -o pipefail
-        # The JVM unit tests first, so that a failing test or a compile error stops the build and is named in its log.
         ./gradlew :app:testPlaystoreDebugUnitTest 2>&1 | tee "${{ github.workspace }}/gradle.log"
         IFS=';' read -ra LIST <<< "$ABIS"
         for abi in "${LIST[@]}"; do
@@ -204,7 +232,6 @@ jobs:
           done
         done
 
-    # The full log can be hard to open; the compile errors and failed tests are repeated as one annotation on the run.
     - name: Report errors as an annotation
       if: failure()
       run: |
@@ -231,7 +258,6 @@ jobs:
     - name: Check the native libraries in the APK
       if: success()
       run: |
-        # Same check as build.yml: every ABI built has to carry the Aether core, its Psiphon client and its pluggable transport.
         status=0
         for apk in ${{ github.workspace }}/apks/*.apk; do
           entries=$(unzip -Z1 "$apk" | grep '^lib/' || true)
