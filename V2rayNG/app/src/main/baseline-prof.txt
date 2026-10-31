@@ -1,0 +1,13 @@
+# Hand-written baseline profile: compile the Compose runtime/UI and the app's own UI ahead of time.
+HSPLandroidx/compose/runtime/**;->**(**)**
+HSPLandroidx/compose/ui/**;->**(**)**
+HSPLandroidx/compose/foundation/**;->**(**)**
+HSPLandroidx/compose/material3/**;->**(**)**
+HSPLandroidx/compose/animation/**;->**(**)**
+HSPLandroidx/lifecycle/**;->**(**)**
+HSPLcom/v2ray/ang/ui/**;->**(**)**
+Landroidx/compose/runtime/**;
+Landroidx/compose/ui/**;
+Landroidx/compose/foundation/**;
+Landroidx/compose/material3/**;
+Lcom/v2ray/ang/ui/**;

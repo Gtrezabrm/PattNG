@@ -74,9 +74,17 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.v2ray.ang.R
 import kotlinx.coroutines.launch
-import kotlin.math.ceil
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import com.v2ray.ang.ui.compose.LocalReduceMotion
 
 /** What the home card shows; [HomeConnection.cardStatus] maps the state of the main screen to it. */
@@ -268,23 +276,30 @@ private fun HomeConnectButton(
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "home-button-scale",
     )
-    // The outline morphs between the idle and the running cookie, and the whole button breathes and turns gently.
+    // The outline morphs between the idle and the running cookie. Nothing runs without end except a soft breath
+    // while the connection is coming up; a settled connection stands still, which spares the battery.
     val reduce = LocalReduceMotion.current
     val morph by animateFloatAsState(
         targetValue = if (running) 1f else 0f,
         animationSpec = if (reduce) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "home-button-morph",
     )
-    val alive = running || busy
-    // The endless motion exists only while the connection is alive; an idle screen draws no frames of its own.
-    // Only the wait is animated without end; a settled connection stands still, which spares the battery.
-    val motion = rememberHomeButtonMotion(active = busy && !reduce, fast = busy)
-    val haloAlpha by animateFloatAsState(
-        targetValue = if (alive) 1f else 0f,
-        animationSpec = tween(500),
-        label = "home-button-halo",
+    val breath = rememberBreath(active = busy && !reduce)
+    // The ring of petals blooms once when the connection is up, and a wave leaves the button once.
+    val bloom by animateFloatAsState(
+        targetValue = if (running) 1f else 0f,
+        animationSpec = if (reduce) snap() else spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow),
+        label = "home-button-bloom",
     )
+    val wave = remember { Animatable(1f) }
+    LaunchedEffect(running, reduce) {
+        if (running && !reduce) {
+            wave.snapTo(0f)
+            wave.animateTo(1f, tween(1_100, easing = FastOutSlowInEasing))
+        }
+    }
     val shape = remember(morph) { homeConnectMorphShape(morph) }
+    val petalColor = colors.button
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -294,25 +309,41 @@ private fun HomeConnectButton(
                 scaleY = scale
             },
     ) {
-        // Soft halo behind the button; drawn in the layer so that the pulse does not recompose anything.
+        // The ring of petals (an eslimi motif), drawn once and cached; only its scale and opacity follow the state.
+        Box(
+            modifier = Modifier
+                .size(size + 32.dp)
+                .graphicsLayer {
+                    val grow = 0.94f + 0.06f * bloom
+                    scaleX = grow
+                    scaleY = grow
+                    alpha = 0.22f + 0.38f * bloom
+                }
+                .drawWithCache {
+                    val petals = eslimiPetals(this.size.minDimension)
+                    onDrawBehind { drawPath(petals, petalColor) }
+                },
+        )
+        // The wave: one ring that leaves the button when the connection is up.
         Box(
             modifier = Modifier
                 .size(size)
-                .graphicsLayer {
-                    val pulse = motion?.pulse?.value ?: 0f
-                    val grow = 1.08f + 0.14f * pulse
-                    scaleX = grow
-                    scaleY = grow
-                    alpha = haloAlpha * (0.30f - 0.18f * pulse)
-                }
-                .background(colors.button, CircleShape),
+                .drawBehind {
+                    val p = wave.value
+                    if (p > 0f && p < 1f) {
+                        drawCircle(
+                            color = petalColor.copy(alpha = 0.45f * (1f - p)),
+                            radius = this.size.minDimension / 2f * (1f + 0.5f * p),
+                            style = Stroke(width = 3.dp.toPx()),
+                        )
+                    }
+                },
         )
         Box(
             modifier = Modifier
                 .size(size)
                 .graphicsLayer {
-                    rotationZ = motion?.turn?.value ?: 0f
-                    val breathe = 1f + 0.025f * (motion?.pulse?.value ?: 0f)
+                    val breathe = 1f + 0.04f * breath.value
                     scaleX = breathe
                     scaleY = breathe
                 }
@@ -347,38 +378,46 @@ private fun HomeConnectButton(
     }
 }
 
-private class HomeButtonMotion(val turn: State<Float>, val pulse: State<Float>)
-
-/**
- * The turn and the breathing of the button. They run only while [active]; when it ends, the turn glides on to the
- * next whole round and the breath settles, so that the button comes to rest instead of snapping back. At rest no
- * animation runs at all.
- */
+/** A breath between 0 and 1 while [active]; it settles back to 0 when it ends, and nothing runs at rest. */
 @Composable
-private fun rememberHomeButtonMotion(active: Boolean, fast: Boolean): HomeButtonMotion {
-    val turn = remember { Animatable(0f) }
-    val pulse = remember { Animatable(0f) }
-    LaunchedEffect(active, fast) {
+private fun rememberBreath(active: Boolean): Animatable<Float, AnimationVector1D> {
+    val breath = remember { Animatable(0f) }
+    LaunchedEffect(active) {
         if (active) {
-            launch {
-                while (true) {
-                    turn.animateTo(turn.value + 360f, tween(if (fast) 6_000 else 24_000, easing = LinearEasing))
-                }
-            }
-            launch {
-                while (true) {
-                    pulse.animateTo(1f, tween(if (fast) 900 else 2_600, easing = FastOutSlowInEasing))
-                    pulse.animateTo(0f, tween(if (fast) 900 else 2_600, easing = FastOutSlowInEasing))
-                }
+            while (true) {
+                breath.animateTo(1f, tween(1_000, easing = FastOutSlowInEasing))
+                breath.animateTo(0f, tween(1_000, easing = FastOutSlowInEasing))
             }
         } else {
-            launch { pulse.animateTo(0f, tween(400)) }
-            val rest = ceil(turn.value / 360f) * 360f
-            turn.animateTo(rest, tween(500, easing = FastOutSlowInEasing))
-            turn.snapTo(0f)
+            breath.animateTo(0f, tween(300))
         }
     }
-    return remember { HomeButtonMotion(turn.asState(), pulse.asState()) }
+    return breath
+}
+
+/** Sixteen petals round a ring of [diameter], the outer part of it, as one path. */
+private fun eslimiPetals(diameter: Float): Path {
+    val path = Path()
+    val center = diameter / 2f
+    val count = 16
+    val base = diameter * 0.405f
+    val mid = diameter * 0.455f
+    val tip = diameter * 0.5f
+    val half = (PI / count * 0.62).toFloat()
+    for (i in 0 until count) {
+        val angle = (2 * PI * i / count).toFloat()
+        fun point(radius: Float, a: Float) = Offset(center + radius * cos(a), center + radius * sin(a))
+        val start = point(base, angle - half)
+        path.moveTo(start.x, start.y)
+        val tipPoint = point(tip, angle)
+        val c1 = point(mid, angle - half * 1.5f)
+        path.quadraticTo(c1.x, c1.y, tipPoint.x, tipPoint.y)
+        val c2 = point(mid, angle + half * 1.5f)
+        val end = point(base, angle + half)
+        path.quadraticTo(c2.x, c2.y, end.x, end.y)
+        path.close()
+    }
+    return path
 }
 
 @Composable
@@ -546,7 +585,7 @@ private fun homeCardColors(status: HomeCardStatus): HomeCardColors {
     val scheme = MaterialTheme.colorScheme
     return when (status) {
         HomeCardStatus.Connected, HomeCardStatus.Connecting -> HomeCardColors(
-            scheme.primaryContainer, scheme.tertiaryContainer, scheme.onPrimaryContainer, scheme.primary, scheme.onPrimary
+            scheme.primaryContainer, scheme.secondaryContainer, scheme.onPrimaryContainer, scheme.primary, scheme.onPrimary
         )
 
         HomeCardStatus.Error -> HomeCardColors(

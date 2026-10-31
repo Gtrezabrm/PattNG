@@ -172,6 +172,8 @@ dependencies {
 
     // AndroidX Core Libraries
     implementation(libs.androidx.core.ktx)
+    // Installs the baseline profile (src/main/baseline-prof.txt) when the APK is sideloaded, so the first scrolls are not interpreted.
+    implementation(libs.androidx.profileinstaller)
     implementation(libs.androidx.appcompat)
 
     // Compose Libraries

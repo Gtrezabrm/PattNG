@@ -160,7 +160,7 @@ fun SettingsScreen(
         )
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
-    var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+    var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     val settingsContext = androidx.compose.ui.platform.LocalContext.current
     var reduceMotion by rememberMmkvBool(AppConfig.PREF_REDUCE_MOTION, MotionPolicy.defaultReduced(settingsContext))
 

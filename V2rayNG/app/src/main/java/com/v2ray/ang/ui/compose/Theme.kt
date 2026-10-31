@@ -67,81 +67,46 @@ private val VazirmatnTypography = DefaultTypography.run {
     )
 }
 
-// Fallback palette (Android < 12, or dynamic color turned off): violet primary container on a
-// warm near-black / lavender-white surface with a lime accent. Hand-picked from the visual
-// direction of the ZedSecure screenshots; no code or assets are copied from that project.
+// PattNG palette (the fallback when dynamic color is off, which is the default): firouzeh turquoise-green from the
+// green of the app icon, lapis-teal as the second color and saffron as the accent, on soft green-tinted surfaces.
 private val LightColor = lightColorScheme(
-    primary = Color(0xFF4F3FD8), // Violet
-    onPrimary = Color(0xFFFFFFFF), // White
-    primaryContainer = Color(0xFF8779F8), // Periwinkle (connection card)
-    onPrimaryContainer = Color(0xFF14055E), // Deep Indigo
-    secondary = Color(0xFF4C6700), // Olive Lime
-    onSecondary = Color(0xFFFFFFFF), // White
-    secondaryContainer = Color(0xFFC7F24E), // Lime
-    onSecondaryContainer = Color(0xFF161E00), // Near Black Olive
-    tertiary = Color(0xFF9C3A62), // Raspberry
-    onTertiary = Color(0xFFFFFFFF), // White
-    tertiaryContainer = Color(0xFFFFD9E2), // Pale Pink
-    onTertiaryContainer = Color(0xFF3E001D), // Dark Wine
-    error = Color(0xFFBA1A1A), // Red
-    errorContainer = Color(0xFFFFDAD6), // Light Red
-    onError = Color(0xFFFFFFFF), // White
-    onErrorContainer = Color(0xFF410002), // Dark Red
-    background = Color(0xFFFDFBFF), // Lavender White
-    onBackground = Color(0xFF1B1B20), // Near Black
-    surface = Color(0xFFFDFBFF), // Lavender White
-    onSurface = Color(0xFF1B1B20), // Near Black
-    surfaceVariant = Color(0xFFE5E0EE), // Light Lavender Gray
-    onSurfaceVariant = Color(0xFF47464F), // Dark Gray
-    outline = Color(0xFF787680), // Medium Gray
-    outlineVariant = Color(0xFFC9C5D0), // Light Gray
-    inverseSurface = Color(0xFF303034), // Dark Gray
-    inverseOnSurface = Color(0xFFF2EFF5), // Very Light Gray
-    inversePrimary = Color(0xFFC9BFFF), // Lavender
-    scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFF4F3FD8), // Violet
-    surfaceContainerLowest = Color(0xFFFFFFFF), // White
-    surfaceContainerLow = Color(0xFFF8F5FC), // Very Light Lavender
-    surfaceContainer = Color(0xFFF2EFF7), // Light Lavender
-    surfaceContainerHigh = Color(0xFFECE9F1), // Lavender Gray
-    surfaceContainerHighest = Color(0xFFE6E3EB), // Lavender Gray
+    primary = Color(0xFF006B55), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFF8FE3C4), onPrimaryContainer = Color(0xFF00382B),
+    secondary = Color(0xFF2F6B7A), onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFBFE6F0), onSecondaryContainer = Color(0xFF001F27),
+    tertiary = Color(0xFF8A5A00), onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFFFDDA3), onTertiaryContainer = Color(0xFF2C1A00),
+    error = Color(0xFFBA1A1A), errorContainer = Color(0xFFFFDAD6),
+    onError = Color(0xFFFFFFFF), onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFF7FBF8), onBackground = Color(0xFF171D1A),
+    surface = Color(0xFFF7FBF8), onSurface = Color(0xFF171D1A),
+    surfaceVariant = Color(0xFFDBE5DF), onSurfaceVariant = Color(0xFF3F4945),
+    outline = Color(0xFF6F7975), outlineVariant = Color(0xFFBFC9C4),
+    inverseSurface = Color(0xFF2C322F), inverseOnSurface = Color(0xFFEDF2EE),
+    inversePrimary = Color(0xFF6DDBB8), scrim = Color(0xFF000000), surfaceTint = Color(0xFF006B55),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFF1F6F3),
+    surfaceContainer = Color(0xFFEBF0ED), surfaceContainerHigh = Color(0xFFE5EAE7),
+    surfaceContainerHighest = Color(0xFFDFE4E1),
 )
 
 private val DarkColor = darkColorScheme(
-    primary = Color(0xFFC9BFFF), // Lavender
-    onPrimary = Color(0xFF2A1C8A), // Deep Indigo
-    primaryContainer = Color(0xFF4636C8), // Indigo (connection card)
-    onPrimaryContainer = Color(0xFFE6DFFF), // Pale Lavender
-    secondary = Color(0xFFC7F24E), // Lime
-    onSecondary = Color(0xFF263500), // Dark Olive
-    secondaryContainer = Color(0xFF3A4D00), // Olive
-    onSecondaryContainer = Color(0xFFDDFF86), // Pale Lime
-    tertiary = Color(0xFFFFB0C8), // Pink
-    onTertiary = Color(0xFF5E1133), // Dark Wine
-    tertiaryContainer = Color(0xFF7B2949), // Wine
-    onTertiaryContainer = Color(0xFFFFD9E2), // Pale Pink
-    error = Color(0xFFFFB4AB), // Light Red
-    errorContainer = Color(0xFF93000A), // Dark Red
-    onError = Color(0xFF690005), // Deep Red
-    onErrorContainer = Color(0xFFFFDAD6), // Light Red
-    background = Color(0xFF11130B), // Olive Black
-    onBackground = Color(0xFFE4E3D6), // Warm Light Gray
-    surface = Color(0xFF11130B), // Olive Black
-    onSurface = Color(0xFFE4E3D6), // Warm Light Gray
-    surfaceVariant = Color(0xFF45483A), // Olive Gray
-    onSurfaceVariant = Color(0xFFC6C8B6), // Warm Light Gray
-    outline = Color(0xFF909285), // Olive Medium Gray
-    outlineVariant = Color(0xFF45483A), // Olive Gray
-    inverseSurface = Color(0xFFE4E3D6), // Warm Light Gray
-    inverseOnSurface = Color(0xFF2F3126), // Dark Olive Gray
-    inversePrimary = Color(0xFF4F3FD8), // Violet
-    scrim = Color(0xFF000000), // Black
-    surfaceTint = Color(0xFFC9BFFF), // Lavender
-    surfaceContainerLowest = Color(0xFF0C0E06), // Near Black
-    surfaceContainerLow = Color(0xFF191B12), // Dark Olive
-    surfaceContainer = Color(0xFF1D1F16), // Dark Olive
-    surfaceContainerHigh = Color(0xFF282A20), // Dark Olive
-    surfaceContainerHighest = Color(0xFF33352B), // Dark Olive
+    primary = Color(0xFF6DDBB8), onPrimary = Color(0xFF00382B),
+    primaryContainer = Color(0xFF0B5A47), onPrimaryContainer = Color(0xFFA8F0D8),
+    secondary = Color(0xFF8FCFE0), onSecondary = Color(0xFF00363F),
+    secondaryContainer = Color(0xFF164F5C), onSecondaryContainer = Color(0xFFB8EAF6),
+    tertiary = Color(0xFFFFC857), onTertiary = Color(0xFF432C00),
+    tertiaryContainer = Color(0xFF5F4100), onTertiaryContainer = Color(0xFFFFDDA3),
+    error = Color(0xFFFFB4AB), errorContainer = Color(0xFF93000A),
+    onError = Color(0xFF690005), onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF0E1512), onBackground = Color(0xFFDDE4E0),
+    surface = Color(0xFF0E1512), onSurface = Color(0xFFDDE4E0),
+    surfaceVariant = Color(0xFF3F4945), onSurfaceVariant = Color(0xFFBFC9C4),
+    outline = Color(0xFF89938F), outlineVariant = Color(0xFF3F4945),
+    inverseSurface = Color(0xFFDDE4E0), inverseOnSurface = Color(0xFF2C322F),
+    inversePrimary = Color(0xFF006B55), scrim = Color(0xFF000000), surfaceTint = Color(0xFF6DDBB8),
+    surfaceContainerLowest = Color(0xFF090F0D), surfaceContainerLow = Color(0xFF161D1A),
+    surfaceContainer = Color(0xFF1A211E), surfaceContainerHigh = Color(0xFF252B29),
+    surfaceContainerHighest = Color(0xFF2F3633),
 )
 
 // Semantic Colors
@@ -170,7 +135,7 @@ object ThemeManager {
     val themeMode: StateFlow<String> = _themeMode.asStateFlow()
 
     private val _dynamicColorEnabled = MutableStateFlow(
-        MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+        MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     )
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
 
@@ -188,7 +153,7 @@ object ThemeManager {
         _themeMode.value =
             MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "0") ?: "0"
         _dynamicColorEnabled.value =
-            MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+            MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     }
 }
 
