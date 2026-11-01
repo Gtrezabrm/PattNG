@@ -43,6 +43,7 @@ import com.v2ray.ang.handler.SettingsChangeManager
 import com.v2ray.ang.root.RootManager
 import com.v2ray.ang.ui.base.BaseComponentActivity
 import com.v2ray.ang.ui.compose.AppTopBar
+import com.v2ray.ang.ui.compose.MotionPolicy
 import com.v2ray.ang.ui.compose.CollapsiblePreferenceGroupHeader
 import com.v2ray.ang.ui.compose.NavigationBarsSpacer
 import com.v2ray.ang.ui.compose.SettingsEditItem
@@ -152,14 +153,17 @@ fun SettingsScreen(
     var speedEnabled by rememberMmkvBool(AppConfig.PREF_SPEED_ENABLED, false)
     var confirmRemove by rememberMmkvBool(AppConfig.PREF_CONFIRM_REMOVE, false)
     var doubleColumnDisplay by rememberMmkvBool(AppConfig.PREF_DOUBLE_COLUMN_DISPLAY, false)
-    var groupAllDisplay by rememberMmkvBool(AppConfig.PREF_GROUP_ALL_DISPLAY, false)
+    var groupAllDisplay by rememberMmkvBool(AppConfig.PREF_GROUP_ALL_DISPLAY, true)
     var language by remember {
         mutableStateOf(
             MmkvManager.decodeSettingsString(AppConfig.PREF_LANGUAGE, "auto") ?: "auto"
         )
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
-    var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, true)
+    var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, false)
+    val settingsContext = androidx.compose.ui.platform.LocalContext.current
+    val settingsConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
+    var reduceMotion by rememberMmkvBool(AppConfig.PREF_REDUCE_MOTION, MotionPolicy.defaultReduced(settingsContext))
 
     var ipv6Enabled by rememberMmkvBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)
     var preferIpv6 by rememberMmkvBool(AppConfig.PREF_PREFER_IPV6, false)
@@ -191,26 +195,26 @@ fun SettingsScreen(
         }
     }
 
-    val languageEntries = stringArrayResource(R.array.language_select).toList()
-    val languageValues = stringArrayResource(R.array.language_select_value).toList()
-    val uiModeNightEntries = stringArrayResource(R.array.ui_mode_night).toList()
-    val uiModeNightValues = stringArrayResource(R.array.ui_mode_night_value).toList()
-    val bypassLanEntries = stringArrayResource(R.array.vpn_bypass_lan).toList()
-    val bypassLanValues = stringArrayResource(R.array.vpn_bypass_lan_value).toList()
-    val interfaceAddrEntries = stringArrayResource(R.array.vpn_interface_address).toList()
-    val interfaceAddrValues = stringArrayResource(R.array.vpn_interface_address_value).toList()
-    val hevLogEntries = stringArrayResource(R.array.hev_tunnel_loglevel).toList()
-    val hevLogValues = stringArrayResource(R.array.hev_tunnel_loglevel).toList()
-    val coreLogLevelEntries = stringArrayResource(R.array.core_loglevel).toList()
-    val coreLogLevelValues = stringArrayResource(R.array.core_loglevel).toList()
-    val outboundResolveEntries = stringArrayResource(R.array.outbound_domain_resolve_method).toList()
-    val outboundResolveValues = stringArrayResource(R.array.outbound_domain_resolve_method_value).toList()
-    val xudpQuicEntries = stringArrayResource(R.array.mux_xudp_quic_entries).toList()
-    val xudpQuicValues = stringArrayResource(R.array.mux_xudp_quic_value).toList()
-    val observatoryLeastLoadMethodEntries = stringArrayResource(R.array.observatory_least_load_method).toList()
-    val observatoryLeastLoadMethodValues = stringArrayResource(R.array.observatory_least_load_method).toList()
-    val modeEntries = stringArrayResource(R.array.mode_entries).toList()
-    val modeValues = stringArrayResource(R.array.mode_value).toList()
+    val languageEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.language_select).toList() }
+    val languageValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.language_select_value).toList() }
+    val uiModeNightEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.ui_mode_night).toList() }
+    val uiModeNightValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.ui_mode_night_value).toList() }
+    val bypassLanEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_bypass_lan).toList() }
+    val bypassLanValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_bypass_lan_value).toList() }
+    val interfaceAddrEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_interface_address).toList() }
+    val interfaceAddrValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.vpn_interface_address_value).toList() }
+    val hevLogEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.hev_tunnel_loglevel).toList() }
+    val hevLogValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.hev_tunnel_loglevel).toList() }
+    val coreLogLevelEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.core_loglevel).toList() }
+    val coreLogLevelValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.core_loglevel).toList() }
+    val outboundResolveEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.outbound_domain_resolve_method).toList() }
+    val outboundResolveValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.outbound_domain_resolve_method_value).toList() }
+    val xudpQuicEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mux_xudp_quic_entries).toList() }
+    val xudpQuicValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mux_xudp_quic_value).toList() }
+    val observatoryLeastLoadMethodEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.observatory_least_load_method).toList() }
+    val observatoryLeastLoadMethodValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.observatory_least_load_method).toList() }
+    val modeEntries = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mode_entries).toList() }
+    val modeValues = remember(settingsConfiguration) { settingsContext.resources.getStringArray(R.array.mode_value).toList() }
 
     Scaffold(
         contentWindowInsets = WindowInsets(0),
@@ -264,6 +268,12 @@ fun SettingsScreen(
                         groupAllDisplay = it
                         SettingsChangeManager.makeSetupGroupTab()
                     }
+                )
+                SettingsSwitchItem(
+                    title = stringResource(R.string.title_pref_reduce_motion),
+                    summary = stringResource(R.string.summary_pref_reduce_motion),
+                    checked = reduceMotion,
+                    onCheckedChange = { reduceMotion = it }
                 )
                 SettingsSwitchItem(
                     title = stringResource(R.string.title_pref_dynamic_color),
