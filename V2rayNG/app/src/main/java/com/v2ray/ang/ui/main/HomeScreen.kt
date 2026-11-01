@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -119,6 +121,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             HomeConnectCard(
                 model = model,
@@ -143,7 +146,7 @@ fun HomeScreen(
             HomeQuickActions(
                 onOpenServerList = onOpenServerList,
                 onNavigate = onNavigate,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().widthIn(max = 480.dp).padding(horizontal = 16.dp, vertical = 8.dp),
             )
         }
     }
@@ -233,7 +236,8 @@ private fun HomePillItem(
         modifier = modifier
             .clip(RoundedCornerShape(26.dp))
             .background(chip)
-            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
+            .selectable(selected = selected, role = Role.Button, onClick = onClick)
+            .heightIn(min = 48.dp)
             .padding(vertical = 8.dp, horizontal = 4.dp),
     ) {
         Icon(painterResource(iconRes), contentDescription = null, tint = tint)
@@ -241,7 +245,7 @@ private fun HomePillItem(
             text = stringResource(labelRes),
             style = MaterialTheme.typography.labelMedium,
             color = tint,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
     }

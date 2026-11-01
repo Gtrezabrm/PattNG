@@ -183,7 +183,7 @@ jobs:
           ${{ github.workspace }}/libs-pt
           ${{ github.workspace }}/native-libs-manifest.txt
         if-no-files-found: error
-        retention-days: 14
+        retention-days: 7
 
     # Psiphon's client starts with the newest server list the build could fetch, so a fresh install has
     # servers before it can reach the list on its own; see fetch-psiphon-servers.sh.
@@ -214,12 +214,14 @@ jobs:
         java-version: '21'
 
     - name: Build and test
+      env:
+        ABI_INPUT: ${{ inputs.abi_filters }}
       run: |
         cd ${{ github.workspace }}/V2rayNG
         echo "sdk.dir=${ANDROID_HOME}" > local.properties
         chmod 755 gradlew
         # Build arm64-v8a only by default; manual input can override the ABI list.
-        ABIS="${{ inputs.abi_filters }}"
+        ABIS="$ABI_INPUT"
         [ -z "$ABIS" ] && ABIS="arm64-v8a"
         mkdir -p "${{ github.workspace }}/apks"
         set -o pipefail
@@ -261,11 +263,13 @@ jobs:
       id: release-build
       if: success()
       continue-on-error: true
+      env:
+        ABI_INPUT: ${{ inputs.abi_filters }}
       run: |
         cd ${{ github.workspace }}/V2rayNG
         keytool -genkeypair -keystore "${{ github.workspace }}/test.jks" -storepass testpass -keypass testpass \
           -alias test -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=PattNG test"
-        ABI="$(echo "${{ inputs.abi_filters || 'arm64-v8a' }}" | cut -d';' -f1)"
+        ABI="$(echo "${ABI_INPUT:-arm64-v8a}" | cut -d';' -f1)"
         set -o pipefail
         ./gradlew :app:assemblePlaystoreRelease "-PABI_FILTERS=$ABI" \
           -Pandroid.injected.signing.store.file="${{ github.workspace }}/test.jks" \

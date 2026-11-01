@@ -1,6 +1,11 @@
 package com.v2ray.ang.ui.main
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -32,6 +37,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -68,8 +74,13 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -139,7 +150,8 @@ fun HomeConnectCard(
     modifier: Modifier = Modifier,
 ) {
     val target = homeCardColors(model.status)
-    val colorSpec = spring<Color>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
+    val reduceMotion = LocalReduceMotion.current
+    val colorSpec = if (reduceMotion) snap<Color>() else spring<Color>(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow)
     val colors = HomeCardColors(
         container = animateColorAsState(target.container, colorSpec, label = "home-card-container").value,
         containerEnd = animateColorAsState(target.containerEnd, colorSpec, label = "home-card-container-end").value,
@@ -152,8 +164,8 @@ fun HomeConnectCard(
     var lastDetails by remember { mutableStateOf<HomeCardDetails?>(null) }
     LaunchedEffect(model.details) { if (model.details != null) lastDetails = model.details }
     val shownDetails = model.details ?: lastDetails
-    val detailsEnter = expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(350))
-    val detailsExit = shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(tween(200))
+    val detailsEnter = if (reduceMotion) EnterTransition.None else expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(350))
+    val detailsExit = if (reduceMotion) ExitTransition.None else shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut(tween(200))
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val landscape = maxWidth > maxHeight
@@ -233,15 +245,20 @@ private fun HomeCardMain(
         verticalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 16.dp),
     ) {
         HomeConnectButton(model.status, model.cancellable, colors, buttonSize, onConnectClick)
+        val reduceMotion = LocalReduceMotion.current
         AnimatedContent(
             targetState = model.status,
-            transitionSpec = { fadeIn(tween(300, delayMillis = 90)) togetherWith fadeOut(tween(150)) },
+            transitionSpec = {
+                if (reduceMotion) EnterTransition.None togetherWith ExitTransition.None
+                else fadeIn(tween(300, delayMillis = 90)) togetherWith fadeOut(tween(150))
+            },
             label = "home-status-text",
         ) { status ->
             Text(
                 text = homeStatusText(status),
                 style = if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
             )
         }
         if (model.serverName != null && model.status != HomeCardStatus.Empty) {
@@ -267,6 +284,7 @@ private fun HomeConnectButton(
     val running = status == HomeCardStatus.Connected
     val busy = status == HomeCardStatus.Connecting
     val label = stringResource(if (running || (busy && cancellable)) R.string.acc_stop else R.string.acc_start)
+    val statusLabel = homeStatusText(status)
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
@@ -277,7 +295,7 @@ private fun HomeConnectButton(
     // The outline morphs between the idle and the running cookie. Nothing runs without end except a soft breath
     // while the connection is coming up; a settled connection stands still, which spares the battery.
     val reduce = LocalReduceMotion.current
-    val morph by animateFloatAsState(
+    val morph = animateFloatAsState(
         targetValue = if (running) 1f else 0f,
         animationSpec = if (reduce) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessLow),
         label = "home-button-morph",
@@ -296,10 +314,13 @@ private fun HomeConnectButton(
         if (running && !wasRunning[0] && !reduce) {
             wave.snapTo(0f)
             wave.animateTo(1f, tween(1_100, easing = FastOutSlowInEasing))
+        } else {
+            wave.snapTo(1f)
         }
         wasRunning[0] = running
     }
-    val shape = remember(morph) { homeConnectMorphShape(morph) }
+    // The outline reads the animation while it is drawn, so a frame of the morph recomposes nothing.
+    val shape = remember { MorphShape { morph.value } }
     val petalColor = colors.button
     Box(
         contentAlignment = Alignment.Center,
@@ -318,10 +339,12 @@ private fun HomeConnectButton(
                     val grow = 0.94f + 0.06f * bloom
                     scaleX = grow
                     scaleY = grow
-                    alpha = 0.22f + 0.38f * bloom
+                    alpha = 0.65f * bloom
+                    compositingStrategy = CompositingStrategy.ModulateAlpha
                 }
                 .drawWithCache {
-                    val petals = eslimiPetals(this.size.minDimension)
+                    // The button is the box less the 16dp of petals on each side.
+                    val petals = eslimiPetals(this.size.minDimension, (this.size.minDimension - 32.dp.toPx()) / 2f, density)
                     onDrawBehind { drawPath(petals, petalColor) }
                 },
         )
@@ -353,13 +376,17 @@ private fun HomeConnectButton(
         Surface(
             onClick = onClick,
             enabled = (!busy || cancellable) && status != HomeCardStatus.Empty,
-            shape = shape,
+            shape = CircleShape,
             color = Color.Transparent,
             contentColor = colors.onButton,
             interactionSource = interaction,
             modifier = Modifier
                 .size(size)
-                .semantics { contentDescription = label },
+                .semantics {
+                contentDescription = label
+                role = Role.Button
+                stateDescription = statusLabel
+            },
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (busy) {
@@ -396,15 +423,18 @@ private fun rememberBreath(active: Boolean): Animatable<Float, AnimationVector1D
     return breath
 }
 
-/** Sixteen petals round a ring of [diameter], the outer part of it, as one path. */
-private fun eslimiPetals(diameter: Float): Path {
+/**
+ * Twelve petals, one on the tip of each of the twelve lobes of the running button, as one path. They sit a constant
+ * 7dp off the lobe tips and are 9dp long whatever the size of the button, and the gaps between them equal their width.
+ */
+private fun eslimiPetals(diameter: Float, buttonRadius: Float, density: Float): Path {
     val path = Path()
     val center = diameter / 2f
-    val count = 16
-    val base = diameter * 0.405f
-    val mid = diameter * 0.455f
-    val tip = diameter * 0.5f
-    val half = (PI / count * 0.62).toFloat()
+    val count = 12
+    val base = buttonRadius + 7f * density
+    val tip = buttonRadius + 16f * density
+    val mid = (base + tip) / 2f
+    val half = (PI / count * 0.45).toFloat()
     for (i in 0 until count) {
         val angle = (2 * PI * i / count).toFloat()
         fun point(radius: Float, a: Float) = Offset(center + radius * cos(a), center + radius * sin(a))
@@ -501,6 +531,7 @@ private fun HomeCardDetailsBlock(
 private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: String?, modifier: Modifier = Modifier) {
     val normalizedCountry = normalizeCountryCode(countryCode)
     val flag = countryFlagEmoji(countryCode)
+    val countryName = normalizedCountry?.let { java.util.Locale("", it).getDisplayCountry() }.orEmpty()
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
@@ -518,15 +549,15 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
                 if (normalizedCountry == "IR") {
                     Image(
                         painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
-                        contentDescription = null,
+                        contentDescription = countryName,
                         modifier = Modifier.size(width = 32.dp, height = 18.dp).clip(RoundedCornerShape(3.dp)),
                     )
                 } else if (flag.isNotEmpty()) {
-                    Text(text = flag, style = MaterialTheme.typography.titleMedium)
+                    Text(text = flag, style = MaterialTheme.typography.titleMedium, modifier = Modifier.clearAndSetSemantics { contentDescription = countryName })
                 }
                 Text(
                     text = ipAddress,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.copy(textDirection = TextDirection.Ltr),
                     maxLines = 1,
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
@@ -549,11 +580,11 @@ private fun HomeDetailTile(label: String, value: String, pending: Boolean = fals
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
             Text(text = label, style = MaterialTheme.typography.labelMedium)
             // One line of a fixed height, so that the tile keeps its size when the figure replaces "Testing…".
-            Box(modifier = Modifier.height(32.dp), contentAlignment = Alignment.CenterStart) {
+            Box(modifier = Modifier.heightIn(min = 32.dp), contentAlignment = Alignment.CenterStart) {
                 Text(
                     text = value,
                     style = if (pending) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -598,7 +629,7 @@ private fun homeCardColors(status: HomeCardStatus): HomeCardColors {
         )
 
         HomeCardStatus.Empty, HomeCardStatus.Disconnected -> HomeCardColors(
-            scheme.surfaceContainerHigh, scheme.surfaceContainerHighest, scheme.onSurface, scheme.secondaryContainer, scheme.onSecondaryContainer
+            scheme.surfaceContainerHigh, scheme.surfaceContainerHighest, scheme.onSurface, scheme.primary, scheme.onPrimary
         )
     }
 }

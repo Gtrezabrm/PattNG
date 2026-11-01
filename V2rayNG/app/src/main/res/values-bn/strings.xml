@@ -801,6 +801,10 @@
     <string name="home_action_retry">আবার চেষ্টা করুন</string>
     <string name="home_action_reconnect">পুনরায় সংযোগ করুন</string>
     <string name="home_nav_home">হোম</string>
+    <string name="home_details_ip">এক্সিট আইপি</string>
+    <string name="home_details_test_ping">আবার পিং পরীক্ষা</string>
+    <string name="home_quick_servers">সার্ভার</string>
+    <string name="home_quick_subscriptions">সাবস্ক্রিপশন</string>
     <string name="home_details_ping">পিং</string>
     <string name="home_details_duration">সময়কাল</string>
     <string name="home_details_download">ডাউনলোড</string>

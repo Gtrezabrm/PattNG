@@ -805,6 +805,10 @@
     <string name="home_action_retry">Повторить</string>
     <string name="home_action_reconnect">Переподключить</string>
     <string name="home_nav_home">Главная</string>
+    <string name="home_details_ip">Выходной IP</string>
+    <string name="home_details_test_ping">Проверить пинг снова</string>
+    <string name="home_quick_servers">Серверы</string>
+    <string name="home_quick_subscriptions">Подписки</string>
     <string name="home_details_ping">Пинг</string>
     <string name="home_details_duration">Длительность</string>
     <string name="home_details_download">Загрузка</string>

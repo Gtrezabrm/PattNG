@@ -3,11 +3,11 @@ package com.v2ray.ang.ui.main
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.handler.MmkvManager
 
-/** What the home card knows of the running connection, kept in the settings so that it outlives the screen and its ViewModel. */
+/** What the home card knows of the running connection; kept in memory so that it outlives the screen and its ViewModel. */
 data class ConnectionFigures(val pingMillis: Long?, val ipAddress: String?, val countryCode: String?)
 
 /**
- * The start of the connection (wall clock) and its last figures. Without it, a ViewModel that is created again while the
+ * The start of the connection (wall clock, in the settings) and its last figures (in memory). Without it, a ViewModel that is created again while the
  * service keeps running would count the duration from zero and measure the ping and the address anew.
  */
 object ConnectionSession {
@@ -24,29 +24,20 @@ object ConnectionSession {
         nowNanos
     }.getOrDefault(nowNanos)
 
-    // The settings store is absent in plain JVM tests; a failed read or write then only means a fresh start.
-    fun saveFigures(figures: ConnectionFigures) {
-        runCatching { MmkvManager.encodeSettings(
-            AppConfig.PREF_HOME_CONNECTION_FIGURES,
-            listOf(figures.pingMillis?.toString().orEmpty(), figures.ipAddress.orEmpty(), figures.countryCode.orEmpty())
-                .joinToString("|"),
-        ) }
+    // The figures include the exit IP, so they stay in memory only: never in the settings, which a backup exports.
+    @Volatile
+    private var figures: ConnectionFigures? = null
+
+    fun saveFigures(value: ConnectionFigures) {
+        figures = value
     }
 
-    fun restoreFigures(): ConnectionFigures? = runCatching {
-        val parts = MmkvManager.decodeSettingsString(AppConfig.PREF_HOME_CONNECTION_FIGURES)?.split("|")
-        if (parts == null || parts.size != 3) return@runCatching null
-        ConnectionFigures(
-            pingMillis = parts[0].toLongOrNull(),
-            ipAddress = parts[1].ifBlank { null },
-            countryCode = parts[2].ifBlank { null },
-        )
-    }.getOrNull()
+    fun restoreFigures(): ConnectionFigures? = figures
 
     fun clear() {
+        figures = null
         runCatching {
             MmkvManager.encodeSettings(AppConfig.PREF_HOME_CONNECTED_SINCE, "")
-            MmkvManager.encodeSettings(AppConfig.PREF_HOME_CONNECTION_FIGURES, "")
         }
     }
 

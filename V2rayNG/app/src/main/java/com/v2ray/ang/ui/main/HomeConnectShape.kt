@@ -1,7 +1,12 @@
 package com.v2ray.ang.ui.main
 
 import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -52,22 +57,32 @@ internal fun cookieMorphRadius(angle: Double, progress: Float): Double {
         cookieRadius(cookieSpec(HomeConnectShape.Active), angle) * t
 }
 
-// Tables made once, so that a frame of the morph costs only a blend and no trigonometry.
-private val idleRadii = DoubleArray(COOKIE_SAMPLES) { cookieMorphRadius(2 * PI * it / COOKIE_SAMPLES, 0f) }
-private val activeRadii = DoubleArray(COOKIE_SAMPLES) { cookieMorphRadius(2 * PI * it / COOKIE_SAMPLES, 1f) }
-private val cosTable = DoubleArray(COOKIE_SAMPLES) { cos(2 * PI * it / COOKIE_SAMPLES) }
-private val sinTable = DoubleArray(COOKIE_SAMPLES) { sin(2 * PI * it / COOKIE_SAMPLES) }
+private const val MORPH_SAMPLES = 120
 
-fun homeConnectMorphShape(progress: Float): Shape = GenericShape { size, _ ->
-    val t = progress.coerceIn(0f, 1f).toDouble()
-    val radius = min(size.width, size.height) / 2f
-    val centerX = size.width / 2f
-    val centerY = size.height / 2f
-    for (i in 0 until COOKIE_SAMPLES) {
-        val r = (idleRadii[i] * (1 - t) + activeRadii[i] * t) * radius
-        val px = centerX + (r * cosTable[i]).toFloat()
-        val py = centerY + (r * sinTable[i]).toFloat()
-        if (i == 0) moveTo(px, py) else lineTo(px, py)
+// Tables made once, so that a frame of the morph costs only a blend and no trigonometry.
+private val idleRadii = DoubleArray(MORPH_SAMPLES) { cookieMorphRadius(2 * PI * it / MORPH_SAMPLES, 0f) }
+private val activeRadii = DoubleArray(MORPH_SAMPLES) { cookieMorphRadius(2 * PI * it / MORPH_SAMPLES, 1f) }
+private val cosTable = DoubleArray(MORPH_SAMPLES) { cos(2 * PI * it / MORPH_SAMPLES) }
+private val sinTable = DoubleArray(MORPH_SAMPLES) { sin(2 * PI * it / MORPH_SAMPLES) }
+
+/**
+ * The cookie between the idle ([progress] 0) and the running look (1). [progress] is read when the outline is made, that
+ * is while drawing, so animating it invalidates only the drawing and one shape object serves the whole animation.
+ */
+class MorphShape(private val progress: () -> Float) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val t = progress().coerceIn(0f, 1f).toDouble()
+        val radius = min(size.width, size.height) / 2f
+        val centerX = size.width / 2f
+        val centerY = size.height / 2f
+        val path = Path()
+        for (i in 0 until MORPH_SAMPLES) {
+            val r = (idleRadii[i] * (1 - t) + activeRadii[i] * t) * radius
+            val px = centerX + (r * cosTable[i]).toFloat()
+            val py = centerY + (r * sinTable[i]).toFloat()
+            if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+        }
+        path.close()
+        return Outline.Generic(path)
     }
-    close()
 }

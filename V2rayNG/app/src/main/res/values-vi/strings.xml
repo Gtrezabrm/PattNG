@@ -799,6 +799,10 @@
     <string name="home_action_retry">Thử lại</string>
     <string name="home_action_reconnect">Kết nối lại</string>
     <string name="home_nav_home">Trang chủ</string>
+    <string name="home_details_ip">IP đầu ra</string>
+    <string name="home_details_test_ping">Kiểm tra ping lại</string>
+    <string name="home_quick_servers">Máy chủ</string>
+    <string name="home_quick_subscriptions">Gói đăng ký</string>
     <string name="home_details_ping">Ping</string>
     <string name="home_details_duration">Thời lượng</string>
     <string name="home_details_download">Tải xuống</string>

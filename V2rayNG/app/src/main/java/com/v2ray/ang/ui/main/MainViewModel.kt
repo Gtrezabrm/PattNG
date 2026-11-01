@@ -94,9 +94,17 @@ class MainViewModel(
      * The remark of the selected profile, read off the main thread, and read again when the groups change, as an edit
      * of the profile does. Collected only while a screen shows it.
      */
-    val selectedServerName: StateFlow<String?> = _uiState
-        .map { it.selectedGuid to it.groups }
-        .distinctUntilChanged()
+    private val serverNameRefresh = MutableStateFlow(0)
+
+    /** Reads the remark again, for the screen to ask when it comes back from the editor of a profile. */
+    fun refreshSelectedServerName() {
+        serverNameRefresh.value += 1
+    }
+
+    val selectedServerName: StateFlow<String?> = kotlinx.coroutines.flow.combine(
+        _uiState.map { it.selectedGuid to it.groups }.distinctUntilChanged(),
+        serverNameRefresh,
+    ) { key, _ -> key }
         .map { (guid, _) ->
             if (guid.isNullOrEmpty()) null
             else withContext(ioDispatcher) { dataSource.decodeServerConfig(guid)?.remarks }
@@ -1157,7 +1165,7 @@ class MainViewModel(
                 connectedSinceNanos = if (running) state.connectedSinceNanos ?: since else null,
             )
         }
-        if (signal == RunningSignal.RUNNING || signal == RunningSignal.START_FAILED) {
+        if (signal == RunningSignal.RUNNING || signal == RunningSignal.START_FAILED || signal == RunningSignal.STOPPED) {
             userRequestedChange = false
             startTimeoutJob?.cancel()
             startTimeoutJob = null
@@ -1171,10 +1179,20 @@ class MainViewModel(
      */
     fun onUserServiceRequest(starting: Boolean) {
         userRequestedChange = true
-        if (starting) ConnectionSession.clear()
         startTimeoutJob?.cancel()
         startTimeoutJob = null
-        _uiState.update { it.copy(pendingStart = starting, connectionIssue = null) }
+        if (starting) ConnectionSession.clear()
+        _uiState.update {
+            // A restart shows nothing of the old route: the duration and the figures begin again with the new one.
+            if (starting) {
+                it.copy(
+                    pendingStart = true, connectionIssue = null, connectionPingMillis = null,
+                    connectionIpAddress = null, connectionCountryCode = null, connectedSinceNanos = null,
+                )
+            } else {
+                it.copy(pendingStart = false, connectionIssue = null)
+            }
+        }
         if (starting) {
             startTimeoutJob = viewModelScope.launch {
                 kotlinx.coroutines.delay(HomeConnection.START_TIMEOUT_MILLIS)

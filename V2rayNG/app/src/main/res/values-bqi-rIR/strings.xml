@@ -801,6 +801,10 @@
     <string name="home_action_retry">دوباره تلاش بکه</string>
     <string name="home_action_reconnect">دوباره منپیز بو</string>
     <string name="home_nav_home">خانه</string>
+    <string name="home_details_ip">آی‌پی خروجی</string>
+    <string name="home_details_test_ping">دوباره آزمایش پینگ</string>
+    <string name="home_quick_servers">سرورها</string>
+    <string name="home_quick_subscriptions">اشتراک‌ها</string>
     <string name="home_details_ping">پینگ</string>
     <string name="home_details_duration">مدت</string>
     <string name="home_details_download">دانلود</string>
