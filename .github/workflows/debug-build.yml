@@ -257,8 +257,8 @@ jobs:
         path: ${{ github.workspace }}/apks/*.apk
         if-no-files-found: error
 
-    # Debug builds are slow by design (no optimization, extra checks). This release-mode APK, signed with a key made
-    # for the run, shows how the app really feels; it needs the debug APK uninstalled first, as its key differs.
+    # Debug builds are slow by design (no optimization, extra checks). This release-mode APK, signed with the same fixed test key
+    # as the debug APK, shows how the app really feels; either installs over the other and over earlier builds.
     - name: Build release-mode APK for testing
       id: release-build
       if: success()
@@ -267,14 +267,12 @@ jobs:
         ABI_INPUT: ${{ inputs.abi_filters }}
       run: |
         cd ${{ github.workspace }}/V2rayNG
-        keytool -genkeypair -keystore "${{ github.workspace }}/test.jks" -storepass testpass -keypass testpass \
-          -alias test -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=PattNG test"
         ABI="$(echo "${ABI_INPUT:-arm64-v8a}" | cut -d';' -f1)"
         set -o pipefail
         ./gradlew :app:assemblePlaystoreRelease "-PABI_FILTERS=$ABI" \
-          -Pandroid.injected.signing.store.file="${{ github.workspace }}/test.jks" \
-          -Pandroid.injected.signing.store.password=testpass -Pandroid.injected.signing.key.alias=test \
-          -Pandroid.injected.signing.key.password=testpass 2>&1 | tee "${{ github.workspace }}/release.log"
+          -Pandroid.injected.signing.store.file="${{ github.workspace }}/V2rayNG/app/pattng-test.keystore" \
+          -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey \
+          -Pandroid.injected.signing.key.password=android 2>&1 | tee "${{ github.workspace }}/release.log"
         mkdir -p "${{ github.workspace }}/release-apks"
         for apk in app/build/outputs/apk/playstore/release/*.apk; do
           cp "$apk" "${{ github.workspace }}/release-apks/$(basename "$apk" .apk)-$ABI.apk"

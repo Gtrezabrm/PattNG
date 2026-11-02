@@ -38,6 +38,17 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // A fixed key for the test builds of this fork, so that each new APK installs over the last one and keeps the
+    // settings. It is public on purpose and protects nothing; never use it for a build that is published as a release.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("pattng-test.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
