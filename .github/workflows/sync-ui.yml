@@ -1,0 +1,56 @@
+name: Sync UI with patterniha
+
+# Keeps the UI branch on top of the newest PattNG: every 6 hours (and by hand) it merges patterniha/pattng's
+# my-releases into ui/home-connection-details and, when that brought something new, starts a Debug Build of it.
+# A merge conflict stops it with a red run; nothing is pushed then, and the branch stays as it was.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: sync-ui
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      UI_BRANCH: ui/home-connection-details
+      GH_TOKEN: ${{ github.token }}
+    steps:
+    - name: Checkout the UI branch
+      uses: actions/checkout@v7
+      with:
+        ref: ${{ env.UI_BRANCH }}
+        fetch-depth: 0
+
+    - name: Merge the newest PattNG
+      id: merge
+      run: |
+        git config user.name "PattNG UI sync"
+        git config user.email "noreply@github.com"
+        git fetch --no-tags https://github.com/patterniha/pattng my-releases
+        if git merge-base --is-ancestor FETCH_HEAD HEAD; then
+          echo "Already up to date."
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if ! git merge --no-edit FETCH_HEAD; then
+          echo "::error title=Merge conflict::patterniha's newest commits conflict with the UI changes; ask Claude to resolve them."
+          git merge --abort
+          exit 1
+        fi
+        git push origin "HEAD:${UI_BRANCH}"
+        echo "changed=true" >> "$GITHUB_OUTPUT"
+
+    - name: Build the merged result
+      if: steps.merge.outputs.changed == 'true'
+      run: |
+        # A push made with the workflow token starts no workflow, so the build is asked for by hand.
+        gh workflow run debug-build.yml --ref "${UI_BRANCH}" -f abi_filters="arm64-v8a"
