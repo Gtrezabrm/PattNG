@@ -416,7 +416,8 @@ class MainViewModel(
             is MainAction.EditServer,
             is MainAction.ShareClipboard,
             is MainAction.ShareFullContent,
-            is MainAction.OpenSubscriptionLink -> {
+            is MainAction.OpenSubscriptionLink,
+            is MainAction.CopyDonationAddress -> {
                 // Handled by Activity via its onAction lambda
             }
         }
