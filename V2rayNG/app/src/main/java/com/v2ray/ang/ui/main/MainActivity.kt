@@ -134,6 +134,7 @@ class MainActivity : HelperBaseComponentActivity() {
                     is MainAction.ShareClipboard -> shareToClipboard(action.guid)
                     is MainAction.ShareFullContent -> shareFullContentAsync(action.guid)
                     is MainAction.OpenSubscriptionLink -> openSubscriptionLink(action.url)
+                    is MainAction.CopyDonationAddress -> copyDonationAddress(action.address)
                     else -> mainViewModel.onAction(action)
                 }
             },
@@ -160,6 +161,12 @@ class MainActivity : HelperBaseComponentActivity() {
         Utils.openUri(this, safeUrl)
     }
 
+    /** PattNG: puts a donation address on the clipboard just as the Donate dialog shows it. */
+    private fun copyDonationAddress(address: String) {
+        Utils.setClipboard(this, address)
+        toastSuccess(R.string.toast_success)
+    }
+
     private fun navigateTo(destination: MainDestination) {
         val intent = when (destination) {
             MainDestination.Subscriptions -> Intent(this, SubSettingActivity::class.java)
@@ -171,11 +178,8 @@ class MainActivity : HelperBaseComponentActivity() {
             MainDestination.CheckUpdate -> Intent(this, CheckUpdateActivity::class.java)
             MainDestination.BackupRestore -> Intent(this, BackupActivity::class.java)
             MainDestination.About -> Intent(this, AboutActivity::class.java)
-            MainDestination.Promotion -> {
-                Utils.openUri(
-                    this,
-                    "${Utils.decode(AppConfig.APP_PROMOTION_URL)}?t=${System.currentTimeMillis()}"
-                )
+            MainDestination.TelegramChannel -> {
+                Utils.openUri(this, AppConfig.TG_CHANNEL_URL)
                 return
             }
         }
