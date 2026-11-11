@@ -85,7 +85,12 @@ class NetworkMonitor(
         }
 
         override fun onLost(network: Network) {
-            onUnderlyingNetworksChanged(null)
+            // PattNG: during a make-before-break switch onLost(old) arrives after onAvailable(new); only the
+            // tracked network may clear the underlying networks, or the VPN looks like it has no network.
+            val wasCurrent = synchronized(lock) {
+                if (upstream == network) { upstream = null; true } else false
+            }
+            if (wasCurrent) onUnderlyingNetworksChanged(null)
         }
     }
 
