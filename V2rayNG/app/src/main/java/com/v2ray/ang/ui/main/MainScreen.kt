@@ -8,8 +8,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
@@ -24,6 +27,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,8 +36,11 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -124,6 +131,8 @@ fun MainScreen(
     }
 
     val latestGroups by rememberUpdatedState(groups)
+    // Height of the floating connection bar, so the server lists can scroll clear of it.
+    var bottomBarHeightPx by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
@@ -151,7 +160,8 @@ fun MainScreen(
         onConfirmRemove = { guid -> showRemoveConfirm = null; onAction(MainAction.RemoveServer(guid)) },
         showDonate = showDonate,
         onDismissDonate = { showDonate = false },
-        onCopyDonationAddress = { address -> onAction(MainAction.CopyDonationAddress(address)) }
+        onCopyDonationAddress = { address -> onAction(MainAction.CopyDonationAddress(address)) },
+        onOpenAuthorTelegram = { onAction(MainAction.OpenAuthorTelegram) }
     )
 
     if (shareTarget != null) {
@@ -244,23 +254,22 @@ fun MainScreen(
                     }
                 )
             },
-            bottomBar = {
-                MainBottomBar(
-                    displayText = displayText,
-                    isRunning = isRunning,
-                    isDarkTheme = isDarkTheme,
-                    onAction = onAction
-                )
-            },
             floatingActionButton = {},
         ) { innerPadding ->
             val layoutDirection = LocalLayoutDirection.current
+            val bottomBarHeight = with(LocalDensity.current) { bottomBarHeightPx.toDp() }
 
+            Box(Modifier.fillMaxSize()) {
             if (groups.isNotEmpty()) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
+                        // No bottom padding: the lists run behind the floating connection bar.
+                        .padding(
+                            start = innerPadding.calculateStartPadding(layoutDirection),
+                            top = innerPadding.calculateTopPadding(),
+                            end = innerPadding.calculateEndPadding(layoutDirection)
+                        )
                 ) {
                     if (groups.size > 1) {
                         GroupTabBar(
@@ -312,11 +321,21 @@ fun MainScreen(
                                 start = 0.dp,
                                 top = 0.dp,
                                 end = 0.dp,
-                                bottom = 80.dp
+                                bottom = bottomBarHeight + 8.dp
                             )
                         )
                     }
                 }
+            }
+            MainBottomBar(
+                displayText = displayText,
+                isRunning = isRunning,
+                isDarkTheme = isDarkTheme,
+                onAction = onAction,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { bottomBarHeightPx = it.height }
+            )
             }
         }
         }
