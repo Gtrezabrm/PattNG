@@ -531,7 +531,9 @@ private fun HomeCardDetailsBlock(
 private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: String?, modifier: Modifier = Modifier) {
     val normalizedCountry = normalizeCountryCode(countryCode)
     val flag = countryFlagEmoji(countryCode)
-    val countryName = normalizedCountry?.let { java.util.Locale("", it).getDisplayCountry() }.orEmpty()
+    val countryName = remember(normalizedCountry) {
+        normalizedCountry?.let { runCatching { java.util.Locale.Builder().setRegion(it).build().displayCountry }.getOrNull() }.orEmpty()
+    }
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),

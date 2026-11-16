@@ -14,7 +14,12 @@ val LocalReduceMotion = staticCompositionLocalOf { false }
 object MotionPolicy {
     private const val WEAK_PHONE_RAM_BYTES = 4_500_000_000L
 
-    fun defaultReduced(context: Context): Boolean {
+    @Volatile private var cachedDefault: Boolean? = null
+
+    /** Computed once per process; it reads system services and runs at every start of the UI. */
+    fun defaultReduced(context: Context): Boolean = cachedDefault ?: computeDefaultReduced(context).also { cachedDefault = it }
+
+    private fun computeDefaultReduced(context: Context): Boolean {
         val lowRam = context.getSystemService(ActivityManager::class.java)?.isLowRamDevice == true
         val scale = Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f)
         // A phone with little memory is usually a slow one too, so it starts with fewer animations; the user can turn them on.
