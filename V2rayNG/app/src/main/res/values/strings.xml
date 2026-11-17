@@ -797,4 +797,26 @@
     <string name="sub_info_traffic" translatable="false">%1$s / %2$s</string>
     <string name="sub_info_unlimited">Unlimited</string>
 
+    <string name="title_mtu_finder">MTU finder</string>
+    <string name="mtu_finder_intro">Measures which UDP packet sizes get through the Aether tunnel and suggests a VPN MTU. Select an Aether profile first.</string>
+    <string name="mtu_current">Current VPN MTU: %1$d</string>
+    <string name="mtu_start">Start test</string>
+    <string name="mtu_cancel">Cancel</string>
+    <string name="mtu_progress">Testing %1$d%%</string>
+    <string name="mtu_recommended">Recommended MTU: %1$d</string>
+    <string name="mtu_confidence_high">Confidence: high</string>
+    <string name="mtu_confidence_medium">Confidence: medium</string>
+    <string name="mtu_confidence_low">Confidence: low, check the result by hand</string>
+    <string name="mtu_below_min_warning">Below 1280 IPv6 may stop working.</string>
+    <string name="mtu_all_passed">No limit found up to %1$d bytes. The UDP path carries full-size packets, so the problem is probably somewhere else.</string>
+    <string name="mtu_copy">Copy</string>
+    <string name="mtu_apply">Apply</string>
+    <string name="mtu_applied">Saved. Restart the VPN to use it.</string>
+    <string name="mtu_chart_caption">Packet loss per UDP payload size in bytes</string>
+    <string name="mtu_note_inner">This measures the path through the Aether tunnel, not your carrier link.</string>
+    <string name="mtu_err_not_aether">Select an Aether profile first.</string>
+    <string name="mtu_err_tunnel">The Aether tunnel did not come up.</string>
+    <string name="mtu_err_busy">Another Aether session is running or still connecting.</string>
+    <string name="mtu_err_no_baseline">Even small UDP packets got no answer. The core may not support UDP over SOCKS, or the connection is down.</string>
+    <string name="mtu_err_udp">This Aether core does not support UDP on its SOCKS port, so the MTU cannot be measured.</string>
 </resources>

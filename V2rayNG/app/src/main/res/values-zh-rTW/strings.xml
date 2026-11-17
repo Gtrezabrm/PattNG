@@ -787,4 +787,26 @@
     <string name="sub_info_open_page">開啟訂閱資訊頁面</string>
     <string name="sub_info_unlimited">無限制</string>
 
+    <string name="title_mtu_finder">MTU 偵測</string>
+    <string name="mtu_finder_intro">測量哪些大小的 UDP 封包能通過 Aether 通道，並建議 VPN 的 MTU。請先選擇 Aether 設定檔。</string>
+    <string name="mtu_current">目前 VPN MTU：%1$d</string>
+    <string name="mtu_start">開始測試</string>
+    <string name="mtu_cancel">取消</string>
+    <string name="mtu_progress">測試中 %1$d%%</string>
+    <string name="mtu_recommended">建議 MTU：%1$d</string>
+    <string name="mtu_confidence_high">可信度：高</string>
+    <string name="mtu_confidence_medium">可信度：中</string>
+    <string name="mtu_confidence_low">可信度：低，請手動核對結果</string>
+    <string name="mtu_below_min_warning">低於 1280，IPv6 可能無法使用。</string>
+    <string name="mtu_all_passed">在 %1$d 位元組內未發現限制。UDP 路徑可通過完整大小的封包，問題可能在別處。</string>
+    <string name="mtu_copy">複製</string>
+    <string name="mtu_apply">套用</string>
+    <string name="mtu_applied">已儲存。重新啟動 VPN 後生效。</string>
+    <string name="mtu_chart_caption">各 UDP 負載大小（位元組）的封包遺失率</string>
+    <string name="mtu_note_inner">此測試測量的是經過 Aether 通道的路徑，而不是電信業者的連線。</string>
+    <string name="mtu_err_not_aether">請先選擇 Aether 設定檔。</string>
+    <string name="mtu_err_tunnel">Aether 通道未能啟動。</string>
+    <string name="mtu_err_busy">另一個 Aether 工作階段正在執行或仍在連線。</string>
+    <string name="mtu_err_no_baseline">連小的 UDP 封包也沒有回應。核心可能不支援經 SOCKS 的 UDP，或網路已中斷。</string>
+    <string name="mtu_err_udp">此 Aether 核心的 SOCKS 連接埠不支援 UDP，因此無法測量 MTU。</string>
 </resources>

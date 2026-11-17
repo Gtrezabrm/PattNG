@@ -789,4 +789,26 @@
     <string name="sub_info_open_page">واز کردن صفحه اطلاعات اشتراک</string>
     <string name="sub_info_unlimited">بی‌حد</string>
 
+    <string name="title_mtu_finder">تشخیص MTU</string>
+    <string name="mtu_finder_intro">اندازه‌ی بسته‌های UDP که از تونل Aether عبور می‌کنند را می‌سنجد و یک MTU برای VPN پیشنهاد می‌دهد. ابتدا یک پروفایل Aether انتخاب کنید.</string>
+    <string name="mtu_current">MTU فعلی VPN: %1$d</string>
+    <string name="mtu_start">شروع تست</string>
+    <string name="mtu_cancel">لغو</string>
+    <string name="mtu_progress">در حال تست %1$d%%</string>
+    <string name="mtu_recommended">MTU پیشنهادی: %1$d</string>
+    <string name="mtu_confidence_high">اطمینان: زیاد</string>
+    <string name="mtu_confidence_medium">اطمینان: متوسط</string>
+    <string name="mtu_confidence_low">اطمینان: کم، نتیجه را دستی بررسی کنید</string>
+    <string name="mtu_below_min_warning">کمتر از 1280؛ ممکن است IPv6 از کار بیفتد.</string>
+    <string name="mtu_all_passed">تا %1$d بایت محدودیتی پیدا نشد. مسیر UDP بسته‌های کامل را عبور می‌دهد، پس مشکل احتمالاً جای دیگری است.</string>
+    <string name="mtu_copy">کپی</string>
+    <string name="mtu_apply">اعمال</string>
+    <string name="mtu_applied">ذخیره شد. برای اعمال، VPN را دوباره راه‌اندازی کنید.</string>
+    <string name="mtu_chart_caption">درصد گم‌شدن بسته به‌ازای اندازه‌ی بار UDP (بایت)</string>
+    <string name="mtu_note_inner">این تست مسیر تونل Aether را می‌سنجد، نه لینک اپراتور شما را.</string>
+    <string name="mtu_err_not_aether">ابتدا یک پروفایل Aether انتخاب کنید.</string>
+    <string name="mtu_err_tunnel">تونل Aether بالا نیامد.</string>
+    <string name="mtu_err_busy">یک نشست Aether دیگر در حال اجراست یا هنوز در حال اتصال است.</string>
+    <string name="mtu_err_no_baseline">حتی بسته‌های کوچک UDP هم پاسخ نگرفتند. شاید هسته UDP روی SOCKS را پشتیبانی نکند یا اتصال قطع باشد.</string>
+    <string name="mtu_err_udp">این هسته Aether روی پورت SOCKS خود UDP را پشتیبانی نمی‌کند، پس MTU قابل اندازه‌گیری نیست.</string>
 </resources>

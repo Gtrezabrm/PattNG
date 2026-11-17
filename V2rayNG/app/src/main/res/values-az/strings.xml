@@ -789,4 +789,26 @@
     <string name="sub_info_open_page">Abunəlik məlumat səhifəsini aç</string>
     <string name="sub_info_unlimited">Limitsiz</string>
 
+    <string name="title_mtu_finder">MTU təyini</string>
+    <string name="mtu_finder_intro">Aether tunelindən keçən UDP paket ölçülərini yoxlayır və VPN üçün MTU təklif edir. Əvvəlcə Aether profilini seçin.</string>
+    <string name="mtu_current">Cari VPN MTU: %1$d</string>
+    <string name="mtu_start">Testə başla</string>
+    <string name="mtu_cancel">Ləğv et</string>
+    <string name="mtu_progress">Test gedir %1$d%%</string>
+    <string name="mtu_recommended">Tövsiyə olunan MTU: %1$d</string>
+    <string name="mtu_confidence_high">Etibarlılıq: yüksək</string>
+    <string name="mtu_confidence_medium">Etibarlılıq: orta</string>
+    <string name="mtu_confidence_low">Etibarlılıq: aşağı, nəticəni əl ilə yoxlayın</string>
+    <string name="mtu_below_min_warning">1280-dən aşağı: IPv6 işləməyə bilər.</string>
+    <string name="mtu_all_passed">%1$d bayta qədər məhdudiyyət tapılmadı. UDP yolu tam ölçülü paketləri keçirir, problem çox güman ki, başqa yerdədir.</string>
+    <string name="mtu_copy">Kopyala</string>
+    <string name="mtu_apply">Tətbiq et</string>
+    <string name="mtu_applied">Yadda saxlanıldı. İstifadə üçün VPN-i yenidən başladın.</string>
+    <string name="mtu_chart_caption">UDP yükünün ölçüsünə görə paket itkisi (bayt)</string>
+    <string name="mtu_note_inner">Bu test Aether tunelindən keçən yolu ölçür, operator xəttini yox.</string>
+    <string name="mtu_err_not_aether">Əvvəlcə Aether profilini seçin.</string>
+    <string name="mtu_err_tunnel">Aether tuneli qalxmadı.</string>
+    <string name="mtu_err_busy">Başqa Aether sessiyası işləyir və ya hələ qoşulur.</string>
+    <string name="mtu_err_no_baseline">Kiçik UDP paketlərinə belə cavab gəlmədi. Nüvə SOCKS üzərindən UDP-ni dəstəkləməyə bilər və ya bağlantı kəsilib.</string>
+    <string name="mtu_err_udp">Bu Aether nüvəsi SOCKS portunda UDP-ni dəstəkləmir, ona görə MTU ölçülə bilməz.</string>
 </resources>

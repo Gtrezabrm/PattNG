@@ -793,4 +793,26 @@
     <string name="sub_info_open_page">Открыть страницу подписки</string>
     <string name="sub_info_unlimited">Без ограничений</string>
 
+    <string name="title_mtu_finder">Подбор MTU</string>
+    <string name="mtu_finder_intro">Измеряет, какие размеры UDP-пакетов проходят через туннель Aether, и предлагает MTU для VPN. Сначала выберите профиль Aether.</string>
+    <string name="mtu_current">Текущий MTU VPN: %1$d</string>
+    <string name="mtu_start">Начать тест</string>
+    <string name="mtu_cancel">Отмена</string>
+    <string name="mtu_progress">Тестирование %1$d%%</string>
+    <string name="mtu_recommended">Рекомендуемый MTU: %1$d</string>
+    <string name="mtu_confidence_high">Уверенность: высокая</string>
+    <string name="mtu_confidence_medium">Уверенность: средняя</string>
+    <string name="mtu_confidence_low">Уверенность: низкая, проверьте результат вручную</string>
+    <string name="mtu_below_min_warning">Ниже 1280: IPv6 может перестать работать.</string>
+    <string name="mtu_all_passed">Ограничений до %1$d байт не найдено. Путь UDP пропускает полные пакеты, проблема, вероятно, в другом.</string>
+    <string name="mtu_copy">Копировать</string>
+    <string name="mtu_apply">Применить</string>
+    <string name="mtu_applied">Сохранено. Перезапустите VPN, чтобы использовать значение.</string>
+    <string name="mtu_chart_caption">Потери пакетов по размеру UDP-данных, байт</string>
+    <string name="mtu_note_inner">Тест измеряет путь через туннель Aether, а не канал вашего оператора.</string>
+    <string name="mtu_err_not_aether">Сначала выберите профиль Aether.</string>
+    <string name="mtu_err_tunnel">Туннель Aether не запустился.</string>
+    <string name="mtu_err_busy">Другая сессия Aether работает или ещё подключается.</string>
+    <string name="mtu_err_no_baseline">Даже маленькие UDP-пакеты остались без ответа. Ядро может не поддерживать UDP через SOCKS, или нет соединения.</string>
+    <string name="mtu_err_udp">Это ядро Aether не поддерживает UDP на своём SOCKS-порту, поэтому измерить MTU нельзя.</string>
 </resources>

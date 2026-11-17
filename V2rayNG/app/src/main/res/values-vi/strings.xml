@@ -787,4 +787,26 @@
     <string name="sub_info_open_page">Mở trang thông tin đăng ký</string>
     <string name="sub_info_unlimited">Không giới hạn</string>
 
+    <string name="title_mtu_finder">Dò MTU</string>
+    <string name="mtu_finder_intro">Đo kích thước gói UDP đi qua đường hầm Aether và đề xuất MTU cho VPN. Hãy chọn một hồ sơ Aether trước.</string>
+    <string name="mtu_current">MTU VPN hiện tại: %1$d</string>
+    <string name="mtu_start">Bắt đầu kiểm tra</string>
+    <string name="mtu_cancel">Hủy</string>
+    <string name="mtu_progress">Đang kiểm tra %1$d%%</string>
+    <string name="mtu_recommended">MTU đề xuất: %1$d</string>
+    <string name="mtu_confidence_high">Độ tin cậy: cao</string>
+    <string name="mtu_confidence_medium">Độ tin cậy: trung bình</string>
+    <string name="mtu_confidence_low">Độ tin cậy: thấp, hãy kiểm tra kết quả thủ công</string>
+    <string name="mtu_below_min_warning">Dưới 1280, IPv6 có thể ngừng hoạt động.</string>
+    <string name="mtu_all_passed">Không tìm thấy giới hạn đến %1$d byte. Đường UDP cho gói đầy đủ đi qua, nên vấn đề có thể ở nơi khác.</string>
+    <string name="mtu_copy">Sao chép</string>
+    <string name="mtu_apply">Áp dụng</string>
+    <string name="mtu_applied">Đã lưu. Khởi động lại VPN để dùng.</string>
+    <string name="mtu_chart_caption">Tỷ lệ mất gói theo kích thước dữ liệu UDP (byte)</string>
+    <string name="mtu_note_inner">Phép đo này đo đường đi qua đường hầm Aether, không phải liên kết của nhà mạng.</string>
+    <string name="mtu_err_not_aether">Hãy chọn một hồ sơ Aether trước.</string>
+    <string name="mtu_err_tunnel">Đường hầm Aether không khởi động được.</string>
+    <string name="mtu_err_busy">Một phiên Aether khác đang chạy hoặc vẫn đang kết nối.</string>
+    <string name="mtu_err_no_baseline">Ngay cả gói UDP nhỏ cũng không có phản hồi. Lõi có thể không hỗ trợ UDP qua SOCKS hoặc kết nối bị ngắt.</string>
+    <string name="mtu_err_udp">Lõi Aether này không hỗ trợ UDP trên cổng SOCKS, nên không thể đo MTU.</string>
 </resources>

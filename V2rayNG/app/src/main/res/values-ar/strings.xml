@@ -797,4 +797,26 @@
     <string name="sub_info_open_page">فتح صفحة معلومات الاشتراك</string>
     <string name="sub_info_unlimited">غير محدود</string>
 
+    <string name="title_mtu_finder">كاشف MTU</string>
+    <string name="mtu_finder_intro">يقيس أحجام حزم UDP التي تمر عبر نفق Aether ويقترح قيمة MTU للـ VPN. اختر ملف Aether أولاً.</string>
+    <string name="mtu_current">MTU الحالي للـ VPN: %1$d</string>
+    <string name="mtu_start">بدء الاختبار</string>
+    <string name="mtu_cancel">إلغاء</string>
+    <string name="mtu_progress">جارٍ الاختبار %1$d%%</string>
+    <string name="mtu_recommended">MTU المقترح: %1$d</string>
+    <string name="mtu_confidence_high">الثقة: عالية</string>
+    <string name="mtu_confidence_medium">الثقة: متوسطة</string>
+    <string name="mtu_confidence_low">الثقة: منخفضة، تحقق من النتيجة يدوياً</string>
+    <string name="mtu_below_min_warning">أقل من 1280؛ قد يتوقف IPv6 عن العمل.</string>
+    <string name="mtu_all_passed">لم يُعثر على حد حتى %1$d بايت. مسار UDP يمرّر الحزم الكاملة، فالمشكلة غالباً في مكان آخر.</string>
+    <string name="mtu_copy">نسخ</string>
+    <string name="mtu_apply">تطبيق</string>
+    <string name="mtu_applied">تم الحفظ. أعد تشغيل الـ VPN لاستخدامه.</string>
+    <string name="mtu_chart_caption">فقد الحزم لكل حجم حمولة UDP بالبايت</string>
+    <string name="mtu_note_inner">يقيس هذا الاختبار المسار عبر نفق Aether وليس رابط مزوّد الخدمة.</string>
+    <string name="mtu_err_not_aether">اختر ملف Aether أولاً.</string>
+    <string name="mtu_err_tunnel">لم يبدأ نفق Aether.</string>
+    <string name="mtu_err_busy">جلسة Aether أخرى قيد التشغيل أو ما زالت تتصل.</string>
+    <string name="mtu_err_no_baseline">لم تصل أي إجابة حتى للحزم الصغيرة. قد لا تدعم النواة UDP عبر SOCKS أو أن الاتصال مقطوع.</string>
+    <string name="mtu_err_udp">لا تدعم نواة Aether هذه UDP عبر منفذ SOCKS، لذا لا يمكن قياس MTU.</string>
 </resources>
