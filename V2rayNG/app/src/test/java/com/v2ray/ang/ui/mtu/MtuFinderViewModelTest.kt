@@ -136,15 +136,24 @@ class MtuFinderViewModelTest {
 
     @Test
     fun `a failing run ends as TunnelDown instead of crashing`() {
+        val logged = mutableListOf<Pair<String, Throwable>>()
         val model = MtuFinderViewModel(
             mock<Application>(),
-            MtuFinderEnvironment(run = { error("boom") }, currentMtu = { 1500 }, applyMtu = {}, copy = {}),
+            MtuFinderEnvironment(
+                run = { error("boom") },
+                currentMtu = { 1500 },
+                applyMtu = {},
+                copy = {},
+                logFailure = { message, e -> logged += message to e },
+            ),
         )
 
         model.onAction(MtuFinderAction.Start)
 
         assertEquals(MtuPhase.DONE, model.state.value.phase)
         assertEquals(MtuOutcome.TunnelDown, model.state.value.outcome)
+        assertEquals(1, logged.size)
+        assertEquals("boom", logged.single().second.message)
     }
 
     @Test

@@ -24,6 +24,8 @@ class MtuFinderEnvironment(
     val currentMtu: () -> Int,
     val applyMtu: (Int) -> Unit,
     val copy: (String) -> Unit,
+    // LogUtil reads MMKV, which a JVM test does not have; a test passes a log of its own.
+    val logFailure: (String, Throwable) -> Unit = { message, e -> LogUtil.e(AppConfig.TAG, message, e) },
 ) {
     companion object {
         fun default(app: Application) = MtuFinderEnvironment(
@@ -69,7 +71,7 @@ class MtuFinderViewModel(
                 _state.update { it.copy(phase = MtuPhase.IDLE, progress = 0) }
                 throw e
             } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "MtuFinder: the measurement failed", e)
+                environment.logFailure("MtuFinder: the measurement failed", e)
                 MtuOutcome.TunnelDown
             }
             _state.update { it.copy(phase = MtuPhase.DONE, progress = 100, outcome = outcome) }
