@@ -809,4 +809,5 @@
     <string name="mtu_err_busy">另一個 Aether 工作階段正在執行或仍在連線。</string>
     <string name="mtu_err_no_baseline">連小的 UDP 封包也沒有回應。核心可能不支援經 SOCKS 的 UDP，或網路已中斷。</string>
     <string name="mtu_err_udp">此 Aether 核心的 SOCKS 連接埠不支援 UDP，因此無法測量 MTU。</string>
+    <string name="mtu_err_below_sweep">只有非常小的 UDP 封包（小於 576 位元組）能通過，因此無法建議 MTU。請檢查網路連線。</string>
 </resources>

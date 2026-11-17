@@ -811,4 +811,5 @@
     <string name="mtu_err_busy">یک نشست Aether دیگر در حال اجراست یا هنوز در حال اتصال است.</string>
     <string name="mtu_err_no_baseline">حتی بسته‌های کوچک UDP هم پاسخ نگرفتند. شاید هسته UDP روی SOCKS را پشتیبانی نکند یا اتصال قطع باشد.</string>
     <string name="mtu_err_udp">این هسته Aether روی پورت SOCKS خود UDP را پشتیبانی نمی‌کند، پس MTU قابل اندازه‌گیری نیست.</string>
+    <string name="mtu_err_below_sweep">فقط بسته‌های UDP خیلی کوچک (کمتر از 576 بایت) عبور می‌کنند، پس MTU پیشنهاد نمی‌شود. اتصال را بررسی کنید.</string>
 </resources>

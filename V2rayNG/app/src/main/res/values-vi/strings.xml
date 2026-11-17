@@ -809,4 +809,5 @@
     <string name="mtu_err_busy">Một phiên Aether khác đang chạy hoặc vẫn đang kết nối.</string>
     <string name="mtu_err_no_baseline">Ngay cả gói UDP nhỏ cũng không có phản hồi. Lõi có thể không hỗ trợ UDP qua SOCKS hoặc kết nối bị ngắt.</string>
     <string name="mtu_err_udp">Lõi Aether này không hỗ trợ UDP trên cổng SOCKS, nên không thể đo MTU.</string>
+    <string name="mtu_err_below_sweep">Chỉ các gói UDP rất nhỏ (dưới 576 byte) đi qua được, nên không thể đề xuất MTU. Hãy kiểm tra kết nối.</string>
 </resources>

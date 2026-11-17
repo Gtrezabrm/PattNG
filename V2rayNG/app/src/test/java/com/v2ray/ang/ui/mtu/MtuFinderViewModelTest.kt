@@ -120,7 +120,7 @@ class MtuFinderViewModelTest {
 
     @Test
     fun `no failure outcome can be applied or copied`() {
-        for (outcome in listOf(MtuOutcome.NoBaseline, MtuOutcome.UdpUnsupported, MtuOutcome.TunnelDown, MtuOutcome.Busy, MtuOutcome.NotAether)) {
+        for (outcome in listOf(MtuOutcome.NoBaseline, MtuOutcome.BelowSweep, MtuOutcome.UdpUnsupported, MtuOutcome.TunnelDown, MtuOutcome.Busy, MtuOutcome.NotAether)) {
             val fake = Fake(outcome)
             val model = viewModel(fake)
 
@@ -132,6 +132,19 @@ class MtuFinderViewModelTest {
             assertTrue(fake.applied.isEmpty())
             assertTrue(fake.copied.isEmpty())
         }
+    }
+
+    @Test
+    fun `a failing run ends as TunnelDown instead of crashing`() {
+        val model = MtuFinderViewModel(
+            mock<Application>(),
+            MtuFinderEnvironment(run = { error("boom") }, currentMtu = { 1500 }, applyMtu = {}, copy = {}),
+        )
+
+        model.onAction(MtuFinderAction.Start)
+
+        assertEquals(MtuPhase.DONE, model.state.value.phase)
+        assertEquals(MtuOutcome.TunnelDown, model.state.value.outcome)
     }
 
     @Test

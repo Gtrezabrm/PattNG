@@ -819,4 +819,5 @@
     <string name="mtu_err_busy">جلسة Aether أخرى قيد التشغيل أو ما زالت تتصل.</string>
     <string name="mtu_err_no_baseline">لم تصل أي إجابة حتى للحزم الصغيرة. قد لا تدعم النواة UDP عبر SOCKS أو أن الاتصال مقطوع.</string>
     <string name="mtu_err_udp">لا تدعم نواة Aether هذه UDP عبر منفذ SOCKS، لذا لا يمكن قياس MTU.</string>
+    <string name="mtu_err_below_sweep">لا تمر إلا حزم UDP صغيرة جداً (أقل من 576 بايت)، لذا لا يمكن اقتراح MTU. تحقق من الاتصال.</string>
 </resources>

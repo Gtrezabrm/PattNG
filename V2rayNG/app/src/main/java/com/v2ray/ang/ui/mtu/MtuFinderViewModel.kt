@@ -8,6 +8,7 @@ import com.v2ray.ang.core.MtuOutcome
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.ui.base.BaseViewModel
+import com.v2ray.ang.util.LogUtil
 import com.v2ray.ang.util.Utils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -67,6 +68,9 @@ class MtuFinderViewModel(
             } catch (e: CancellationException) {
                 _state.update { it.copy(phase = MtuPhase.IDLE, progress = 0) }
                 throw e
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "MtuFinder: the measurement failed", e)
+                MtuOutcome.TunnelDown
             }
             _state.update { it.copy(phase = MtuPhase.DONE, progress = 100, outcome = outcome) }
         }

@@ -809,4 +809,5 @@
     <string name="mtu_err_busy">另一个 Aether 会话正在运行或仍在连接。</string>
     <string name="mtu_err_no_baseline">连小的 UDP 数据包也没有回应。内核可能不支持经 SOCKS 的 UDP，或网络已断开。</string>
     <string name="mtu_err_udp">此 Aether 内核的 SOCKS 端口不支持 UDP，因此无法测量 MTU。</string>
+    <string name="mtu_err_below_sweep">只有非常小的 UDP 数据包（小于 576 字节）能通过，因此无法推荐 MTU。请检查网络连接。</string>
 </resources>

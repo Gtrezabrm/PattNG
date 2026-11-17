@@ -55,41 +55,50 @@ object AetherMtuProbe {
             LogUtil.w(AppConfig.TAG, "MtuProbe: the SOCKS port could not be reached, port=$port", e)
             return MtuOutcome.TunnelDown
         }
-        socks.use { session ->
-            var nextId = 0
-            fun answered(step: MtuProbeStep): Boolean = probe(session, step, nextId++ and 0xFFFF)
+        try {
+            socks.use { session ->
+                var nextId = 0
+                fun answered(step: MtuProbeStep): Boolean = probe(session, step, nextId++ and 0xFFFF)
 
-            // A path that answers nothing small would make the whole sweep wait out its timeouts for no result.
-            val alive = (0 until PRECHECK_TRIES).any {
-                RESOLVERS.indices.any { resolver -> answered(MtuProbeStep(MtuScoring.BASELINE_SIZE, resolver)) }
-            }
-            if (!alive) return MtuOutcome.NoBaseline
+                // A path that answers nothing small would make the whole sweep wait out its timeouts for no result.
+                var alive = false
+                precheck@ for (attempt in 0 until PRECHECK_TRIES) {
+                    for (resolver in RESOLVERS.indices) {
+                        currentCoroutineContext().ensureActive()
+                        if (answered(MtuProbeStep(MtuScoring.BASELINE_SIZE, resolver))) {
+                            alive = true
+                            break@precheck
+                        }
+                    }
+                }
+                if (!alive) return MtuOutcome.NoBaseline
 
-            val steps = MtuScoring.schedule(MtuScoring.defaultSizes(), MtuScoring.ROUNDS, RESOLVERS.size, Random(System.nanoTime()))
-            val samples = ArrayList<MtuSample>(steps.size)
-            steps.forEachIndexed { index, step ->
-                currentCoroutineContext().ensureActive()
-                samples += MtuSample(step.size, step.resolver, answered(step))
-                onProgress((index + 1) * 100 / steps.size)
-                delay(PACING_MS)
+                val steps = MtuScoring.schedule(MtuScoring.defaultSizes(), MtuScoring.ROUNDS, RESOLVERS.size, Random(System.nanoTime()))
+                val samples = ArrayList<MtuSample>(steps.size)
+                steps.forEachIndexed { index, step ->
+                    currentCoroutineContext().ensureActive()
+                    samples += MtuSample(step.size, step.resolver, answered(step))
+                    onProgress((index + 1) * 100 / steps.size)
+                    delay(PACING_MS)
+                }
+                return MtuScoring.score(samples, ipv6)
             }
-            return MtuScoring.score(samples, ipv6)
+        } catch (e: IOException) {
+            // A send that fails means the association is gone; scoring its silence would read as a size limit.
+            LogUtil.w(AppConfig.TAG, "MtuProbe: the SOCKS UDP association failed during the sweep, port=$port", e)
+            return MtuOutcome.TunnelDown
         }
     }
 
     /** True when the answer to a query of [step]'s size, with [id], came back in time. A late answer to an earlier probe has another id. */
-    private fun probe(socks: Socks5Udp, step: MtuProbeStep, id: Int): Boolean = try {
+    private fun probe(socks: Socks5Udp, step: MtuProbeStep, id: Int): Boolean {
         socks.send(RESOLVERS[step.resolver], DNS_PORT, DnsPacket.buildQuery(id, QUERY_NAME, step.size))
         val deadline = System.nanoTime() + PROBE_TIMEOUT_MS * 1_000_000L
-        var delivered = false
-        while (!delivered) {
+        while (true) {
             val leftMs = (deadline - System.nanoTime()) / 1_000_000L
-            if (leftMs <= 0) break
-            val data = socks.receive(leftMs.toInt()) ?: break
-            delivered = DnsPacket.parseResponse(data, id) != null
+            if (leftMs <= 0) return false
+            val data = socks.receive(leftMs.toInt()) ?: return false
+            if (DnsPacket.parseResponse(data, id) != null) return true
         }
-        delivered
-    } catch (_: IOException) {
-        false
     }
 }

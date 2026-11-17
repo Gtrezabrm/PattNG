@@ -811,4 +811,5 @@
     <string name="mtu_err_busy">Başqa Aether sessiyası işləyir və ya hələ qoşulur.</string>
     <string name="mtu_err_no_baseline">Kiçik UDP paketlərinə belə cavab gəlmədi. Nüvə SOCKS üzərindən UDP-ni dəstəkləməyə bilər və ya bağlantı kəsilib.</string>
     <string name="mtu_err_udp">Bu Aether nüvəsi SOCKS portunda UDP-ni dəstəkləmir, ona görə MTU ölçülə bilməz.</string>
+    <string name="mtu_err_below_sweep">Yalnız çox kiçik UDP paketləri (576 baytdan az) keçir, ona görə MTU təklif oluna bilmir. Bağlantını yoxlayın.</string>
 </resources>

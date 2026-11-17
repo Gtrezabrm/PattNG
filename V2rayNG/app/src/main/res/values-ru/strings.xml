@@ -815,4 +815,5 @@
     <string name="mtu_err_busy">Другая сессия Aether работает или ещё подключается.</string>
     <string name="mtu_err_no_baseline">Даже маленькие UDP-пакеты остались без ответа. Ядро может не поддерживать UDP через SOCKS, или нет соединения.</string>
     <string name="mtu_err_udp">Это ядро Aether не поддерживает UDP на своём SOCKS-порту, поэтому измерить MTU нельзя.</string>
+    <string name="mtu_err_below_sweep">Проходят только очень маленькие UDP-пакеты (меньше 576 байт), поэтому MTU предложить нельзя. Проверьте соединение.</string>
 </resources>

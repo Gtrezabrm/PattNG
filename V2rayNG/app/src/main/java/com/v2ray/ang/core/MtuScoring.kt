@@ -40,6 +40,9 @@ sealed interface MtuOutcome {
     /** The Aether tunnel did not come up, or its SOCKS port could not be reached. */
     data object TunnelDown : MtuOutcome
 
+    /** Only packets under the smallest sweep size got through: the limit is somewhere below 576 bytes, not measured. */
+    data object BelowSweep : MtuOutcome
+
     /** Another Aether session holds the core or is still connecting. */
     data object Busy : MtuOutcome
 
@@ -111,9 +114,7 @@ object MtuScoring {
         for (result in sweep) {
             if (result.loss <= allowed) best = result else break
         }
-        if (best == null) {
-            return MtuOutcome.Recommended(MIN_MTU, MtuConfidence.LOW, true, BASELINE_SIZE, results)
-        }
+        if (best == null) return MtuOutcome.BelowSweep
         if (best.size == sweep.last().size) return MtuOutcome.AllPassed(best.size, results)
 
         val next = sweep[sweep.indexOf(best) + 1]

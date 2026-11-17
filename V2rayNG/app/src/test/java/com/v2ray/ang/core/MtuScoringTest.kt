@@ -46,13 +46,11 @@ class MtuScoringTest {
 
     @Test
     fun `an answer above a cliff does not lift the limit`() {
-        val sizes = MtuScoring.defaultSizes()
         val samples = cliffAt(1264).map { if (it.size == 1456) it.copy(delivered = true) else it }
 
         val recommended = assertInstanceOf(MtuOutcome.Recommended::class.java, MtuScoring.score(samples, ipv6 = false))
 
         assertEquals(1264, recommended.maxPassingPayload)
-        assertTrue(1456 in sizes)
     }
 
     @Test
@@ -65,8 +63,10 @@ class MtuScoringTest {
     @Test
     fun `a lone lost probe in a round still passes`() {
         val samples = cliffAt(1264).toMutableList()
-        val first = samples.indexOfFirst { it.size == 1232 && it.resolver == 0 }
-        samples[first] = samples[first].copy(delivered = false)
+        for (resolver in 0 until MtuScoring.RESOLVER_COUNT) {
+            val first = samples.indexOfFirst { it.size == 1232 && it.resolver == resolver }
+            samples[first] = samples[first].copy(delivered = false)
+        }
 
         val recommended = assertInstanceOf(MtuOutcome.Recommended::class.java, MtuScoring.score(samples, ipv6 = false))
 
@@ -113,12 +113,8 @@ class MtuScoringTest {
     }
 
     @Test
-    fun `the smallest sweep size failing gives the floor with a warning`() {
-        val recommended = assertInstanceOf(MtuOutcome.Recommended::class.java, MtuScoring.score(cliffAt(100), ipv6 = false))
-
-        assertEquals(576, recommended.mtu)
-        assertEquals(MtuConfidence.LOW, recommended.confidence)
-        assertTrue(recommended.belowIpv6Minimum)
+    fun `the smallest sweep size failing gives BelowSweep and no number`() {
+        assertEquals(MtuOutcome.BelowSweep, MtuScoring.score(cliffAt(100), ipv6 = false))
     }
 
     @Test
