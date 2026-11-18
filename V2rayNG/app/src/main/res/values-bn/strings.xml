@@ -812,5 +812,6 @@
     <string name="mtu_err_busy">আরেকটি Aether সেশন চলছে বা এখনও সংযুক্ত হচ্ছে।</string>
     <string name="mtu_err_no_baseline">ছোট UDP প্যাকেটেরও উত্তর আসেনি। কোর হয়তো SOCKS-এ UDP সমর্থন করে না, অথবা সংযোগ নেই।</string>
     <string name="mtu_err_udp">এই Aether কোর তার SOCKS পোর্টে UDP সমর্থন করে না, তাই MTU মাপা যাবে না।</string>
-    <string name="mtu_err_below_sweep">শুধু খুব ছোট UDP প্যাকেট (576 বাইটের কম) যাচ্ছে, তাই MTU প্রস্তাব করা যায় না। সংযোগ পরীক্ষা করুন।</string>
+    <string name="mtu_err_below_sweep">বড় পরীক্ষামূলক প্যাকেটের কোনো উত্তর আসেনি। কারণ টানেল হতে পারে, আবার বড় DNS কোয়েরি ফেলে দেওয়া রিজলভার বা ফিল্টারও হতে পারে, তাই কোনো MTU সুপারিশ করা হচ্ছে না।</string>
+    <string name="mtu_err_tcp_carried">এই প্রোফাইল টানেলটি TCP-এর ভেতরে বহন করে (HTTP/2-এর ওপর MASQUE), তাই নেটওয়ার্ক প্যাকেটের আকার সীমিত করে না এবং এই পরীক্ষার মাপার কিছু নেই। VPN MTU সেটিংয়ে বিভিন্ন মান চেষ্টা করে তুলনা করুন।</string>
 </resources>

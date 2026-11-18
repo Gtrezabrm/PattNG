@@ -145,6 +145,21 @@ class MtuFinderViewModelTest {
     }
 
     @Test
+    fun `a profile that carries the tunnel in TCP gives no number to copy or apply`() {
+        val fake = Fake(MtuOutcome.TcpCarried)
+        val model = viewModel(fake)
+
+        model.onAction(MtuFinderAction.Start)
+        model.onAction(MtuFinderAction.Apply)
+        model.onAction(MtuFinderAction.Copy)
+
+        assertEquals(MtuOutcome.TcpCarried, model.state.value.outcome)
+        assertTrue(fake.applied.isEmpty())
+        assertTrue(fake.copied.isEmpty())
+        assertFalse(model.state.value.applied)
+    }
+
+    @Test
     fun `apply writes only a measured recommendation`() {
         val fake = Fake(recommended)
         val model = viewModel(fake)

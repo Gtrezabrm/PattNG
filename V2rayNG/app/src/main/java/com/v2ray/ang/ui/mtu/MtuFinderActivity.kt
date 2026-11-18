@@ -139,6 +139,7 @@ private fun OutcomeContent(outcome: MtuOutcome, applied: Boolean, onCopy: () -> 
         MtuOutcome.NoBaseline -> ErrorText(R.string.mtu_err_no_baseline)
         MtuOutcome.UdpUnsupported -> ErrorText(R.string.mtu_err_udp)
         MtuOutcome.BelowSweep -> ErrorText(R.string.mtu_err_below_sweep)
+        MtuOutcome.TcpCarried -> Text(stringResource(R.string.mtu_err_tcp_carried))
         MtuOutcome.TunnelDown -> ErrorText(R.string.mtu_err_tunnel)
         MtuOutcome.Busy -> ErrorText(R.string.mtu_err_busy)
         MtuOutcome.NotAether -> ErrorText(R.string.mtu_err_not_aether)

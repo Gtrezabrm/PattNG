@@ -810,5 +810,6 @@
     <string name="mtu_err_busy">Một phiên Aether khác đang chạy hoặc vẫn đang kết nối.</string>
     <string name="mtu_err_no_baseline">Ngay cả gói UDP nhỏ cũng không có phản hồi. Lõi có thể không hỗ trợ UDP qua SOCKS hoặc kết nối bị ngắt.</string>
     <string name="mtu_err_udp">Lõi Aether này không hỗ trợ UDP trên cổng SOCKS, nên không thể đo MTU.</string>
-    <string name="mtu_err_below_sweep">Chỉ các gói UDP rất nhỏ (dưới 576 byte) đi qua được, nên không thể đề xuất MTU. Hãy kiểm tra kết nối.</string>
+    <string name="mtu_err_below_sweep">Các gói thử lớn không nhận được phản hồi. Có thể do đường hầm, nhưng cũng có thể do bộ phân giải hoặc bộ lọc loại bỏ các truy vấn DNS lớn, nên không đề xuất MTU.</string>
+    <string name="mtu_err_tcp_carried">Hồ sơ này truyền đường hầm bên trong TCP (MASQUE qua HTTP/2), nên mạng không giới hạn kích thước gói và bài kiểm tra này không có gì để đo. Hãy thử các giá trị trong cài đặt MTU của VPN và so sánh.</string>
 </resources>

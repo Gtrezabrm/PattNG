@@ -820,5 +820,6 @@
     <string name="mtu_err_busy">Another Aether session is running or still connecting.</string>
     <string name="mtu_err_no_baseline">Even small UDP packets got no answer. The core may not support UDP over SOCKS, or the connection is down.</string>
     <string name="mtu_err_udp">This Aether core does not support UDP on its SOCKS port, so the MTU cannot be measured.</string>
-    <string name="mtu_err_below_sweep">Only very small UDP packets get through (under 576 bytes), so no MTU can be recommended. Check the connection.</string>
+    <string name="mtu_err_below_sweep">Large test packets got no answer. That can be the tunnel, but also a resolver or filter that drops large DNS queries, so no MTU is recommended.</string>
+    <string name="mtu_err_tcp_carried">This profile carries the tunnel inside TCP (MASQUE over HTTP/2), so the network does not limit packet size and there is nothing for this test to measure. Try values in the VPN MTU setting and compare.</string>
 </resources>

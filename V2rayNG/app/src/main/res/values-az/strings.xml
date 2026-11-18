@@ -812,5 +812,6 @@
     <string name="mtu_err_busy">Başqa Aether sessiyası işləyir və ya hələ qoşulur.</string>
     <string name="mtu_err_no_baseline">Kiçik UDP paketlərinə belə cavab gəlmədi. Nüvə SOCKS üzərindən UDP-ni dəstəkləməyə bilər və ya bağlantı kəsilib.</string>
     <string name="mtu_err_udp">Bu Aether nüvəsi SOCKS portunda UDP-ni dəstəkləmir, ona görə MTU ölçülə bilməz.</string>
-    <string name="mtu_err_below_sweep">Yalnız çox kiçik UDP paketləri (576 baytdan az) keçir, ona görə MTU təklif oluna bilmir. Bağlantını yoxlayın.</string>
+    <string name="mtu_err_below_sweep">Böyük sınaq paketləri cavabsız qaldı. Səbəb tunel ola bilər, həm də böyük DNS sorğularını atan resolver və ya filtr ola bilər, buna görə MTU tövsiyə olunmur.</string>
+    <string name="mtu_err_tcp_carried">Bu profil tuneli TCP daxilində daşıyır (HTTP/2 üzərindən MASQUE), buna görə şəbəkə paket ölçüsünü məhdudlaşdırmır və bu testin ölçəcəyi bir şey yoxdur. VPN MTU ayarında müxtəlif dəyərləri sınayıb müqayisə edin.</string>
 </resources>

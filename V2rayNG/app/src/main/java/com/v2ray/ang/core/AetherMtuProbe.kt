@@ -2,6 +2,10 @@ package com.v2ray.ang.core
 
 import android.content.Context
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.enums.AetherProtocol
+import com.v2ray.ang.enums.AetherPsiphon
+import com.v2ray.ang.enums.AetherTor
+import com.v2ray.ang.enums.AetherTransport
 import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.util.LogUtil
@@ -37,6 +41,15 @@ object AetherMtuProbe {
         val guid = MmkvManager.getSelectServer() ?: return MtuOutcome.NotAether
         val profile = MmkvManager.decodeServerConfig(guid) ?: return MtuOutcome.NotAether
         if (profile.configType != EConfigType.AETHER) return MtuOutcome.NotAether
+        // Over HTTP/2 the IP packets travel inside a TCP stream: no path limit on their size, so a sweep would measure
+        // only what the resolvers and filters on the way do to large DNS queries.
+        val overHttp2 = AetherCoreManager.masqueOverHttp2(
+            AetherProtocol.fromString(profile.aetherProtocol),
+            AetherTransport.fromString(profile.aetherTransport),
+            AetherTor.fromString(profile.aetherTor),
+            AetherPsiphon.fromString(profile.aetherPsiphon),
+        )
+        if (overHttp2) return MtuOutcome.TcpCarried
         val ipv6 = MmkvManager.decodeSettingsBool(AppConfig.PREF_IPV6_ENABLED, AppConfig.DEFAULT_IPV6_ENABLED)
 
         var outcome: MtuOutcome? = null

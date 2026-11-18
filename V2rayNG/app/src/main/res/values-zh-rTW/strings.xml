@@ -810,5 +810,6 @@
     <string name="mtu_err_busy">另一個 Aether 工作階段正在執行或仍在連線。</string>
     <string name="mtu_err_no_baseline">連小的 UDP 封包也沒有回應。核心可能不支援經 SOCKS 的 UDP，或網路已中斷。</string>
     <string name="mtu_err_udp">此 Aether 核心的 SOCKS 連接埠不支援 UDP，因此無法測量 MTU。</string>
-    <string name="mtu_err_below_sweep">只有非常小的 UDP 封包（小於 576 位元組）能通過，因此無法建議 MTU。請檢查網路連線。</string>
+    <string name="mtu_err_below_sweep">較大的測試封包沒有得到回應。可能是通道的問題，也可能是解析器或過濾設備丟棄了較大的 DNS 查詢，因此不建議 MTU。</string>
+    <string name="mtu_err_tcp_carried">此設定檔將通道承載於 TCP 內（HTTP/2 上的 MASQUE），網路不會限制封包大小，本測試沒有可測量的內容。請在 VPN MTU 設定中嘗試不同的值並比較。</string>
 </resources>

@@ -40,8 +40,17 @@ sealed interface MtuOutcome {
     /** The Aether tunnel did not come up, or its SOCKS port could not be reached. */
     data object TunnelDown : MtuOutcome
 
-    /** Only packets under the smallest sweep size got through: the limit is somewhere below 576 bytes, not measured. */
+    /**
+     * No size of the sweep got an answer, though a small query did. That fits a tunnel limit, but just as well a resolver
+     * or a filter that drops large DNS queries, so it is not a measured limit and no number follows from it.
+     */
     data object BelowSweep : MtuOutcome
+
+    /**
+     * The profile carries the tunnel inside TCP (MASQUE over HTTP/2), so the network puts no limit on a packet's size and
+     * there is nothing here for the sweep to measure.
+     */
+    data object TcpCarried : MtuOutcome
 
     /** Another Aether session holds the core or is still connecting. */
     data object Busy : MtuOutcome

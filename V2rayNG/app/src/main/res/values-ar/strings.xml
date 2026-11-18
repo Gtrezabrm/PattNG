@@ -820,5 +820,6 @@
     <string name="mtu_err_busy">جلسة Aether أخرى قيد التشغيل أو ما زالت تتصل.</string>
     <string name="mtu_err_no_baseline">لم تصل أي إجابة حتى للحزم الصغيرة. قد لا تدعم النواة UDP عبر SOCKS أو أن الاتصال مقطوع.</string>
     <string name="mtu_err_udp">لا تدعم نواة Aether هذه UDP عبر منفذ SOCKS، لذا لا يمكن قياس MTU.</string>
-    <string name="mtu_err_below_sweep">لا تمر إلا حزم UDP صغيرة جداً (أقل من 576 بايت)، لذا لا يمكن اقتراح MTU. تحقق من الاتصال.</string>
+    <string name="mtu_err_below_sweep">لم تحصل حزم الاختبار الكبيرة على رد. قد يكون السبب النفق، وقد يكون محلل DNS أو مرشحًا يُسقط استعلامات DNS الكبيرة، لذلك لا يُقترح أي MTU.</string>
+    <string name="mtu_err_tcp_carried">يحمل هذا الملف النفق داخل TCP (‏MASQUE عبر HTTP/2)، لذا لا تحدّ الشبكة من حجم الحزمة ولا يوجد ما يقيسه هذا الاختبار. جرّب قيمًا في إعداد MTU للـ VPN وقارن.</string>
 </resources>
