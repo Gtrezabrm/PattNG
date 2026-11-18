@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -154,7 +155,8 @@ private fun ErrorText(resId: Int) {
 private fun LossChart(results: List<MtuSizeResult>) {
     if (results.isEmpty()) return
     val caption = stringResource(R.string.mtu_chart_caption)
-    val figures = results.joinToString { "${it.size}: ${(it.loss * 100).roundToInt()}%" }
+    val context = LocalContext.current
+    val figures = results.joinToString { context.getString(R.string.mtu_chart_item, it.size, (it.loss * 100).roundToInt()) }
     val track = MaterialTheme.colorScheme.surfaceVariant
     val good = MaterialTheme.colorScheme.primary
     val bad = MaterialTheme.colorScheme.error

@@ -803,6 +803,7 @@
     <string name="mtu_apply">Áp dụng</string>
     <string name="mtu_applied">Đã lưu. Khởi động lại VPN để dùng.</string>
     <string name="mtu_chart_caption">Tỷ lệ mất gói theo kích thước dữ liệu UDP (byte)</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">Phép đo này đo đường đi qua đường hầm Aether, không phải liên kết của nhà mạng.</string>
     <string name="mtu_err_not_aether">Hãy chọn một hồ sơ Aether trước.</string>
     <string name="mtu_err_tunnel">Đường hầm Aether không khởi động được.</string>

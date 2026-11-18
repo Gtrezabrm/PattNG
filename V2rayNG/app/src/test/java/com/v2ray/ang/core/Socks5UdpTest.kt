@@ -106,4 +106,17 @@ class Socks5UdpTest {
         worker.join(2000)
         server.close()
     }
+
+    @Test
+    fun `an association is lost once the server closes the control connection`() {
+        // The fake server holds the connection for 300 ms after its reply and then hangs up.
+        val (server, worker) = fakeServer(byteArrayOf(5, 0), byteArrayOf(5, 0, 0, 1, 0, 0, 0, 0, 0x30, 0x39))
+
+        val session = Socks5Udp.open(server.localPort, timeoutMs = 2000)
+        assertFalse(session.associationLost())
+        worker.join(3000)
+        assertTrue(session.associationLost())
+        session.close()
+        server.close()
+    }
 }

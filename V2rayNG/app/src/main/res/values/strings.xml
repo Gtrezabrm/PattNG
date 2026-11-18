@@ -813,6 +813,7 @@
     <string name="mtu_apply">Apply</string>
     <string name="mtu_applied">Saved. Restart the VPN to use it.</string>
     <string name="mtu_chart_caption">Packet loss per UDP payload size in bytes</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">This measures the path through the Aether tunnel, not your carrier link.</string>
     <string name="mtu_err_not_aether">Select an Aether profile first.</string>
     <string name="mtu_err_tunnel">The Aether tunnel did not come up.</string>

@@ -809,6 +809,7 @@
     <string name="mtu_apply">Применить</string>
     <string name="mtu_applied">Сохранено. Перезапустите VPN, чтобы использовать значение.</string>
     <string name="mtu_chart_caption">Потери пакетов по размеру UDP-данных, байт</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">Тест измеряет путь через туннель Aether, а не канал вашего оператора.</string>
     <string name="mtu_err_not_aether">Сначала выберите профиль Aether.</string>
     <string name="mtu_err_tunnel">Туннель Aether не запустился.</string>

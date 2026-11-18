@@ -44,6 +44,21 @@ internal class Socks5Udp private constructor(
         }
     }
 
+    /**
+     * True when the server has ended the association by closing the control connection. UDP sends to a relay that is gone
+     * do not fail, so without this its silence would read as a datagram size that does not get through.
+     */
+    fun associationLost(): Boolean {
+        return try {
+            control.soTimeout = 1
+            control.getInputStream().read() == -1
+        } catch (_: SocketTimeoutException) {
+            false
+        } catch (_: IOException) {
+            true
+        }
+    }
+
     override fun close() {
         runCatching { udp.close() }
         runCatching { control.close() }

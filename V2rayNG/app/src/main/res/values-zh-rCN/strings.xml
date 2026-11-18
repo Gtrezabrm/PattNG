@@ -803,6 +803,7 @@
     <string name="mtu_apply">应用</string>
     <string name="mtu_applied">已保存。重启 VPN 后生效。</string>
     <string name="mtu_chart_caption">各 UDP 载荷大小（字节）的丢包率</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">此测试测量的是经过 Aether 隧道的路径，而不是运营商链路。</string>
     <string name="mtu_err_not_aether">请先选择 Aether 配置。</string>
     <string name="mtu_err_tunnel">Aether 隧道未能启动。</string>

@@ -6,6 +6,8 @@ import com.v2ray.ang.core.MtuOutcome
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -101,6 +103,45 @@ class MtuFinderViewModelTest {
         assertEquals(MtuPhase.IDLE, model.state.value.phase)
         assertNull(model.state.value.outcome)
         assertEquals(0, model.state.value.progress)
+    }
+
+    @Test
+    fun `a cancelled run that is still unwinding cannot overwrite the run that followed`() {
+        // A blocked socket read ignores a cancel until it returns; the first run stands for that.
+        val firstGate = CompletableDeferred<Unit>()
+        var calls = 0
+        val model = MtuFinderViewModel(
+            mock<Application>(),
+            MtuFinderEnvironment(
+                run = { onProgress ->
+                    if (++calls == 1) {
+                        withContext(NonCancellable) { firstGate.await() }
+                        onProgress(90)
+                        MtuOutcome.TunnelDown
+                    } else {
+                        onProgress(10)
+                        recommended
+                    }
+                },
+                currentMtu = { 1500 },
+                applyMtu = {},
+                copy = {},
+                logFailure = { _, _ -> },
+            ),
+        )
+
+        model.onAction(MtuFinderAction.Start)
+        model.onAction(MtuFinderAction.Cancel)
+        model.onAction(MtuFinderAction.Start)
+
+        assertEquals(MtuPhase.DONE, model.state.value.phase)
+        assertEquals(recommended, model.state.value.outcome)
+
+        firstGate.complete(Unit)
+
+        assertEquals(MtuPhase.DONE, model.state.value.phase)
+        assertEquals(recommended, model.state.value.outcome)
+        assertEquals(100, model.state.value.progress)
     }
 
     @Test

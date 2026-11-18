@@ -813,6 +813,7 @@
     <string name="mtu_apply">تطبيق</string>
     <string name="mtu_applied">تم الحفظ. أعد تشغيل الـ VPN لاستخدامه.</string>
     <string name="mtu_chart_caption">فقد الحزم لكل حجم حمولة UDP بالبايت</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">يقيس هذا الاختبار المسار عبر نفق Aether وليس رابط مزوّد الخدمة.</string>
     <string name="mtu_err_not_aether">اختر ملف Aether أولاً.</string>
     <string name="mtu_err_tunnel">لم يبدأ نفق Aether.</string>

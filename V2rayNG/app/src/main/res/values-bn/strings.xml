@@ -805,6 +805,7 @@
     <string name="mtu_apply">প্রয়োগ</string>
     <string name="mtu_applied">সংরক্ষিত। ব্যবহারের জন্য VPN আবার চালু করুন।</string>
     <string name="mtu_chart_caption">UDP পেলোডের আকার (বাইট) অনুযায়ী প্যাকেট লস</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">এই পরীক্ষা Aether টানেলের পথ মাপে, আপনার অপারেটরের লিংক নয়।</string>
     <string name="mtu_err_not_aether">আগে একটি Aether প্রোফাইল বেছে নিন।</string>
     <string name="mtu_err_tunnel">Aether টানেল চালু হয়নি।</string>

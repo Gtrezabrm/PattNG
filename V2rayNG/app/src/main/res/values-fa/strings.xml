@@ -805,6 +805,7 @@
     <string name="mtu_apply">اعمال</string>
     <string name="mtu_applied">ذخیره شد. برای اعمال، VPN را دوباره راه‌اندازی کنید.</string>
     <string name="mtu_chart_caption">درصد گم‌شدن بسته به‌ازای اندازه‌ی بار UDP (بایت)</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">این تست مسیر تونل Aether را می‌سنجد، نه لینک اپراتور شما را.</string>
     <string name="mtu_err_not_aether">ابتدا یک پروفایل Aether انتخاب کنید.</string>
     <string name="mtu_err_tunnel">تونل Aether بالا نیامد.</string>

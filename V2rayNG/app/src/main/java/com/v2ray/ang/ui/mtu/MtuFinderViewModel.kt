@@ -50,10 +50,13 @@ class MtuFinderViewModel(
 
     private var job: Job? = null
 
+    /** Numbers each run, so that a cancelled run that is still unwinding cannot write into the run that followed it. */
+    private var run = 0
+
     fun onAction(action: MtuFinderAction) {
         when (action) {
             MtuFinderAction.Start -> start()
-            MtuFinderAction.Cancel -> job?.cancel()
+            MtuFinderAction.Cancel -> cancel()
             MtuFinderAction.Copy -> recommended()?.let { environment.copy(it.mtu.toString()) }
             MtuFinderAction.Apply -> apply()
         }
@@ -62,20 +65,30 @@ class MtuFinderViewModel(
     private fun recommended(): MtuOutcome.Recommended? = _state.value.outcome as? MtuOutcome.Recommended
 
     private fun start() {
-        if (job?.isActive == true) return
+        if (_state.value.phase == MtuPhase.RUNNING) return
+        val mine = ++run
         _state.update { it.copy(phase = MtuPhase.RUNNING, progress = 0, outcome = null, applied = false) }
         job = viewModelScope.launch {
             val outcome = try {
-                environment.run { progress -> _state.update { it.copy(progress = progress) } }
+                environment.run { progress ->
+                    if (run == mine) _state.update { it.copy(progress = progress) }
+                }
             } catch (e: CancellationException) {
-                _state.update { it.copy(phase = MtuPhase.IDLE, progress = 0) }
                 throw e
             } catch (e: Exception) {
                 environment.logFailure("MtuFinder: the measurement failed", e)
                 MtuOutcome.TunnelDown
             }
-            _state.update { it.copy(phase = MtuPhase.DONE, progress = 100, outcome = outcome) }
+            if (run == mine) _state.update { it.copy(phase = MtuPhase.DONE, progress = 100, outcome = outcome) }
         }
+    }
+
+    /** The screen is idle at once; the cancelled run may take a moment to unwind, and its late writes are ignored. */
+    private fun cancel() {
+        if (_state.value.phase != MtuPhase.RUNNING) return
+        run++
+        job?.cancel()
+        _state.update { it.copy(phase = MtuPhase.IDLE, progress = 0, outcome = null) }
     }
 
     /** Only a measured recommendation is ever written. */

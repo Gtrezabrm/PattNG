@@ -805,6 +805,7 @@
     <string name="mtu_apply">Tətbiq et</string>
     <string name="mtu_applied">Yadda saxlanıldı. İstifadə üçün VPN-i yenidən başladın.</string>
     <string name="mtu_chart_caption">UDP yükünün ölçüsünə görə paket itkisi (bayt)</string>
+    <string name="mtu_chart_item" formatted="true">%1$d: %2$d%%</string>
     <string name="mtu_note_inner">Bu test Aether tunelindən keçən yolu ölçür, operator xəttini yox.</string>
     <string name="mtu_err_not_aether">Əvvəlcə Aether profilini seçin.</string>
     <string name="mtu_err_tunnel">Aether tuneli qalxmadı.</string>

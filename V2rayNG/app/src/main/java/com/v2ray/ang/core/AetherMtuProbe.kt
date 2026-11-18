@@ -6,9 +6,12 @@ import com.v2ray.ang.enums.EConfigType
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.util.LogUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import kotlin.random.Random
@@ -55,6 +58,24 @@ object AetherMtuProbe {
             LogUtil.w(AppConfig.TAG, "MtuProbe: the SOCKS port could not be reached, port=$port", e)
             return MtuOutcome.TunnelDown
         }
+        // A receive that blocks does not notice a cancellation; closing the socket from a second coroutine ends it at once.
+        return coroutineScope {
+            val closer = launch(Dispatchers.IO) {
+                try {
+                    awaitCancellation()
+                } finally {
+                    socks.close()
+                }
+            }
+            try {
+                measure(socks, ipv6, onProgress)
+            } finally {
+                closer.cancel()
+            }
+        }
+    }
+
+    private suspend fun measure(socks: Socks5Udp, ipv6: Boolean, onProgress: (Int) -> Unit): MtuOutcome {
         try {
             socks.use { session ->
                 var nextId = 0
@@ -77,15 +98,18 @@ object AetherMtuProbe {
                 val samples = ArrayList<MtuSample>(steps.size)
                 steps.forEachIndexed { index, step ->
                     currentCoroutineContext().ensureActive()
-                    samples += MtuSample(step.size, step.resolver, answered(step))
+                    val ok = answered(step)
+                    // A relay that is gone answers nothing at any size; that is not a size limit.
+                    if (!ok && session.associationLost()) return MtuOutcome.TunnelDown
+                    samples += MtuSample(step.size, step.resolver, ok)
                     onProgress((index + 1) * 100 / steps.size)
                     delay(PACING_MS)
                 }
                 return MtuScoring.score(samples, ipv6)
             }
         } catch (e: IOException) {
-            // A send that fails means the association is gone; scoring its silence would read as a size limit.
-            LogUtil.w(AppConfig.TAG, "MtuProbe: the SOCKS UDP association failed during the sweep, port=$port", e)
+            // A send or receive that fails means the association is gone (or was closed by a cancel).
+            LogUtil.w(AppConfig.TAG, "MtuProbe: the SOCKS UDP association failed during the sweep", e)
             return MtuOutcome.TunnelDown
         }
     }
