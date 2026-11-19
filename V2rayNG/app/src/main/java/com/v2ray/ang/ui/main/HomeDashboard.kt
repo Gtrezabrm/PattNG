@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,6 +48,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -68,20 +71,45 @@ fun HomeDashboard(
     modifier: Modifier = Modifier,
 ) {
     val connected = model.status == HomeCardStatus.Connected
-    Column(modifier = modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .widthIn(max = 560.dp)
-                .align(Alignment.CenterHorizontally)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            DashboardServerCard(model, onServerClick)
-            if (connected && model.details != null) {
-                HomeCardDetailsSection(model.details, onRefreshPingClick, showTitle = false)
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        DashboardServerCard(model, onServerClick, modifier = Modifier.widthIn(max = 560.dp))
+        // The hero takes what is left, so the screen has no hole: the brand shape stands in the middle, calm.
+        BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            val compact = maxHeight < 330.dp
+            val emblem = minOf(220.dp, maxHeight * 0.55f).coerceAtLeast(96.dp)
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                HomeConnectButton(
+                    status = model.status,
+                    cancellable = false,
+                    colors = homeCardColors(model.status),
+                    size = emblem,
+                    onClick = {},
+                    interactive = false,
+                )
+                if (connected && model.details != null) {
+                    Text(
+                        text = model.details.duration,
+                        style = if (compact) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displayMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.heightIn(min = 40.dp),
+                    )
+                } else {
+                    Text(
+                        text = homeStatusText(model.status),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 2,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
+        }
+        if (connected && model.details != null) {
+            DashboardPingRow(model.details, onRefreshPingClick, modifier = Modifier.widthIn(max = 560.dp))
         }
         SlideToConnect(
             status = model.status,
@@ -89,54 +117,100 @@ fun HomeDashboard(
             modifier = Modifier
                 .fillMaxWidth()
                 .widthIn(max = 560.dp)
-                .align(Alignment.CenterHorizontally)
                 .padding(bottom = 4.dp),
         )
     }
 }
 
 @Composable
-private fun DashboardServerCard(model: HomeCardModel, onClick: () -> Unit) {
+private fun DashboardServerCard(model: HomeCardModel, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val scheme = MaterialTheme.colorScheme
+    val statusColor = when (model.status) {
+        HomeCardStatus.Connected -> scheme.primary
+        HomeCardStatus.Error -> scheme.error
+        else -> scheme.onSurfaceVariant
+    }
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        modifier = Modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
+        color = scheme.surfaceContainerHigh,
+        contentColor = scheme.onSurface,
+        modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text = stringResource(R.string.home_change_server),
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = model.serverName ?: stringResource(R.string.home_empty_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (model.status != HomeCardStatus.Empty) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(
+                    modifier = Modifier.size(48.dp).background(scheme.primaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_dns_24dp),
+                        contentDescription = null,
+                        tint = scheme.onPrimaryContainer,
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = homeStatusText(model.status),
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = model.serverName ?: stringResource(R.string.home_empty_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (model.status == HomeCardStatus.Empty) stringResource(R.string.home_change_server) else homeStatusText(model.status),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = statusColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+                Icon(
+                    painter = painterResource(R.drawable.ic_arrow_back_24dp),
+                    contentDescription = null,
+                    tint = scheme.onSurfaceVariant,
+                    // The arrow of the back button points away from the next screen; turn it to point at it.
+                    modifier = Modifier.graphicsLayer { rotationZ = if (rtl) 0f else 180f },
+                )
             }
+            if (model.status == HomeCardStatus.Connected && model.details != null) {
+                HomeIpDetailTile(
+                    label = stringResource(R.string.home_details_ip),
+                    ipAddress = model.details.ipAddress?.takeIf { it.isNotBlank() } ?: stringResource(R.string.connection_test_testing),
+                    countryCode = model.details.countryCode,
+                    plain = true,
+                )
+            }
+        }
+    }
+}
+
+/** The ping as a chip, and the one action on it; both keep their size when the figure arrives. */
+@Composable
+private fun DashboardPingRow(details: HomeCardDetails, onRefreshPingClick: () -> Unit, modifier: Modifier = Modifier) {
+    val measuring = stringResource(R.string.connection_test_testing)
+    val ping = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) } ?: measuring
+    val label = stringResource(R.string.home_details_ping)
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics(mergeDescendants = true) {},
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(text = label, style = MaterialTheme.typography.labelLarge)
+                Text(text = ping, style = MaterialTheme.typography.titleLarge, maxLines = 1)
+            }
+        }
+        FilledTonalIconButton(onClick = onRefreshPingClick, modifier = Modifier.size(56.dp)) {
             Icon(
-                painter = painterResource(R.drawable.ic_arrow_back_24dp),
-                contentDescription = null,
-                // The arrow of the back button points away from the next screen; turn it to point at it.
-                modifier = Modifier.graphicsLayer { rotationZ = if (rtl) 0f else 180f },
+                painter = painterResource(R.drawable.ic_refresh_24dp),
+                contentDescription = stringResource(R.string.home_details_test_ping),
             )
         }
     }
@@ -161,11 +235,11 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
     )
     val outerDirection = LocalLayoutDirection.current
     val statusText = homeStatusText(status)
-    val trackColor = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
-    val onTrack = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-    val knobColor = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
-    val onKnob = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary
-    val knobSize = 60.dp
+    val trackColor = if (active) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh
+    val onTrack = if (active) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+    val knobColor = MaterialTheme.colorScheme.primary
+    val onKnob = MaterialTheme.colorScheme.onPrimary
+    val knobSize = 52.dp
     val inset = 8.dp
     val trackHeight = knobSize + inset * 2
     // The knob moves from the left to the right in every language, so that the gesture is the same everywhere.

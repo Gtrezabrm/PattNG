@@ -278,12 +278,14 @@ private fun HomeCardMain(
 }
 
 @Composable
-private fun HomeConnectButton(
+internal fun HomeConnectButton(
     status: HomeCardStatus,
     cancellable: Boolean,
     colors: HomeCardColors,
     size: Dp,
     onClick: () -> Unit,
+    /** False for a picture of the state only: no click, no focus, no semantics of its own. */
+    interactive: Boolean = true,
 ) {
     val running = status == HomeCardStatus.Connected
     val busy = status == HomeCardStatus.Connecting
@@ -377,21 +379,7 @@ private fun HomeConnectButton(
                 }
                 .background(colors.button, shape),
         )
-        Surface(
-            onClick = onClick,
-            enabled = (!busy || cancellable) && status != HomeCardStatus.Empty,
-            shape = CircleShape,
-            color = Color.Transparent,
-            contentColor = colors.onButton,
-            interactionSource = interaction,
-            modifier = Modifier
-                .size(size)
-                .semantics {
-                contentDescription = label
-                role = Role.Button
-                stateDescription = statusLabel
-            },
-        ) {
+        val face: @Composable () -> Unit = {
             Box(contentAlignment = Alignment.Center) {
                 if (busy) {
                     CircularProgressIndicator(
@@ -405,6 +393,27 @@ private fun HomeConnectButton(
                         modifier = Modifier.size(size * 0.33f),
                     )
                 }
+            }
+        }
+        if (interactive) {
+            Surface(
+                onClick = onClick,
+                enabled = (!busy || cancellable) && status != HomeCardStatus.Empty,
+                shape = CircleShape,
+                color = Color.Transparent,
+                contentColor = colors.onButton,
+                interactionSource = interaction,
+                modifier = Modifier
+                    .size(size)
+                    .semantics {
+                        contentDescription = label
+                        role = Role.Button
+                        stateDescription = statusLabel
+                    },
+            ) { face() }
+        } else {
+            Box(modifier = Modifier.size(size).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+                androidx.compose.runtime.CompositionLocalProvider(LocalContentColor provides colors.onButton) { face() }
             }
         }
     }
@@ -532,7 +541,14 @@ private fun HomeCardDetailsBlock(
 
 /** One read-only figure; it is a single semantic node, so it is spoken as "label, value". */
 @Composable
-private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: String?, modifier: Modifier = Modifier) {
+internal fun HomeIpDetailTile(
+    label: String,
+    ipAddress: String,
+    countryCode: String?,
+    modifier: Modifier = Modifier,
+    /** A flat tile for a card of its own: no border, a tonal fill. */
+    plain: Boolean = false,
+) {
     val normalizedCountry = normalizeCountryCode(countryCode)
     val flag = countryFlagEmoji(countryCode)
     val countryName = remember(normalizedCountry) {
@@ -540,9 +556,9 @@ private fun HomeIpDetailTile(label: String, ipAddress: String, countryCode: Stri
     }
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
-        contentColor = LocalContentColor.current,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.42f)),
+        color = if (plain) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
+        contentColor = if (plain) MaterialTheme.colorScheme.onSurface else LocalContentColor.current,
+        border = if (plain) null else BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.42f)),
         modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
     ) {
         Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)) {
@@ -610,7 +626,7 @@ internal fun homeStatusText(status: HomeCardStatus): String = stringResource(
     }
 )
 
-private data class HomeCardColors(
+internal data class HomeCardColors(
     val container: Color,
     val containerEnd: Color,
     val content: Color,
@@ -619,7 +635,7 @@ private data class HomeCardColors(
 )
 
 @Composable
-private fun homeCardColors(status: HomeCardStatus): HomeCardColors {
+internal fun homeCardColors(status: HomeCardStatus): HomeCardColors {
     val scheme = MaterialTheme.colorScheme
     return when (status) {
         HomeCardStatus.Connected, HomeCardStatus.Connecting -> HomeCardColors(
