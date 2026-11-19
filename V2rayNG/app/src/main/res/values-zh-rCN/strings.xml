@@ -838,4 +838,8 @@
     <string name="card_style_glass">玻璃</string>
     <string name="palette_wheat">Wheat</string>
     <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">主屏幕样式</string>
+    <string name="home_style_dashboard">仪表盘</string>
+    <string name="home_slide_to_connect">滑动以连接</string>
+    <string name="home_slide_to_disconnect">滑动以断开</string>
 </resources>

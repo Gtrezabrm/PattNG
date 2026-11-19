@@ -840,4 +840,8 @@
     <string name="card_style_glass">গ্লাস</string>
     <string name="palette_wheat">Wheat</string>
     <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">হোম স্ক্রিনের ধরন</string>
+    <string name="home_style_dashboard">ড্যাশবোর্ড</string>
+    <string name="home_slide_to_connect">সংযোগ করতে স্লাইড করুন</string>
+    <string name="home_slide_to_disconnect">বিচ্ছিন্ন করতে স্লাইড করুন</string>
 </resources>

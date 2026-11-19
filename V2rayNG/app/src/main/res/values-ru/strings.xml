@@ -844,4 +844,8 @@
     <string name="card_style_glass">Стекло</string>
     <string name="palette_wheat">Wheat</string>
     <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">Стиль главного экрана</string>
+    <string name="home_style_dashboard">Панель</string>
+    <string name="home_slide_to_connect">Сдвиньте, чтобы подключиться</string>
+    <string name="home_slide_to_disconnect">Сдвиньте, чтобы отключиться</string>
 </resources>

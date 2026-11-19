@@ -163,6 +163,7 @@ fun SettingsScreen(
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
     var colorPalette by rememberMmkvString(AppConfig.PREF_COLOR_PALETTE, "0")
     var cardStyle by rememberMmkvString(AppConfig.PREF_CARD_STYLE, CardStyle.Classic.key)
+    var homeStyle by rememberMmkvString(AppConfig.PREF_HOME_STYLE, "classic")
     var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     val settingsContext = androidx.compose.ui.platform.LocalContext.current
     val settingsConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -302,6 +303,19 @@ fun SettingsScreen(
                     onSelected = {
                         colorPalette = it
                         ThemeManager.setPalette(it)
+                    }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_home_style),
+                    entries = listOf(
+                        stringResource(R.string.card_style_classic),
+                        stringResource(R.string.home_style_dashboard),
+                    ),
+                    values = listOf("classic", "dashboard"),
+                    selectedValue = homeStyle,
+                    onSelected = {
+                        homeStyle = it
+                        ThemeManager.setHomeStyle(it)
                     }
                 )
                 SettingsListItem(

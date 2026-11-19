@@ -848,4 +848,8 @@
     <string name="card_style_glass">زجاجي</string>
     <string name="palette_wheat">Wheat</string>
     <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">نمط الشاشة الرئيسية</string>
+    <string name="home_style_dashboard">لوحة المعلومات</string>
+    <string name="home_slide_to_connect">اسحب للاتصال</string>
+    <string name="home_slide_to_disconnect">اسحب لقطع الاتصال</string>
 </resources>

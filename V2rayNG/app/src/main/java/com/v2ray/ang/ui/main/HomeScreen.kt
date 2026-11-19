@@ -46,6 +46,7 @@ import com.v2ray.ang.ui.compose.CardStyle
 import com.v2ray.ang.ui.compose.LocalCardStyle
 import com.v2ray.ang.ui.compose.LocalReduceMotion
 import com.v2ray.ang.ui.compose.glassBlobs
+import com.v2ray.ang.ui.compose.ThemeManager
 import com.v2ray.ang.ui.compose.glassRim
 import com.v2ray.ang.ui.compose.AppTopBar
 import kotlinx.coroutines.delay
@@ -134,7 +135,17 @@ fun HomeScreen(
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            HomeConnectCard(
+            val dashboard = ThemeManager.homeStyle.collectAsStateWithLifecycle().value == "dashboard"
+            if (dashboard) {
+                HomeDashboard(
+                    model = model,
+                    onServerClick = onOpenServerList,
+                    // Only the user starts the service: a failed or dropped connection is not retried by itself.
+                    onConnectClick = { if (status == HomeCardStatus.Empty) onOpenServerList() else onAction(MainAction.ToggleService) },
+                    onRefreshPingClick = { onAction(MainAction.TestCurrentServer) },
+                    modifier = Modifier.weight(1f),
+                )
+            } else HomeConnectCard(
                 model = model,
                 onConnectClick = { onAction(MainAction.ToggleService) },
                 onStatusActionClick = {
@@ -145,7 +156,7 @@ fun HomeScreen(
                 modifier = Modifier.weight(1f),
             )
             // The card already names the server and the pill opens the list; a short screen keeps its room for the card.
-            if (LocalConfiguration.current.screenHeightDp >= 700) {
+            if (!dashboard && LocalConfiguration.current.screenHeightDp >= 700) {
                 HomeServerSelector(
                     serverName = serverName,
                     onClick = onOpenServerList,

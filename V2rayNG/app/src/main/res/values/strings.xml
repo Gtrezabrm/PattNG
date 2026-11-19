@@ -850,4 +850,8 @@
     <string name="card_style_glass">Glass</string>
     <string name="palette_wheat">Wheat</string>
     <string name="palette_cobalt">Cobalt</string>
+    <string name="title_pref_home_style">Home screen style</string>
+    <string name="home_style_dashboard">Dashboard</string>
+    <string name="home_slide_to_connect">Slide to connect</string>
+    <string name="home_slide_to_disconnect">Slide to disconnect</string>
 </resources>

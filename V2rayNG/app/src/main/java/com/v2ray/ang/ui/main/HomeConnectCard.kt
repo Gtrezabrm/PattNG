@@ -482,7 +482,7 @@ private fun HomeStatusAction(status: HomeCardStatus, onClick: () -> Unit) {
 
 /** Connection details appear automatically while connected. */
 @Composable
-private fun HomeCardDetailsSection(
+internal fun HomeCardDetailsSection(
     details: HomeCardDetails,
     onRefreshPingClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -599,7 +599,7 @@ private fun HomeDetailTile(label: String, value: String, pending: Boolean = fals
 }
 
 @Composable
-private fun homeStatusText(status: HomeCardStatus): String = stringResource(
+internal fun homeStatusText(status: HomeCardStatus): String = stringResource(
     when (status) {
         HomeCardStatus.Empty -> R.string.home_empty_title
         HomeCardStatus.Disconnected -> R.string.connection_not_connected

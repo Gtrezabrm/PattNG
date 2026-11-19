@@ -328,6 +328,17 @@ object ThemeManager {
         _cardStyle.value = style
     }
 
+    private val _homeStyle = MutableStateFlow(
+        MmkvManager.decodeSettingsString(AppConfig.PREF_HOME_STYLE, "classic") ?: "classic"
+    )
+    /** "classic" is the centered card, "dashboard" the server card with the slide control. */
+    val homeStyle: StateFlow<String> = _homeStyle.asStateFlow()
+
+    fun setHomeStyle(value: String) {
+        MmkvManager.encodeSettings(AppConfig.PREF_HOME_STYLE, value)
+        _homeStyle.value = value
+    }
+
     fun setPalette(value: String) {
         MmkvManager.encodeSettings(AppConfig.PREF_COLOR_PALETTE, value)
         _palette.value = value
@@ -350,6 +361,7 @@ object ThemeManager {
             MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
         _palette.value = MmkvManager.decodeSettingsString(AppConfig.PREF_COLOR_PALETTE, "0") ?: "0"
         _cardStyle.value = CardStyle.of(MmkvManager.decodeSettingsString(AppConfig.PREF_CARD_STYLE, CardStyle.Classic.key))
+        _homeStyle.value = MmkvManager.decodeSettingsString(AppConfig.PREF_HOME_STYLE, "classic") ?: "classic"
     }
 }
 
