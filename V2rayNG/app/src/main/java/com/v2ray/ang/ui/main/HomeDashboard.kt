@@ -1,6 +1,6 @@
 package com.v2ray.ang.ui.main
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -28,10 +29,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -118,12 +123,14 @@ private fun DashboardServerCard(model: HomeCardModel, onClick: () -> Unit) {
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = homeStatusText(model.status),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (model.status != HomeCardStatus.Empty) {
+                    Text(
+                        text = homeStatusText(model.status),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Icon(
                 painter = painterResource(R.drawable.ic_arrow_back_24dp),
@@ -145,7 +152,14 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
     val reduceMotion = LocalReduceMotion.current
     val scope = rememberCoroutineScope()
     val active = status == HomeCardStatus.Connected || status == HomeCardStatus.Connecting
-    val label = if (active) stringResource(R.string.home_slide_to_disconnect) else stringResource(R.string.home_slide_to_connect)
+    val label = stringResource(
+        when {
+            status == HomeCardStatus.Empty -> R.string.home_action_choose_server
+            active -> R.string.home_slide_to_disconnect
+            else -> R.string.home_slide_to_connect
+        }
+    )
+    val outerDirection = LocalLayoutDirection.current
     val statusText = homeStatusText(status)
     val trackColor = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh
     val onTrack = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
@@ -159,7 +173,8 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
         BoxWithConstraints(
             modifier = modifier
                 .height(trackHeight)
-                .background(trackColor, RoundedCornerShape(trackHeight / 2))
+                .clip(RoundedCornerShape(trackHeight / 2))
+                .background(trackColor)
                 .semantics(mergeDescendants = true) {
                     contentDescription = label
                     stateDescription = statusText
@@ -168,9 +183,12 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
         ) {
             val density = LocalDensity.current
             val travel = with(density) { (maxWidth - knobSize - inset * 2).toPx() }.coerceAtLeast(1f)
-            val offset = remember { Animatable(0f) }
+            var x by remember { mutableFloatStateOf(0f) }
+            // A new width can make the old position too far; it is held inside the track when it is drawn.
+            val drawn = x.coerceAtMost(travel)
+            androidx.compose.runtime.CompositionLocalProvider(LocalLayoutDirection provides outerDirection) {
             Row(
-                modifier = Modifier.fillMaxWidth().height(trackHeight).padding(start = knobSize + inset * 2, end = 20.dp),
+                modifier = Modifier.fillMaxWidth().height(trackHeight).absolutePadding(left = knobSize + inset * 2, right = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -178,19 +196,23 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
                 Spacer(Modifier.size(8.dp))
                 Text(text = label, color = onTrack.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            }
             Box(
                 modifier = Modifier
                     .padding(inset)
-                    .offset { androidx.compose.ui.unit.IntOffset(offset.value.toInt(), 0) }
+                    .offset { androidx.compose.ui.unit.IntOffset(drawn.toInt(), 0) }
                     .size(knobSize)
                     .background(knobColor, CircleShape)
                     .draggable(
                         orientation = Orientation.Horizontal,
-                        state = rememberDraggableState { delta -> scope.launch { offset.snapTo((offset.value + delta).coerceIn(0f, travel)) } },
+                        state = rememberDraggableState { delta -> x = (x + delta).coerceIn(0f, travel) },
                         onDragStopped = {
-                            val done = offset.value >= travel * 0.7f
-                            scope.launch {
-                                if (reduceMotion) offset.snapTo(0f) else offset.animateTo(0f, spring())
+                            val done = x >= travel * 0.7f
+                            val from = x
+                            if (reduceMotion) {
+                                x = 0f
+                            } else {
+                                scope.launch { animate(from, 0f, animationSpec = spring()) { value, _ -> x = value } }
                             }
                             if (done) onToggle()
                         },
