@@ -193,9 +193,93 @@ private val CanyonDark = darkColorScheme(
     surfaceContainerHighest = Color(0xFF402C3A),
 )
 
+// Wheat: Pastel Sage Gray #A7A594, Wheat Beige #E9D2B8, Deep Eggplant #6A0D12.
+private val WheatLight = lightColorScheme(
+    primary = Color(0xFF6A0D12), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFE9D2B8), onPrimaryContainer = Color(0xFF2B0507),
+    secondary = Color(0xFF65634F), onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFE3E1CF), onSecondaryContainer = Color(0xFF1C1B10),
+    tertiary = Color(0xFF7A5A2B), onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFF6DDB9), onTertiaryContainer = Color(0xFF2A1800),
+    error = Color(0xFFBA1A1A), errorContainer = Color(0xFFFFDAD6),
+    onError = Color(0xFFFFFFFF), onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFFFF9F2), onBackground = Color(0xFF1F1B16),
+    surface = Color(0xFFFFF9F2), onSurface = Color(0xFF1F1B16),
+    surfaceVariant = Color(0xFFEBE1D3), onSurfaceVariant = Color(0xFF4B463D),
+    outline = Color(0xFF7C766B), outlineVariant = Color(0xFFCEC5B8),
+    inverseSurface = Color(0xFF34302A), inverseOnSurface = Color(0xFFF8EFE6),
+    inversePrimary = Color(0xFFFFB3AE), scrim = Color(0xFF000000), surfaceTint = Color(0xFF6A0D12),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFFAF1E8),
+    surfaceContainer = Color(0xFFF4EBE2), surfaceContainerHigh = Color(0xFFEEE5DC),
+    surfaceContainerHighest = Color(0xFFE8DFD6),
+)
+
+private val WheatDark = darkColorScheme(
+    primary = Color(0xFFE9D2B8), onPrimary = Color(0xFF3B2A14),
+    primaryContainer = Color(0xFF6A0D12), onPrimaryContainer = Color(0xFFFFDAD6),
+    secondary = Color(0xFFA7A594), onSecondary = Color(0xFF2F2F22),
+    secondaryContainer = Color(0xFF4A4A3A), onSecondaryContainer = Color(0xFFE3E1CF),
+    tertiary = Color(0xFFE9D2B8), onTertiary = Color(0xFF3B2A14),
+    tertiaryContainer = Color(0xFF5A4326), onTertiaryContainer = Color(0xFFF6DDB9),
+    error = Color(0xFFFFB4AB), errorContainer = Color(0xFF93000A),
+    onError = Color(0xFF690005), onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF1A1411), onBackground = Color(0xFFEBE1D6),
+    surface = Color(0xFF1A1411), onSurface = Color(0xFFEBE1D6),
+    surfaceVariant = Color(0xFF4B463D), onSurfaceVariant = Color(0xFFCEC5B8),
+    outline = Color(0xFF979082), outlineVariant = Color(0xFF4B463D),
+    inverseSurface = Color(0xFFEBE1D6), inverseOnSurface = Color(0xFF34302A),
+    inversePrimary = Color(0xFF6A0D12), scrim = Color(0xFF000000), surfaceTint = Color(0xFFE9D2B8),
+    surfaceContainerLowest = Color(0xFF130E0B), surfaceContainerLow = Color(0xFF231C18),
+    surfaceContainer = Color(0xFF281F1B), surfaceContainerHigh = Color(0xFF322925),
+    surfaceContainerHighest = Color(0xFF3D3430),
+)
+
+// Cobalt: Midnight Black #030407, Electric Cobalt Blue #1558C9, Acid Lime #D4FF24.
+private val CobaltLight = lightColorScheme(
+    primary = Color(0xFF1558C9), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFD9E5FF), onPrimaryContainer = Color(0xFF001A43),
+    secondary = Color(0xFF566500), onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFD4FF24), onSecondaryContainer = Color(0xFF1A2000),
+    tertiary = Color(0xFF3F4F00), onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFE6F78A), onTertiaryContainer = Color(0xFF141B00),
+    error = Color(0xFFBA1A1A), errorContainer = Color(0xFFFFDAD6),
+    onError = Color(0xFFFFFFFF), onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFF8FAFF), onBackground = Color(0xFF191C22),
+    surface = Color(0xFFF8FAFF), onSurface = Color(0xFF191C22),
+    surfaceVariant = Color(0xFFDFE3F0), onSurfaceVariant = Color(0xFF424652),
+    outline = Color(0xFF727683), outlineVariant = Color(0xFFC2C6D4),
+    inverseSurface = Color(0xFF2E3037), inverseOnSurface = Color(0xFFF0F0F9),
+    inversePrimary = Color(0xFFB0C6FF), scrim = Color(0xFF000000), surfaceTint = Color(0xFF1558C9),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFF2F3FA),
+    surfaceContainer = Color(0xFFECEDF4), surfaceContainerHigh = Color(0xFFE6E8EF),
+    surfaceContainerHighest = Color(0xFFE1E2E9),
+)
+
+private val CobaltDark = darkColorScheme(
+    primary = Color(0xFFD4FF24), onPrimary = Color(0xFF263300),
+    primaryContainer = Color(0xFF1558C9), onPrimaryContainer = Color(0xFFE0EBFF),
+    secondary = Color(0xFF9DBBF5), onSecondary = Color(0xFF05295F),
+    secondaryContainer = Color(0xFF1C3A6E), onSecondaryContainer = Color(0xFFD9E5FF),
+    tertiary = Color(0xFFD4FF24), onTertiary = Color(0xFF263300),
+    tertiaryContainer = Color(0xFF3F4F00), onTertiaryContainer = Color(0xFFE6F78A),
+    error = Color(0xFFFFB4AB), errorContainer = Color(0xFF93000A),
+    onError = Color(0xFF690005), onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF030407), onBackground = Color(0xFFE2E4EC),
+    surface = Color(0xFF030407), onSurface = Color(0xFFE2E4EC),
+    surfaceVariant = Color(0xFF2A2E3A), onSurfaceVariant = Color(0xFFC2C6D4),
+    outline = Color(0xFF8C909E), outlineVariant = Color(0xFF2A2E3A),
+    inverseSurface = Color(0xFFE2E4EC), inverseOnSurface = Color(0xFF2E3037),
+    inversePrimary = Color(0xFF1558C9), scrim = Color(0xFF000000), surfaceTint = Color(0xFFD4FF24),
+    surfaceContainerLowest = Color(0xFF000002), surfaceContainerLow = Color(0xFF0C0E14),
+    surfaceContainer = Color(0xFF11131A), surfaceContainerHigh = Color(0xFF191C24),
+    surfaceContainerHighest = Color(0xFF22252E),
+)
+
 private fun paletteScheme(palette: String, dark: Boolean): ColorScheme = when (palette) {
     "1" -> if (dark) MochaDark else MochaLight
     "2" -> if (dark) CanyonDark else CanyonLight
+    "3" -> if (dark) WheatDark else WheatLight
+    "4" -> if (dark) CobaltDark else CobaltLight
     else -> if (dark) DarkColor else LightColor
 }
 
@@ -234,6 +318,16 @@ object ThemeManager {
     )
     val palette: StateFlow<String> = _palette.asStateFlow()
 
+    private val _cardStyle = MutableStateFlow(
+        CardStyle.of(MmkvManager.decodeSettingsString(AppConfig.PREF_CARD_STYLE, CardStyle.Classic.key))
+    )
+    val cardStyle: StateFlow<CardStyle> = _cardStyle.asStateFlow()
+
+    fun setCardStyle(style: CardStyle) {
+        MmkvManager.encodeSettings(AppConfig.PREF_CARD_STYLE, style.key)
+        _cardStyle.value = style
+    }
+
     fun setPalette(value: String) {
         MmkvManager.encodeSettings(AppConfig.PREF_COLOR_PALETTE, value)
         _palette.value = value
@@ -255,6 +349,7 @@ object ThemeManager {
         _dynamicColorEnabled.value =
             MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
         _palette.value = MmkvManager.decodeSettingsString(AppConfig.PREF_COLOR_PALETTE, "0") ?: "0"
+        _cardStyle.value = CardStyle.of(MmkvManager.decodeSettingsString(AppConfig.PREF_CARD_STYLE, CardStyle.Classic.key))
     }
 }
 
@@ -277,6 +372,7 @@ fun AppTheme(
 ) {
     val dynamicColor by ThemeManager.dynamicColorEnabled.collectAsState()
     val palette by ThemeManager.palette.collectAsState()
+    val cardStyle by ThemeManager.cardStyle.collectAsState()
     val context = LocalContext.current
     val usePersianFont = LocalConfiguration.current.locales[0].language == "fa"
     val colorScheme = when {
@@ -312,6 +408,7 @@ fun AppTheme(
 
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme,
+        LocalCardStyle provides cardStyle,
         LocalAppSnackbar provides snackbarController,
         LocalReduceMotion provides reduceMotion
     ) {

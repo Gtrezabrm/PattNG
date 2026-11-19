@@ -833,4 +833,9 @@
     <string name="palette_default">Mặc định</string>
     <string name="palette_mocha">Mocha</string>
     <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">Kiểu thẻ</string>
+    <string name="card_style_classic">Cổ điển</string>
+    <string name="card_style_glass">Kính</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
 </resources>

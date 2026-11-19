@@ -50,6 +50,7 @@ import com.v2ray.ang.ui.compose.SettingsEditItem
 import com.v2ray.ang.ui.compose.SettingsListItem
 import com.v2ray.ang.ui.compose.SettingsMenuItem
 import com.v2ray.ang.ui.compose.SettingsSwitchItem
+import com.v2ray.ang.ui.compose.CardStyle
 import com.v2ray.ang.ui.compose.ThemeManager
 import com.v2ray.ang.ui.compose.verticalScrollbar
 import com.v2ray.ang.util.LogUtil
@@ -161,6 +162,7 @@ fun SettingsScreen(
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
     var colorPalette by rememberMmkvString(AppConfig.PREF_COLOR_PALETTE, "0")
+    var cardStyle by rememberMmkvString(AppConfig.PREF_CARD_STYLE, CardStyle.Classic.key)
     var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     val settingsContext = androidx.compose.ui.platform.LocalContext.current
     val settingsConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -292,12 +294,27 @@ fun SettingsScreen(
                         stringResource(R.string.palette_default),
                         stringResource(R.string.palette_mocha),
                         stringResource(R.string.palette_canyon),
+                        stringResource(R.string.palette_wheat),
+                        stringResource(R.string.palette_cobalt),
                     ),
-                    values = listOf("0", "1", "2"),
+                    values = listOf("0", "1", "2", "3", "4"),
                     selectedValue = colorPalette,
                     onSelected = {
                         colorPalette = it
                         ThemeManager.setPalette(it)
+                    }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_card_style),
+                    entries = listOf(
+                        stringResource(R.string.card_style_classic),
+                        stringResource(R.string.card_style_glass),
+                    ),
+                    values = listOf(CardStyle.Classic.key, CardStyle.Glass.key),
+                    selectedValue = cardStyle,
+                    onSelected = {
+                        cardStyle = it
+                        ThemeManager.setCardStyle(CardStyle.of(it))
                     }
                 )
                 SettingsListItem(

@@ -839,4 +839,9 @@
     <string name="palette_default">По умолчанию</string>
     <string name="palette_mocha">Mocha</string>
     <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">Стиль карточек</string>
+    <string name="card_style_classic">Классический</string>
+    <string name="card_style_glass">Стекло</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
 </resources>

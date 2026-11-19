@@ -94,7 +94,10 @@ import com.v2ray.ang.R
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import com.v2ray.ang.ui.compose.CardStyle
+import com.v2ray.ang.ui.compose.LocalCardStyle
 import com.v2ray.ang.ui.compose.LocalReduceMotion
+import com.v2ray.ang.ui.compose.glassRim
 
 /** What the home card shows; [HomeConnection.cardStatus] maps the state of the main screen to it. */
 enum class HomeCardStatus {
@@ -185,6 +188,7 @@ fun HomeConnectCard(
                 .widthIn(max = if (landscape) 720.dp else 480.dp)
                 .padding(if (compact) 8.dp else 16.dp)
                 .background(remember(colors.container, colors.containerEnd) { Brush.verticalGradient(listOf(colors.container, colors.containerEnd)) }, cardShape)
+                .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(cardShape, MaterialTheme.colorScheme.tertiary) else Modifier)
                 .verticalScroll(rememberScrollState()),
         ) {
             if (landscape) {

@@ -42,6 +42,11 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.CardStyle
+import com.v2ray.ang.ui.compose.LocalCardStyle
+import com.v2ray.ang.ui.compose.LocalReduceMotion
+import com.v2ray.ang.ui.compose.glassBlobs
+import com.v2ray.ang.ui.compose.glassRim
 import com.v2ray.ang.ui.compose.AppTopBar
 import kotlinx.coroutines.delay
 
@@ -117,9 +122,15 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
+        val glass = LocalCardStyle.current == CardStyle.Glass
+        val blobs = glass && !LocalReduceMotion.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .then(
+                    if (blobs) Modifier.glassBlobs(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
+                    else Modifier
+                )
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -154,14 +165,21 @@ fun HomeScreen(
 
 private const val NANOS_PER_SECOND = 1_000_000_000L
 
+/** The fill of a glass surface is a little see-through, so the corner waves show; the text colors stay the same. */
+@Composable
+private fun glassFill(color: Color): Color =
+    if (LocalCardStyle.current == CardStyle.Glass) color.copy(alpha = 0.82f) else color
+
 /** One row that opens the list of servers; it is one semantic node, spoken with the server it would change. */
 @Composable
 private fun HomeServerSelector(serverName: String?, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = modifier.semantics(mergeDescendants = true) {},
+        color = glassFill(MaterialTheme.colorScheme.surfaceContainer),
+        modifier = modifier
+            .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(RoundedCornerShape(24.dp), MaterialTheme.colorScheme.tertiary) else Modifier)
+            .semantics(mergeDescendants = true) {},
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
@@ -194,8 +212,9 @@ private fun HomeQuickActions(
 ) {
     Surface(
         shape = RoundedCornerShape(32.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = modifier,
+        color = glassFill(MaterialTheme.colorScheme.surfaceContainerHigh),
+        modifier = modifier
+            .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(RoundedCornerShape(32.dp), MaterialTheme.colorScheme.tertiary) else Modifier),
     ) {
         Row(
             modifier = Modifier.padding(6.dp),

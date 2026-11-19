@@ -835,4 +835,9 @@
     <string name="palette_default">ডিফল্ট</string>
     <string name="palette_mocha">Mocha</string>
     <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">কার্ডের ধরন</string>
+    <string name="card_style_classic">ক্লাসিক</string>
+    <string name="card_style_glass">গ্লাস</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
 </resources>

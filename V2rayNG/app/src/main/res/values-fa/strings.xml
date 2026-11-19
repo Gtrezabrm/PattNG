@@ -836,4 +836,9 @@
     <string name="palette_default">پیش‌فرض</string>
     <string name="palette_mocha">Mocha</string>
     <string name="palette_canyon">Canyon</string>
+    <string name="title_pref_card_style">سبک کارت‌ها</string>
+    <string name="card_style_classic">کلاسیک</string>
+    <string name="card_style_glass">شیشه‌ای</string>
+    <string name="palette_wheat">Wheat</string>
+    <string name="palette_cobalt">Cobalt</string>
 </resources>
