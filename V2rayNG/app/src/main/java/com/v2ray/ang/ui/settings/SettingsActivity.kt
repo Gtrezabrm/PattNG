@@ -160,6 +160,7 @@ fun SettingsScreen(
         )
     }
     var uiModeNight by rememberMmkvString(AppConfig.PREF_UI_MODE_NIGHT, "0")
+    var colorPalette by rememberMmkvString(AppConfig.PREF_COLOR_PALETTE, "0")
     var dynamicColor by rememberMmkvBool(AppConfig.PREF_DYNAMIC_COLOR, false)
     val settingsContext = androidx.compose.ui.platform.LocalContext.current
     val settingsConfiguration = androidx.compose.ui.platform.LocalConfiguration.current
@@ -283,6 +284,20 @@ fun SettingsScreen(
                     onCheckedChange = {
                         dynamicColor = it
                         ThemeManager.setDynamicColorEnabled(it)
+                    }
+                )
+                SettingsListItem(
+                    title = stringResource(R.string.title_pref_color_palette),
+                    entries = listOf(
+                        stringResource(R.string.palette_default),
+                        stringResource(R.string.palette_mocha),
+                        stringResource(R.string.palette_canyon),
+                    ),
+                    values = listOf("0", "1", "2"),
+                    selectedValue = colorPalette,
+                    onSelected = {
+                        colorPalette = it
+                        ThemeManager.setPalette(it)
                     }
                 )
                 SettingsListItem(

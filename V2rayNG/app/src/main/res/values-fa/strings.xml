@@ -832,4 +832,8 @@
     <string name="home_details_title">جزئیات اتصال</string>
     <string name="home_change_server">برای تغییر سرور بزنید</string>
 
+    <string name="title_pref_color_palette">پالت رنگ</string>
+    <string name="palette_default">پیش‌فرض</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

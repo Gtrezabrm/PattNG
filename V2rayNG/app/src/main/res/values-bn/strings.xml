@@ -831,4 +831,8 @@
     <string name="home_details_title">সংযোগের বিবরণ</string>
     <string name="home_change_server">সার্ভার পরিবর্তন করতে ট্যাপ করুন</string>
 
+    <string name="title_pref_color_palette">রঙের প্যালেট</string>
+    <string name="palette_default">ডিফল্ট</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

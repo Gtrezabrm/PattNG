@@ -831,4 +831,8 @@
     <string name="home_details_title">جزئیات منپیز</string>
     <string name="home_change_server">واسه عوض کردن سرور بزن</string>
 
+    <string name="title_pref_color_palette">پالت رنگ</string>
+    <string name="palette_default">پیش‌فرض</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

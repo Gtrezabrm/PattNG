@@ -835,4 +835,8 @@
     <string name="home_details_title">Сведения о подключении</string>
     <string name="home_change_server">Нажмите, чтобы сменить сервер</string>
 
+    <string name="title_pref_color_palette">Цветовая палитра</string>
+    <string name="palette_default">По умолчанию</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

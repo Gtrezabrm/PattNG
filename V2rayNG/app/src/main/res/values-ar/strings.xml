@@ -839,4 +839,8 @@
     <string name="home_details_title">تفاصيل الاتصال</string>
     <string name="home_change_server">اضغط لتغيير الخادم</string>
 
+    <string name="title_pref_color_palette">لوحة الألوان</string>
+    <string name="palette_default">الافتراضي</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

@@ -829,4 +829,8 @@
     <string name="home_details_title">連線詳情</string>
     <string name="home_change_server">點按以變更伺服器</string>
 
+    <string name="title_pref_color_palette">配色方案</string>
+    <string name="palette_default">預設</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

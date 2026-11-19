@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -109,6 +110,95 @@ private val DarkColor = darkColorScheme(
     surfaceContainerHighest = Color(0xFF2F3633),
 )
 
+// Color palettes selectable in the settings. "0" is the default PattNG palette above.
+// Mocha: Mocha Brown #87624A, Platinum White #DDE3E8, Pale Lavender #E8D0F2.
+private val MochaLight = lightColorScheme(
+    primary = Color(0xFF87624A), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFF4DFD0), onPrimaryContainer = Color(0xFF301A0B),
+    secondary = Color(0xFF5C6670), onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFDDE3E8), onSecondaryContainer = Color(0xFF171E24),
+    tertiary = Color(0xFF7C5C8A), onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFE8D0F2), onTertiaryContainer = Color(0xFF2E1539),
+    error = Color(0xFFBA1A1A), errorContainer = Color(0xFFFFDAD6),
+    onError = Color(0xFFFFFFFF), onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFFFF8F5), onBackground = Color(0xFF211A16),
+    surface = Color(0xFFFFF8F5), onSurface = Color(0xFF211A16),
+    surfaceVariant = Color(0xFFF1DFD5), onSurfaceVariant = Color(0xFF50443D),
+    outline = Color(0xFF82746B), outlineVariant = Color(0xFFD4C3B9),
+    inverseSurface = Color(0xFF362F2B), inverseOnSurface = Color(0xFFFBEEE8),
+    inversePrimary = Color(0xFFE8BDA3), scrim = Color(0xFF000000), surfaceTint = Color(0xFF87624A),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFFBF1EC),
+    surfaceContainer = Color(0xFFF6EBE5), surfaceContainerHigh = Color(0xFFF0E5DF),
+    surfaceContainerHighest = Color(0xFFEADFD9),
+)
+
+private val MochaDark = darkColorScheme(
+    primary = Color(0xFFE8D0F2), onPrimary = Color(0xFF3A2446),
+    primaryContainer = Color(0xFF87624A), onPrimaryContainer = Color(0xFFFFE9DA),
+    secondary = Color(0xFFDDE3E8), onSecondary = Color(0xFF2B3237),
+    secondaryContainer = Color(0xFF4C3E36), onSecondaryContainer = Color(0xFFF1DFD5),
+    tertiary = Color(0xFFE8BDA3), onTertiary = Color(0xFF45290F),
+    tertiaryContainer = Color(0xFF63401F), onTertiaryContainer = Color(0xFFFFDCC4),
+    error = Color(0xFFFFB4AB), errorContainer = Color(0xFF93000A),
+    onError = Color(0xFF690005), onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF1D1310), onBackground = Color(0xFFEDE0DA),
+    surface = Color(0xFF1D1310), onSurface = Color(0xFFEDE0DA),
+    surfaceVariant = Color(0xFF50443D), onSurfaceVariant = Color(0xFFD4C3B9),
+    outline = Color(0xFF9C8D84), outlineVariant = Color(0xFF50443D),
+    inverseSurface = Color(0xFFEDE0DA), inverseOnSurface = Color(0xFF362F2B),
+    inversePrimary = Color(0xFF87624A), scrim = Color(0xFF000000), surfaceTint = Color(0xFFE8D0F2),
+    surfaceContainerLowest = Color(0xFF160D0A), surfaceContainerLow = Color(0xFF261B17),
+    surfaceContainer = Color(0xFF2B1F1B), surfaceContainerHigh = Color(0xFF362A25),
+    surfaceContainerHighest = Color(0xFF41342F),
+)
+
+// Canyon: Ice Blue #D3E1F0, Deep Purple #4A0F3D, Canyon Gold #F4A300.
+private val CanyonLight = lightColorScheme(
+    primary = Color(0xFF4A0F3D), onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFF6D7EC), onPrimaryContainer = Color(0xFF330028),
+    secondary = Color(0xFF8A5A00), onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFFFDDA3), onSecondaryContainer = Color(0xFF2C1A00),
+    tertiary = Color(0xFF3E5F85), onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFFD3E1F0), onTertiaryContainer = Color(0xFF0A1D31),
+    error = Color(0xFFBA1A1A), errorContainer = Color(0xFFFFDAD6),
+    onError = Color(0xFFFFFFFF), onErrorContainer = Color(0xFF410002),
+    background = Color(0xFFFFF7FB), onBackground = Color(0xFF211820),
+    surface = Color(0xFFFFF7FB), onSurface = Color(0xFF211820),
+    surfaceVariant = Color(0xFFEFDDE9), onSurfaceVariant = Color(0xFF4E4350),
+    outline = Color(0xFF80737F), outlineVariant = Color(0xFFD2C1CE),
+    inverseSurface = Color(0xFF362D35), inverseOnSurface = Color(0xFFFBEDF7),
+    inversePrimary = Color(0xFFF2B0E2), scrim = Color(0xFF000000), surfaceTint = Color(0xFF4A0F3D),
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFFBEFF6),
+    surfaceContainer = Color(0xFFF6E9F1), surfaceContainerHigh = Color(0xFFF0E3EB),
+    surfaceContainerHighest = Color(0xFFEAD8E6),
+)
+
+private val CanyonDark = darkColorScheme(
+    primary = Color(0xFFD3E1F0), onPrimary = Color(0xFF1A2E44),
+    primaryContainer = Color(0xFF5C1D4D), onPrimaryContainer = Color(0xFFFFD8F0),
+    secondary = Color(0xFFF4A300), onSecondary = Color(0xFF3B2600),
+    secondaryContainer = Color(0xFF6B4A00), onSecondaryContainer = Color(0xFFFFDDA3),
+    tertiary = Color(0xFFB9CDE6), onTertiary = Color(0xFF1E3248),
+    tertiaryContainer = Color(0xFF354B66), onTertiaryContainer = Color(0xFFD3E1F0),
+    error = Color(0xFFFFB4AB), errorContainer = Color(0xFF93000A),
+    onError = Color(0xFF690005), onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF1B0A18), onBackground = Color(0xFFEFDFEA),
+    surface = Color(0xFF1B0A18), onSurface = Color(0xFFEFDFEA),
+    surfaceVariant = Color(0xFF4E4350), onSurfaceVariant = Color(0xFFD2C1CE),
+    outline = Color(0xFF9A8B98), outlineVariant = Color(0xFF4E4350),
+    inverseSurface = Color(0xFFEFDFEA), inverseOnSurface = Color(0xFF362D35),
+    inversePrimary = Color(0xFF4A0F3D), scrim = Color(0xFF000000), surfaceTint = Color(0xFFD3E1F0),
+    surfaceContainerLowest = Color(0xFF130610), surfaceContainerLow = Color(0xFF25121F),
+    surfaceContainer = Color(0xFF2A1724), surfaceContainerHigh = Color(0xFF35212F),
+    surfaceContainerHighest = Color(0xFF402C3A),
+)
+
+private fun paletteScheme(palette: String, dark: Boolean): ColorScheme = when (palette) {
+    "1" -> if (dark) MochaDark else MochaLight
+    "2" -> if (dark) CanyonDark else CanyonLight
+    else -> if (dark) DarkColor else LightColor
+}
+
 // Semantic Colors
 val colorPing = Color(0xFF009966) // Green
 val colorPingRed = Color(0xFFFF0099) // Pink Red
@@ -139,6 +229,16 @@ object ThemeManager {
     )
     val dynamicColorEnabled: StateFlow<Boolean> = _dynamicColorEnabled.asStateFlow()
 
+    private val _palette = MutableStateFlow(
+        MmkvManager.decodeSettingsString(AppConfig.PREF_COLOR_PALETTE, "0") ?: "0"
+    )
+    val palette: StateFlow<String> = _palette.asStateFlow()
+
+    fun setPalette(value: String) {
+        MmkvManager.encodeSettings(AppConfig.PREF_COLOR_PALETTE, value)
+        _palette.value = value
+    }
+
     fun setThemeMode(mode: String) {
         MmkvManager.encodeSettings(AppConfig.PREF_UI_MODE_NIGHT, mode)
         _themeMode.value = mode
@@ -154,6 +254,7 @@ object ThemeManager {
             MmkvManager.decodeSettingsString(AppConfig.PREF_UI_MODE_NIGHT, "0") ?: "0"
         _dynamicColorEnabled.value =
             MmkvManager.decodeSettingsBool(AppConfig.PREF_DYNAMIC_COLOR, false)
+        _palette.value = MmkvManager.decodeSettingsString(AppConfig.PREF_COLOR_PALETTE, "0") ?: "0"
     }
 }
 
@@ -175,6 +276,7 @@ fun AppTheme(
     content: @Composable () -> Unit
 ) {
     val dynamicColor by ThemeManager.dynamicColorEnabled.collectAsState()
+    val palette by ThemeManager.palette.collectAsState()
     val context = LocalContext.current
     val usePersianFont = LocalConfiguration.current.locales[0].language == "fa"
     val colorScheme = when {
@@ -182,8 +284,7 @@ fun AppTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColor
-        else -> LightColor
+        else -> paletteScheme(palette, darkTheme)
     }
     val snackbarController = rememberAppSnackbarController()
     // Read again whenever the screen resumes, so that the switch of the settings applies on return.

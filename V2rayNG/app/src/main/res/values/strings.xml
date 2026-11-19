@@ -841,4 +841,8 @@
     <string name="home_details_title">Connection details</string>
     <string name="home_change_server">Tap to change server</string>
 
+    <string name="title_pref_color_palette">Color palette</string>
+    <string name="palette_default">Default</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

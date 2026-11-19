@@ -829,4 +829,8 @@
     <string name="home_details_title">Chi tiết kết nối</string>
     <string name="home_change_server">Chạm để đổi máy chủ</string>
 
+    <string name="title_pref_color_palette">Bảng màu</string>
+    <string name="palette_default">Mặc định</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>

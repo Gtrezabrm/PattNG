@@ -832,4 +832,8 @@
     <string name="home_details_title">Bağlantı təfərrüatları</string>
     <string name="home_change_server">Serveri dəyişmək üçün toxunun</string>
 
+    <string name="title_pref_color_palette">Rəng palitrası</string>
+    <string name="palette_default">Susmaya görə</string>
+    <string name="palette_mocha">Mocha</string>
+    <string name="palette_canyon">Canyon</string>
 </resources>
