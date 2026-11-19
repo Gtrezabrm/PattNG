@@ -110,6 +110,8 @@ class MainActivity : HelperBaseComponentActivity() {
         super.onStart()
         // The service can have gone away while the screen was not shown, without a word if its process died.
         mainViewModel.onAction(MainAction.RefreshServiceState)
+        // A profile may have been renamed in its editor while this screen was away.
+        mainViewModel.refreshSelectedServerName()
     }
 
     @Composable
