@@ -188,7 +188,7 @@ fun HomeConnectCard(
                 .widthIn(max = if (landscape) 720.dp else 480.dp)
                 .padding(if (compact) 8.dp else 16.dp)
                 .background(remember(colors.container, colors.containerEnd) { Brush.verticalGradient(listOf(colors.container, colors.containerEnd)) }, cardShape)
-                .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(cardShape, MaterialTheme.colorScheme.tertiary) else Modifier)
+                .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(40.dp, MaterialTheme.colorScheme.tertiary) else Modifier)
                 .verticalScroll(rememberScrollState()),
         ) {
             if (landscape) {

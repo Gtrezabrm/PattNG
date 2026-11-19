@@ -178,7 +178,7 @@ private fun HomeServerSelector(serverName: String?, onClick: () -> Unit, modifie
         shape = RoundedCornerShape(24.dp),
         color = glassFill(MaterialTheme.colorScheme.surfaceContainer),
         modifier = modifier
-            .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(RoundedCornerShape(24.dp), MaterialTheme.colorScheme.tertiary) else Modifier)
+            .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(24.dp, MaterialTheme.colorScheme.tertiary) else Modifier)
             .semantics(mergeDescendants = true) {},
     ) {
         Row(
@@ -214,7 +214,7 @@ private fun HomeQuickActions(
         shape = RoundedCornerShape(32.dp),
         color = glassFill(MaterialTheme.colorScheme.surfaceContainerHigh),
         modifier = modifier
-            .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(RoundedCornerShape(32.dp), MaterialTheme.colorScheme.tertiary) else Modifier),
+            .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(32.dp, MaterialTheme.colorScheme.tertiary) else Modifier),
     ) {
         Row(
             modifier = Modifier.padding(6.dp),

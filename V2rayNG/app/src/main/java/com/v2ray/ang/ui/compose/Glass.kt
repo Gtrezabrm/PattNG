@@ -3,14 +3,14 @@ package com.v2ray.ang.ui.compose
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawOutline
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** How the cards of the Home screen are drawn. Glass is a cheap look: no blur, no layers, nothing drawn per frame. */
@@ -26,8 +26,8 @@ enum class CardStyle(val key: String) {
 val LocalCardStyle = staticCompositionLocalOf { CardStyle.Classic }
 
 /** A glossy sheen and a light-to-accent rim over the content, built once per size. */
-fun Modifier.glassRim(shape: Shape, accent: Color): Modifier = drawWithCache {
-    val outline = shape.createOutline(size, layoutDirection, this)
+fun Modifier.glassRim(corner: Dp, accent: Color): Modifier = drawWithCache {
+    val radius = CornerRadius(corner.toPx())
     val sheen = Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.12f), Color.Transparent), endY = size.height * 0.45f)
     val rim = Brush.linearGradient(
         listOf(Color.White.copy(alpha = 0.55f), Color.White.copy(alpha = 0.06f), accent.copy(alpha = 0.7f)),
@@ -37,8 +37,8 @@ fun Modifier.glassRim(shape: Shape, accent: Color): Modifier = drawWithCache {
     val stroke = Stroke(width = 1.5.dp.toPx())
     onDrawWithContent {
         drawContent()
-        drawOutline(outline, brush = sheen)
-        drawOutline(outline, brush = rim, style = stroke)
+        drawRoundRect(brush = sheen, cornerRadius = radius)
+        drawRoundRect(brush = rim, cornerRadius = radius, style = stroke)
     }
 }
 
