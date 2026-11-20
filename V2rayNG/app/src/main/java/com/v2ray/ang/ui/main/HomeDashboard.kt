@@ -3,12 +3,19 @@ package com.v2ray.ang.ui.main
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -95,6 +102,7 @@ fun HomeDashboard(
                     size = emblem,
                     onClick = {},
                     interactive = false,
+                    showIcon = false,
                 )
                 if (connected && model.details != null) {
                     Text(
@@ -190,6 +198,7 @@ private fun DashboardServerCard(model: HomeCardModel, onClick: () -> Unit, modif
                         ipAddress = model.details.ipAddress?.takeIf { it.isNotBlank() } ?: stringResource(R.string.connection_test_testing),
                         countryCode = model.details.countryCode,
                         plain = true,
+                        showFlag = false,
                     )
                 }
             }
@@ -215,9 +224,9 @@ private fun DashboardFlag(countryCode: String?, size: Dp, modifier: Modifier = M
         contentAlignment = Alignment.Center,
     ) {
         when {
-            code == "IR" -> Image(
-                painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
-                contentDescription = name,
+            code == "IR" || flagDrawable(code) != null -> Image(
+                painter = painterResource(if (code == "IR") R.drawable.ic_flag_iran_lion_sun else flagDrawable(code)!!),
+                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -304,7 +313,7 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
                     contentDescription = label
                     stateDescription = statusText
                 }
-                .clickableAsButton(onToggle),
+                .accessibleToggle(label, onToggle),
         ) {
             val density = LocalDensity.current
             val travel = with(density) { (maxWidth - knobSize - inset * 2).toPx() }.coerceAtLeast(1f)
@@ -350,5 +359,26 @@ private fun SlideToConnect(status: HomeCardStatus, onToggle: () -> Unit, modifie
     }
 }
 
-private fun Modifier.clickableAsButton(onClick: () -> Unit): Modifier =
-    this.then(Modifier.clickable(role = Role.Button, onClick = onClick))
+/**
+ * A plain tap does nothing: the control is slid. A screen reader's double tap, a switch and a keyboard still toggle it,
+ * through the action of the semantics and the Enter, Space and D-pad center keys (on key up, so a held key toggles once).
+ */
+private fun Modifier.accessibleToggle(label: String, onToggle: () -> Unit): Modifier = this
+    .onKeyEvent { event ->
+        val key = event.key
+        val isConfirm = key == Key.Enter || key == Key.NumPadEnter || key == Key.DirectionCenter || key == Key.Spacebar
+        if (isConfirm && event.type == KeyEventType.KeyUp) {
+            onToggle()
+            true
+        } else {
+            isConfirm
+        }
+    }
+    .focusable()
+    .semantics {
+        role = Role.Button
+        onClick(label = label) {
+            onToggle()
+            true
+        }
+    }

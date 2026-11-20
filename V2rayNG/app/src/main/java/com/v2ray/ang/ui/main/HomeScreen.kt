@@ -189,6 +189,8 @@ private fun HomeServerSelector(serverName: String?, onClick: () -> Unit, modifie
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
         color = glassFill(MaterialTheme.colorScheme.surfaceContainer),
+        // A color with its own alpha is no theme token, so the content color is named, or the text turns dark.
+        contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = modifier
             .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(24.dp, MaterialTheme.colorScheme.tertiary) else Modifier)
             .semantics(mergeDescendants = true) {},
@@ -225,6 +227,7 @@ private fun HomeQuickActions(
     Surface(
         shape = RoundedCornerShape(32.dp),
         color = glassFill(MaterialTheme.colorScheme.surfaceContainerHigh),
+        contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = modifier
             .then(if (LocalCardStyle.current == CardStyle.Glass) Modifier.glassRim(32.dp, MaterialTheme.colorScheme.tertiary) else Modifier),
     ) {

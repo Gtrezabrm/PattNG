@@ -286,6 +286,8 @@ internal fun HomeConnectButton(
     onClick: () -> Unit,
     /** False for a picture of the state only: no click, no focus, no semantics of its own. */
     interactive: Boolean = true,
+    /** False for a picture of the state that is not a button: the play and stop signs would suggest one. */
+    showIcon: Boolean = true,
 ) {
     val running = status == HomeCardStatus.Connected
     val busy = status == HomeCardStatus.Connecting
@@ -386,7 +388,7 @@ internal fun HomeConnectButton(
                         modifier = Modifier.size(size * 0.29f),
                         color = colors.onButton,
                     )
-                } else {
+                } else if (showIcon) {
                     Icon(
                         painter = painterResource(if (running) R.drawable.ic_stop_24dp else R.drawable.ic_play_24dp),
                         contentDescription = null,
@@ -548,6 +550,8 @@ internal fun HomeIpDetailTile(
     modifier: Modifier = Modifier,
     /** A flat tile for a card of its own: no border, a tonal fill. */
     plain: Boolean = false,
+    /** False when the country is shown elsewhere on the same card. */
+    showFlag: Boolean = true,
 ) {
     val normalizedCountry = normalizeCountryCode(countryCode)
     val flag = countryFlagEmoji(countryCode)
@@ -568,7 +572,9 @@ internal fun HomeIpDetailTile(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (normalizedCountry == "IR") {
+                if (!showFlag) {
+                    // The flag stands on the card; the figure alone.
+                } else if (normalizedCountry == "IR") {
                     Image(
                         painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
                         contentDescription = countryName,
@@ -595,7 +601,7 @@ private fun HomeDetailTile(label: String, value: String, pending: Boolean = fals
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.38f),
-        contentColor = LocalContentColor.current,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary.copy(alpha = 0.42f)),
         modifier = modifier.semantics(mergeDescendants = true) {},
     ) {
