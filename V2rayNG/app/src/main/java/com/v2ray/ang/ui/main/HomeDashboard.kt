@@ -3,6 +3,11 @@ package com.v2ray.ang.ui.main
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -138,49 +143,94 @@ private fun DashboardServerCard(model: HomeCardModel, onClick: () -> Unit, modif
         contentColor = scheme.onSurface,
         modifier = modifier.fillMaxWidth().semantics(mergeDescendants = true) {},
     ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                Box(
-                    modifier = Modifier.size(48.dp).background(scheme.primaryContainer, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
+        Box {
+            // A faint brand shape in the corner, as a quiet decoration; the card clips it.
+            val motifShape = remember { MorphShape { 0f } }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = 48.dp, y = (-48).dp)
+                    .size(180.dp)
+                    .background(scheme.primary.copy(alpha = 0.10f), motifShape),
+            )
+            Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    DashboardFlag(
+                        countryCode = if (model.status == HomeCardStatus.Connected) model.details?.countryCode else null,
+                        size = 64.dp,
+                    )
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = model.serverName ?: stringResource(R.string.home_empty_title),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = if (model.status == HomeCardStatus.Empty) stringResource(R.string.home_change_server) else homeStatusText(model.status),
+                            style = MaterialTheme.typography.titleSmall,
+                            color = statusColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     Icon(
-                        painter = painterResource(R.drawable.ic_dns_24dp),
+                        painter = painterResource(R.drawable.ic_arrow_back_24dp),
                         contentDescription = null,
-                        tint = scheme.onPrimaryContainer,
+                        tint = scheme.onSurfaceVariant,
+                        // The arrow of the back button points away from the next screen; turn it to point at it.
+                        modifier = Modifier.graphicsLayer { rotationZ = if (rtl) 0f else 180f },
                     )
                 }
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = model.serverName ?: stringResource(R.string.home_empty_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = if (model.status == HomeCardStatus.Empty) stringResource(R.string.home_change_server) else homeStatusText(model.status),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = statusColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                if (model.status == HomeCardStatus.Connected && model.details != null) {
+                    HomeIpDetailTile(
+                        label = stringResource(R.string.home_details_ip),
+                        ipAddress = model.details.ipAddress?.takeIf { it.isNotBlank() } ?: stringResource(R.string.connection_test_testing),
+                        countryCode = model.details.countryCode,
+                        plain = true,
                     )
                 }
-                Icon(
-                    painter = painterResource(R.drawable.ic_arrow_back_24dp),
-                    contentDescription = null,
-                    tint = scheme.onSurfaceVariant,
-                    // The arrow of the back button points away from the next screen; turn it to point at it.
-                    modifier = Modifier.graphicsLayer { rotationZ = if (rtl) 0f else 180f },
-                )
             }
-            if (model.status == HomeCardStatus.Connected && model.details != null) {
-                HomeIpDetailTile(
-                    label = stringResource(R.string.home_details_ip),
-                    ipAddress = model.details.ipAddress?.takeIf { it.isNotBlank() } ?: stringResource(R.string.connection_test_testing),
-                    countryCode = model.details.countryCode,
-                    plain = true,
-                )
-            }
+        }
+    }
+}
+
+/**
+ * The country as a rounded square, the flag cropped to fill it; a country without a picture here shows its emoji flag
+ * on a tonal square, and no country at all shows the icon of a server.
+ */
+@Composable
+private fun DashboardFlag(countryCode: String?, size: Dp, modifier: Modifier = Modifier) {
+    val scheme = MaterialTheme.colorScheme
+    val shape = RoundedCornerShape(size * 0.3f)
+    val code = normalizeCountryCode(countryCode)
+    val emoji = countryFlagEmoji(countryCode)
+    val name = remember(code) {
+        code?.let { runCatching { java.util.Locale.Builder().setRegion(it).build().displayCountry }.getOrNull() }.orEmpty()
+    }
+    Box(
+        modifier = modifier.size(size).clip(shape).background(scheme.primaryContainer),
+        contentAlignment = Alignment.Center,
+    ) {
+        when {
+            code == "IR" -> Image(
+                painter = painterResource(R.drawable.ic_flag_iran_lion_sun),
+                contentDescription = name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+            )
+            emoji.isNotEmpty() -> Text(
+                text = emoji,
+                fontSize = (size.value * 0.5f).sp,
+                modifier = Modifier.clearAndSetSemantics { contentDescription = name },
+            )
+            else -> Icon(
+                painter = painterResource(R.drawable.ic_dns_24dp),
+                contentDescription = null,
+                tint = scheme.onPrimaryContainer,
+                modifier = Modifier.size(size * 0.5f),
+            )
         }
     }
 }
@@ -196,7 +246,7 @@ private fun DashboardPingRow(details: HomeCardDetails, onRefreshPingClick: () ->
             shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.weight(1f).heightIn(min = 56.dp).semantics(mergeDescendants = true) {},
+            modifier = Modifier.weight(1f).heightIn(min = 64.dp).semantics(mergeDescendants = true) {},
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 18.dp),
@@ -207,7 +257,7 @@ private fun DashboardPingRow(details: HomeCardDetails, onRefreshPingClick: () ->
                 Text(text = ping, style = MaterialTheme.typography.titleLarge, maxLines = 1)
             }
         }
-        FilledTonalIconButton(onClick = onRefreshPingClick, modifier = Modifier.size(56.dp)) {
+        FilledTonalIconButton(onClick = onRefreshPingClick, modifier = Modifier.size(64.dp)) {
             Icon(
                 painter = painterResource(R.drawable.ic_refresh_24dp),
                 contentDescription = stringResource(R.string.home_details_test_ping),

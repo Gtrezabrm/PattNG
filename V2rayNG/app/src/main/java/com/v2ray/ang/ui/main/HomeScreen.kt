@@ -107,9 +107,16 @@ fun HomeScreen(
         cancellable = uiState.isRunning,
     )
 
+    val glass = LocalCardStyle.current == CardStyle.Glass
+    val blobs = glass && !LocalReduceMotion.current
+    val scheme = MaterialTheme.colorScheme
     Scaffold(
+        // The corner waves lie behind the bar too, so the bar must not paint over them.
+        modifier = if (blobs) Modifier.background(scheme.background).glassBlobs(scheme.primary, scheme.tertiary) else Modifier,
+        containerColor = if (blobs) Color.Transparent else scheme.background,
         topBar = {
             AppTopBar(
+                containerColor = if (blobs) Color.Transparent else Color.Unspecified,
                 title = stringResource(R.string.app_name),
                 onBackClick = {},
                 navigationIcon = {
@@ -123,15 +130,9 @@ fun HomeScreen(
             )
         },
     ) { innerPadding ->
-        val glass = LocalCardStyle.current == CardStyle.Glass
-        val blobs = glass && !LocalReduceMotion.current
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .then(
-                    if (blobs) Modifier.glassBlobs(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-                    else Modifier
-                )
                 .padding(innerPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
