@@ -118,7 +118,8 @@ enum class HomeCardStatus {
 @Immutable
 data class HomeCardDetails(
     val pingMillis: Int?,
-    val duration: String,
+    /** Read where it is shown, so the clock's tick recomposes that text only and not the card around it. */
+    val duration: () -> String,
     val ipAddress: String? = null,
     val countryCode: String? = null,
     val download: String? = null,
@@ -516,7 +517,7 @@ private fun HomeCardDetailsBlock(
     val pingText = details.pingMillis?.let { stringResource(R.string.server_test_delay_value, it) } ?: measuring
     val tiles = buildList {
         add(stringResource(R.string.home_details_ping) to pingText)
-        add(stringResource(R.string.home_details_duration) to details.duration)
+        add(stringResource(R.string.home_details_duration) to details.duration())
         details.download?.let { add(stringResource(R.string.home_details_download) to it) }
         details.upload?.let { add(stringResource(R.string.home_details_upload) to it) }
     }

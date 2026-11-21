@@ -105,10 +105,9 @@ fun HomeDashboard(
                         .height(mapHeight),
                 )
                 if (connected && model.details != null) {
-                    Text(
-                        text = model.details.duration,
+                    DashboardDuration(
+                        duration = model.details.duration,
                         style = if (compact) MaterialTheme.typography.headlineLarge else MaterialTheme.typography.displayMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.heightIn(min = 40.dp),
                     )
                 } else {
@@ -382,3 +381,9 @@ private fun Modifier.accessibleToggle(label: String, onToggle: () -> Unit): Modi
             true
         }
     }
+
+/** The connection time, read here so that its tick redraws this text and nothing around it. */
+@Composable
+private fun DashboardDuration(duration: () -> String, style: androidx.compose.ui.text.TextStyle, modifier: Modifier = Modifier) {
+    Text(text = duration(), style = style, color = MaterialTheme.colorScheme.onSurface, modifier = modifier)
+}

@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,7 +79,7 @@ fun HomeScreen(
     val since = uiState.connectedSinceNanos
     // The clock ticks only while the screen is shown; in the background nothing wakes up each second.
     val lifecycleOwner = LocalLifecycleOwner.current
-    val duration by produceState(initialValue = HomeConnection.formatDuration(0), since, lifecycleOwner) {
+    val durationState = produceState(initialValue = HomeConnection.formatDuration(0), since, lifecycleOwner) {
         if (since == null) {
             value = HomeConnection.formatDuration(0)
             return@produceState
@@ -91,13 +92,16 @@ fun HomeScreen(
         }
     }
 
+    // Read by the text that shows it, not here: this screen does not recompose at each tick.
+    val durationText = remember(durationState) { { durationState.value } }
+
     val model = HomeCardModel(
         status = status,
         serverName = serverName,
         details = if (status == HomeCardStatus.Connected) {
             HomeCardDetails(
                 pingMillis = uiState.connectionPingMillis?.toInt(),
-                duration = duration,
+                duration = durationText,
                 ipAddress = uiState.connectionIpAddress,
                 countryCode = uiState.connectionCountryCode,
             )
