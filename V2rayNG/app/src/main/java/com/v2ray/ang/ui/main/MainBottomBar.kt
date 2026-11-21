@@ -115,7 +115,8 @@ fun MainBottomBar(
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .shadow(elevation = 3.dp, shape = CircleShape)
+                        // A shadow is an extra layer to draw; a weak phone goes without it.
+                        .shadow(elevation = if (LocalReduceMotion.current) 0.dp else 3.dp, shape = CircleShape)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                         .clickable(

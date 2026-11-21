@@ -41,16 +41,19 @@ private const val MASK_LATITUDE_SPAN = 146.0
 @Composable
 private fun rememberWorldMask(): BooleanArray? {
     val context = LocalContext.current
-    val mask by produceState<BooleanArray?>(initialValue = null) {
-        value = withContext(Dispatchers.Default) {
+    val mask by produceState<BooleanArray?>(initialValue = cachedWorldMask) {
+        // Decoded once for the process: the home screen comes and goes, the land does not change.
+        value = cachedWorldMask ?: withContext(Dispatchers.Default) {
             runCatching {
-                val bytes = context.resources.openRawResource(R.raw.world_mask).use { it.readBytes() }
+                val bytes = context.applicationContext.resources.openRawResource(R.raw.world_mask).use { it.readBytes() }
                 BooleanArray(MASK_COLUMNS * MASK_ROWS) { i -> (bytes[i / 8].toInt() shr (7 - i % 8)) and 1 == 1 }
             }.getOrNull()
-        }
+        }?.also { cachedWorldMask = it }
     }
     return mask
 }
+
+@Volatile private var cachedWorldMask: BooleanArray? = null
 
 private fun countryName(code: String?): String? =
     code?.let { runCatching { Locale.Builder().setRegion(it).build().displayCountry }.getOrNull() }?.takeIf { it.isNotBlank() }
