@@ -1137,7 +1137,16 @@ class MainViewModel(
         val requestId = testRequests.beginCurrent()
         _uiState.update { it.copy(isTesting = true, status = MainStatus.Testing) }
         dataSource.testCurrentServerRealPing(requestId)
+        // PattNG: a reply lost on its way (the service restarting, the receiver not yet registered) would leave
+        // "Testing" for good; the request ends here when nothing has answered it, and a late reply is then refused.
+        currentTestTimeoutJob?.cancel()
+        currentTestTimeoutJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(CURRENT_TEST_TIMEOUT_MILLIS)
+            if (testRequests.completeCurrent(requestId)) resetTestStatus()
+        }
     }
+
+    private var currentTestTimeoutJob: Job? = null
 
     private fun onTestsFinished(requestId: String) {
         if (testRequests.completeBulk(requestId) == null) return
@@ -1251,6 +1260,7 @@ class MainViewModel(
     internal enum class ReadingFate { SHOW, OVERTAKEN, HOLD_UNTIL_SETTLED, READ_AGAIN }
 
     companion object {
+        private const val CURRENT_TEST_TIMEOUT_MILLIS = 25_000L
         private const val TEST_RESULT_FLUSH_INTERVAL_MS = 500L
 
         /**
