@@ -2,6 +2,7 @@ package com.v2ray.ang.ui.compose
 
 import android.app.ActivityManager
 import android.content.Context
+import android.os.Build
 import android.provider.Settings
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.v2ray.ang.AppConfig
@@ -25,9 +26,12 @@ object MotionPolicy {
         // A phone with little memory is usually a slow one too, so it starts with fewer animations; the user can turn them on.
         val info = ActivityManager.MemoryInfo()
         context.getSystemService(ActivityManager::class.java)?.getMemoryInfo(info)
-        val weak = info.totalMem in 1 until WEAK_PHONE_RAM_BYTES
-        return lowRam || weak || scale == 0f
+        return isWeakPhone(lowRam, info.totalMem, Build.VERSION.SDK_INT, Runtime.getRuntime().availableProcessors()) || scale == 0f
     }
+
+    /** Little memory, an old Android (9 or lower) or four cores or fewer: any of them marks a phone that animates badly. */
+    internal fun isWeakPhone(lowRam: Boolean, totalMemBytes: Long, sdkInt: Int, cores: Int): Boolean =
+        lowRam || totalMemBytes in 1 until WEAK_PHONE_RAM_BYTES || sdkInt <= Build.VERSION_CODES.P || cores <= 4
 
     fun isReduced(context: Context): Boolean =
         MmkvManager.decodeSettingsBool(AppConfig.PREF_REDUCE_MOTION, defaultReduced(context))
