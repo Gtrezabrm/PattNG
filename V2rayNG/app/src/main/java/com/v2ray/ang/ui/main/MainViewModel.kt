@@ -202,7 +202,7 @@ class MainViewModel(
             MainServiceEvent.StateNotRunning ->
                 updateRunningState(false, clearTestingText = false, signal = RunningSignal.NOT_RUNNING)
             MainServiceEvent.StateStartSuccess -> {
-                toastSuccess(R.string.toast_services_success)
+                // The home screen shows the connected state; a message on top of it would only repeat it.
                 updateRunningState(true)
             }
 

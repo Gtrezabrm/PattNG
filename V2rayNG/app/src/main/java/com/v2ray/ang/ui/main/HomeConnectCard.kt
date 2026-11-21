@@ -162,7 +162,8 @@ fun HomeConnectCard(
         button = animateColorAsState(target.button, colorSpec, label = "home-card-button").value,
         onButton = animateColorAsState(target.onButton, colorSpec, label = "home-card-on-button").value,
     )
-    val showDetails = model.status == HomeCardStatus.Connected && model.details != null
+    val settled = rememberSettledConnected(model.status)
+    val showDetails = settled && model.details != null
     // Keep the last figures while the details fold away, so that they do not blank out during the exit animation.
     var lastDetails by remember { mutableStateOf<HomeCardDetails?>(null) }
     LaunchedEffect(model.details) { if (model.details != null) lastDetails = model.details }
@@ -660,4 +661,24 @@ internal fun homeCardColors(status: HomeCardStatus): HomeCardColors {
             scheme.surfaceContainerHigh, scheme.surfaceContainerHighest, scheme.onSurface, scheme.primary, scheme.onPrimary
         )
     }
+}
+
+
+/**
+ * True once the card has stayed connected for a moment. A start can report "running" a beat before the core says it is
+ * still warming up, and the card must not open its figures and fold them again; one that is already connected when the
+ * screen opens needs no wait.
+ */
+@Composable
+internal fun rememberSettledConnected(status: HomeCardStatus): Boolean {
+    var settled by remember { mutableStateOf(status == HomeCardStatus.Connected) }
+    LaunchedEffect(status) {
+        if (status == HomeCardStatus.Connected) {
+            if (!settled) kotlinx.coroutines.delay(900)
+            settled = true
+        } else {
+            settled = false
+        }
+    }
+    return settled
 }

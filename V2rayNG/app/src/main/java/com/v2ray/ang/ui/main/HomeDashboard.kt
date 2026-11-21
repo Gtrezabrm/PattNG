@@ -83,7 +83,7 @@ fun HomeDashboard(
     onRefreshPingClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val connected = model.status == HomeCardStatus.Connected
+    val connected = rememberSettledConnected(model.status)
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -192,7 +192,7 @@ private fun DashboardServerCard(model: HomeCardModel, onClick: () -> Unit, modif
                         modifier = Modifier.graphicsLayer { rotationZ = if (rtl) 0f else 180f },
                     )
                 }
-                if (model.status == HomeCardStatus.Connected && model.details != null) {
+                if (rememberSettledConnected(model.status) && model.details != null) {
                     HomeIpDetailTile(
                         label = stringResource(R.string.home_details_ip),
                         ipAddress = model.details.ipAddress?.takeIf { it.isNotBlank() } ?: stringResource(R.string.connection_test_testing),
