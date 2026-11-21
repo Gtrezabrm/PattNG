@@ -144,6 +144,7 @@ fun HomeScreen(
                     // Only the user starts the service: a failed or dropped connection is not retried by itself.
                     onConnectClick = { if (status == HomeCardStatus.Empty) onOpenServerList() else onAction(MainAction.ToggleService) },
                     onRefreshPingClick = { onAction(MainAction.TestCurrentServer) },
+                    realCountryCode = uiState.realCountryCode,
                     modifier = Modifier.weight(1f),
                 )
             } else HomeConnectCard(

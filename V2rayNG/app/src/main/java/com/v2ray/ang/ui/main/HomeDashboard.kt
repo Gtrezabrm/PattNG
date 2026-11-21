@@ -81,6 +81,7 @@ fun HomeDashboard(
     onServerClick: () -> Unit,
     onConnectClick: () -> Unit,
     onRefreshPingClick: () -> Unit,
+    realCountryCode: String?,
     modifier: Modifier = Modifier,
 ) {
     val connected = rememberSettledConnected(model.status)
@@ -93,16 +94,15 @@ fun HomeDashboard(
         // The hero takes what is left, so the screen has no hole: the brand shape stands in the middle, calm.
         BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
             val compact = maxHeight < 330.dp
-            val emblem = minOf(220.dp, maxHeight * 0.55f).coerceAtLeast(96.dp)
+            val mapHeight = minOf(260.dp, maxHeight * 0.62f).coerceAtLeast(120.dp)
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                HomeConnectButton(
-                    status = model.status,
-                    cancellable = false,
-                    colors = homeCardColors(model.status),
-                    size = emblem,
-                    onClick = {},
-                    interactive = false,
-                    showIcon = false,
+                HomeMapCard(
+                    realCountryCode = realCountryCode,
+                    exitCountryCode = if (connected) model.details?.countryCode else null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .widthIn(max = 560.dp)
+                        .height(mapHeight),
                 )
                 if (connected && model.details != null) {
                     Text(

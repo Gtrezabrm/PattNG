@@ -49,6 +49,9 @@ data class MainUiState(
     /** ISO 3166-1 alpha-2 code for the exit IP, when the IP lookup supplies one. */
     val connectionCountryCode: String? = null,
 
+    /** The country the user is in when no tunnel is up, from a lookup made outside it; memory only, never stored. */
+    val realCountryCode: String? = null,
+
     /** [System.nanoTime] when the running state began; null while not running. */
     val connectedSinceNanos: Long? = null,
     val locateTarget: LocateTarget? = null,

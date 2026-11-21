@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
+import com.v2ray.ang.handler.SpeedtestManager
 import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.GroupMapItem
 import com.v2ray.ang.dto.LocateTarget
@@ -186,6 +187,32 @@ class MainViewModel(
     init {
         collectServiceEvents()
         setupGroupTab()
+        refreshRealLocation()
+    }
+
+    private var realLocationJob: Job? = null
+    private var realLocationAtNanos = 0L
+
+    /**
+     * Where the user is seen from while no tunnel is up, for the map on the home screen. The answer is kept as a country
+     * code in memory only, never stored or logged, and asked at most once a minute. It waits a moment first so that a
+     * tunnel that is going down is gone and the answer is not the exit's.
+     */
+    private fun refreshRealLocation() {
+        val now = System.nanoTime()
+        if (realLocationJob?.isActive == true) return
+        if (realLocationAtNanos != 0L && now - realLocationAtNanos < 60_000_000_000L && _uiState.value.realCountryCode != null) return
+        realLocationJob = viewModelScope.launch {
+            kotlinx.coroutines.delay(1500)
+            if (_uiState.value.isRunning || _uiState.value.pendingStart) return@launch
+            val code = withContext(Dispatchers.IO) {
+                runCatching { SpeedtestManager.getDirectIPInfo()?.country }.getOrNull()
+            }
+            realLocationAtNanos = System.nanoTime()
+            // A tunnel that came up meanwhile may have answered for the exit: that is not the real place.
+            if (_uiState.value.isRunning || _uiState.value.pendingStart) return@launch
+            normalizeCountryCode(code)?.let { c -> _uiState.update { it.copy(realCountryCode = c) } }
+        }
     }
 
     private fun collectServiceEvents() {
@@ -1152,7 +1179,10 @@ class MainViewModel(
         val userRequested = userRequestedChange
         val now = System.nanoTime()
         // The duration and the figures outlive this ViewModel: a screen that comes back finds them where they were.
-        if (!running) ConnectionSession.clear()
+        if (!running) {
+            ConnectionSession.clear()
+            refreshRealLocation()
+        }
         val since = if (running) ConnectionSession.startedAtNanos(now) else null
         val restored = if (running) ConnectionSession.restoreFigures() else null
         _uiState.update { state ->
