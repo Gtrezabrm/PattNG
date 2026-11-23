@@ -1,5 +1,13 @@
 package com.v2ray.ang.ui.main
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -38,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.R
+import com.v2ray.ang.ui.compose.LocalReduceMotion
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.ui.compose.LocalDarkTheme
@@ -76,6 +85,11 @@ fun MainScreen(
     val isDarkTheme = LocalDarkTheme.current
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    // The home card is the first screen; the list of servers is a screen of its own, opened from it.
+    var showServerList by rememberSaveable { mutableStateOf(false) }
+    // The home screen is opt-in (Settings > UI): by default the list of servers is the first screen, as it always was.
+    val originalHome = com.v2ray.ang.ui.compose.ThemeManager.homeStyle.collectAsStateWithLifecycle().value == "original"
+    BackHandler(enabled = showServerList && !originalHome) { showServerList = false }
     var showSearch by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var showDelAllConfirm by remember { mutableStateOf(false) }
@@ -179,6 +193,33 @@ fun MainScreen(
             )
         }
     ) {
+        // Home and the list of servers pass into one another with a short fade-through; with fewer animations, at once.
+        val reduceMotion = LocalReduceMotion.current
+        AnimatedContent(
+            targetState = showServerList || originalHome,
+            transitionSpec = {
+                if (reduceMotion) {
+                    EnterTransition.None togetherWith ExitTransition.None
+                } else {
+                    fadeIn(tween(220, delayMillis = 90)) togetherWith
+                        fadeOut(tween(90))
+                }
+            },
+            label = "home-or-server-list",
+        ) { listShown ->
+        if (!listShown) {
+            HomeScreen(
+                mainViewModel = mainViewModel,
+                uiState = uiState,
+                onAction = onAction,
+                onMenuClick = { scope.launch { drawerState.open() } },
+                onOpenServerList = { showServerList = true },
+                onNavigate = { route ->
+                    scope.launch { drawerState.close() }
+                    onNavigate(route)
+                },
+            )
+        } else {
         Scaffold(
             contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
             topBar = {
@@ -252,7 +293,7 @@ fun MainScreen(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
                         userScrollEnabled = true,
-                        beyondViewportPageCount = 1,
+                        beyondViewportPageCount = 0,
                         key = { page -> groups.getOrNull(page)?.id ?: "group-page-$page" }
                     ) { page ->
                         val group = groups.getOrNull(page) ?: return@HorizontalPager
@@ -298,6 +339,8 @@ fun MainScreen(
                     .onSizeChanged { bottomBarHeightPx = it.height }
             )
             }
+        }
+        }
         }
     }
 }
