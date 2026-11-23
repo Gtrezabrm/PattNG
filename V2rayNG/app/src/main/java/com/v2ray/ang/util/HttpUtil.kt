@@ -190,9 +190,16 @@ object HttpUtil {
                         if (location.isNullOrEmpty()) {
                             throw IOException("Redirect location not found")
                         }
+                        val previousUrl = currentUrl
                         currentUrl = resolveLocation(currentUrl, location)
                         if (currentUrl.isNullOrEmpty()) {
                             throw IOException("Failed to resolve redirect location")
+                        }
+                        // PattNG: a redirect must not downgrade HTTPS to HTTP, which would expose the request to the network.
+                        if (previousUrl?.startsWith("https://", ignoreCase = true) == true &&
+                            currentUrl?.startsWith("https://", ignoreCase = true) != true
+                        ) {
+                            throw IOException("Refused redirect from HTTPS to a non-HTTPS location")
                         }
                         continue
                     }

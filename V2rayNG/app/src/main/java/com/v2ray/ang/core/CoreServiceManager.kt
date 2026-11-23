@@ -515,11 +515,12 @@ object CoreServiceManager {
             val tunFd = currentVpnInterface
 
             connectionTestScope.coroutineContext.cancelChildren()
-            LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload start...")
+            val reloadStartedAt = android.os.SystemClock.elapsedRealtime()
+            LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload start (network handover)...")
 
             coreController.stopLoop()
             if (launchCore(service, tunFd, isReload = true, goesOn = { ReloadOutcome.goesOn(askedBy = askedBy, current = networkMonitor) })) {
-                LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload finished")
+                LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload finished in ${android.os.SystemClock.elapsedRealtime() - reloadStartedAt} ms")
             } else {
                 LogUtil.i(AppConfig.TAG, "StartCore-Manager: Core reload given up, the service was stopped while the configuration was built or the Aether ports were checked")
             }
