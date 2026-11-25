@@ -54,6 +54,7 @@ data class MainUiState(
 
     /** [System.nanoTime] when the running state began; null while not running. */
     val connectedSinceNanos: Long? = null,
+    val searchQuery: String = "",
     val locateTarget: LocateTarget? = null,
     val confirmRemove: Boolean = false,
     val doubleColumnDisplay: Boolean = false,
@@ -116,7 +117,8 @@ sealed interface MainAction {
 
     data class ImportBatchConfig(val configText: String) : MainAction
 
-    data object LocateHandled : MainAction
+    data class LocateHandled(val target: LocateTarget) : MainAction
+    data object Exit : MainAction
 
     /** PattNG: the refusal of a move numbered [refusal], see [MainUiState.moveRefusal], was told. */
     data class MoveRefusalShown(val refusal: Int) : MainAction
