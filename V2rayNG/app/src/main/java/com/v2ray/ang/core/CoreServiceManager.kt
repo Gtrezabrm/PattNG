@@ -41,6 +41,8 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.withContext
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
@@ -51,6 +53,7 @@ import java.net.InetSocketAddress
 object CoreServiceManager {
 
     private const val AETHER_WARM_UP_MS = 30_000L
+    private const val STOP_WAIT_MILLIS = 2_000L
 
     private val coreController: CoreController = CoreNativeManager.newCoreController(CoreCallback())
     private val mMsgReceive = ReceiveMessageHandler()
@@ -120,6 +123,7 @@ object CoreServiceManager {
      * Starts the V2Ray core service.
      */
     fun startCoreLoop(vpnInterface: ParcelFileDescriptor?): Boolean {
+        awaitPreviousStop()
         if (isRunning()) {
             LogUtil.w(AppConfig.TAG, "StartCore-Manager: Core already running")
             return false
@@ -355,6 +359,7 @@ object CoreServiceManager {
         if (aether != null) {
             announceAetherWarmUp(service, guid, isReload)
         } else if (!isReload) {
+            markConnectedSince()
             MessageHelper.sendMsg2UI(service, AppConfig.MSG_STATE_START_SUCCESS, "")
         }
         NotificationManager.startSpeedNotification()
@@ -384,6 +389,7 @@ object CoreServiceManager {
                 AetherCoreManager.WarmUpOutcome.LISTENING -> {
                     NotificationManager.setStatusLine(null)
                     val ready = if (isReload) AppConfig.MSG_STATE_RUNNING else AppConfig.MSG_STATE_START_SUCCESS
+                    if (!isReload) markConnectedSince()
                     MessageHelper.sendMsg2UI(service, ready, "")
                 }
             }
@@ -418,6 +424,29 @@ object CoreServiceManager {
     }
 
     /**
+     * The home card counts the connection time from here. It is written by the service when the connection is up, so that a
+     * start from the quick-settings tile or the notification, with the app closed, counts from then and not from the moment
+     * the app is opened.
+     */
+    private fun markConnectedSince() {
+        runCatching { MmkvManager.encodeSettings(AppConfig.PREF_HOME_CONNECTED_SINCE, System.currentTimeMillis().toString()) }
+    }
+
+    @Volatile
+    private var stopLoopJob: Job? = null
+
+    /**
+     * Xray stops asynchronously on one shared controller. A start right behind a stop used to initialise it again while it was
+     * still coming down, which can end the daemon process in a native fault; Android then refuses the service for minutes
+     * ("process is bad"). The start waits for that stop, for at most [STOP_WAIT_MILLIS].
+     */
+    private fun awaitPreviousStop() {
+        val job = stopLoopJob?.takeIf { it.isActive } ?: return
+        LogUtil.i(AppConfig.TAG, "StartCore-Manager: Waiting for the previous stop to finish")
+        runBlocking { withTimeoutOrNull(STOP_WAIT_MILLIS) { job.join() } }
+    }
+
+    /**
      * Stops the V2Ray core service.
      * Unregisters broadcast receivers, stops notifications, and shuts down plugins.
      * @return True if the core was stopped successfully, false otherwise.
@@ -436,7 +465,7 @@ object CoreServiceManager {
         AetherCoreManager.stop()
 
         if (isRunning()) {
-            CoroutineScope(Dispatchers.IO).launch {
+            stopLoopJob = CoroutineScope(Dispatchers.IO).launch {
                 try {
                     coreController.stopLoop()
                 } catch (e: Throwable) {
