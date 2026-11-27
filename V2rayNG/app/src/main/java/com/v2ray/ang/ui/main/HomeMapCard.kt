@@ -24,6 +24,8 @@ import androidx.compose.ui.graphics.PointMode
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -139,7 +141,13 @@ fun HomeMapCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (realName != null) RouteChip(realName, filled = false)
-                if (realName != null && exitName != null) Text(text = "→", color = scheme.onSurfaceVariant)
+                if (realName != null && exitName != null) {
+                    Text(
+                        // The arrow points the way the route is read: left to right in LTR, right to left in RTL.
+                        text = if (LocalLayoutDirection.current == LayoutDirection.Rtl) "\u2190" else "\u2192",
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
                 if (exitName != null) RouteChip(exitName, filled = true)
             }
         }

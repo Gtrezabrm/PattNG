@@ -439,7 +439,7 @@ object CoreServiceManager {
             CoroutineScope(Dispatchers.IO).launch {
                 try {
                     coreController.stopLoop()
-                } catch (e: Exception) {
+                } catch (e: Throwable) {
                     LogUtil.e(AppConfig.TAG, "StartCore-Manager: Failed to stop V2Ray loop", e)
                 }
             }
@@ -860,6 +860,10 @@ object CoreServiceManager {
                             serviceControl.stopService()
                             delay(500L)
                             LauncherManager.startService(serviceControl.getService())
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Throwable) {
+                            LogUtil.e(AppConfig.TAG, "StartCore-Manager: restart failed, phase=restart", e)
                         } finally {
                             pendingResult.finish()
                         }

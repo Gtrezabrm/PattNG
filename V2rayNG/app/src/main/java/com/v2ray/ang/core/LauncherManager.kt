@@ -37,7 +37,8 @@ object LauncherManager {
         pendingStart?.let { mainHandler.removeCallbacks(it) }
         pendingStart = null
         if (wait <= 0) {
-            start()
+            // The RESTART receiver calls from a worker thread, where a toast in the failure path would itself throw.
+            if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) start() else mainHandler.post(start)
             return
         }
         val run = Runnable { pendingStart = null; start() }
